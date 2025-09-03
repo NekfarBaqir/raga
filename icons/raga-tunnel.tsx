@@ -15,6 +15,7 @@ const RagaTunnelLeft = ({ className }: { className?: string }) => {
 
   const pathLength = useTransform(scrollYProgress, [0, 1], [0, 1]);
   const opacity = useTransform(scrollYProgress, [0, 0.1], [0, 1]);
+  const fillOpacity = useTransform(scrollYProgress, [0, 1], [0, 1]);
 
   return (
     <div ref={ref} className={className}>
@@ -28,7 +29,8 @@ const RagaTunnelLeft = ({ className }: { className?: string }) => {
           strokeLinejoin="round"
           style={{
             pathLength: pathLength,
-            opacity: opacity
+            opacity: opacity,
+            fillOpacity: fillOpacity
           }}
         />
         <defs>
@@ -53,6 +55,7 @@ const RagaTunnelRight = ({ className }: { className?: string }) => {
 
   const pathLength = useTransform(scrollYProgress, [0, 1], [0, 1]);
   const opacity = useTransform(scrollYProgress, [0, 0.1], [0, 1]);
+  const fillOpacity = useTransform(scrollYProgress, [0, 1], [0, 1]);
 
   return (
     <div ref={ref} className={className}>
@@ -66,7 +69,8 @@ const RagaTunnelRight = ({ className }: { className?: string }) => {
           strokeLinejoin="round"
           style={{
             pathLength: pathLength,
-            opacity: opacity
+            opacity: opacity,
+            fillOpacity: fillOpacity
           }}
         />
         <defs>
