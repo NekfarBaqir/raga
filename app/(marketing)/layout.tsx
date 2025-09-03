@@ -1,0 +1,17 @@
+import "@/app/globals.css";
+import Header from "@/components/layouts/header";
+
+
+
+export default function Layout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+   <div className="w-full flex flex-col justify-start ites">
+    <Header/>
+    {children}
+   </div>
+  );
+}
