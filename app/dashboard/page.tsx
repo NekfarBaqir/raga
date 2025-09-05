@@ -1,10 +1,5 @@
 const page = () => {
-  return (
-    <div className="flex items-center justify-center text-black">
-      Welcome to the dashboard
-      <a href="/auth/logout"></a>
-    </div>
-  );
+  return <div>Welcome to the dashboard</div>;
 };
 
 export default page;

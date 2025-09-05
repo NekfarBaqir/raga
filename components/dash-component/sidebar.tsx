@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { BarChart3, HelpCircle, Inbox, Menu, X } from "lucide-react";
+import { BarChart3, HelpCircle, Inbox, LogOut, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Logo from "@/icons/logo";
 
@@ -31,7 +31,7 @@ export default function Sidebar({
         </button>
       </div>
 
-      <aside className="hidden md:flex w-64 bg-muted border-r flex-col">
+      <aside className="hidden md:flex w-64 bg-muted border-r flex-col relative">
         <div className="p-4 font-bold text-xl">
           <Logo className="w-40 h-40 -mt-12 ml-4 -mb-14" />
         </div>
@@ -46,6 +46,13 @@ export default function Sidebar({
             />
           ))}
         </nav>
+        <div className="p-4 absolute bottom-4 right-3">
+          <SidebarItem
+            label="Logout"
+            icon={LogOut}
+            onClick={() => (window.location.href = "/auth/logout")}
+          />
+        </div>
       </aside>
       {mobileOpen && (
         <div
@@ -80,9 +87,6 @@ export default function Sidebar({
                 />
               ))}
             </nav>
-            <div className="">
-              <a href="/auth/logout">Logout</a>
-            </div>
           </aside>
         </div>
       )}
