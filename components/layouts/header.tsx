@@ -4,7 +4,7 @@ import { sideConfig } from "@/config/site";
 import Logo from "@/icons/logo";
 import { MainNavItem } from "@/types";
 import { usePathname } from "next/navigation";
-import { Button } from "../ui/button";
+import { ShimmerButton } from "../magicui/shimmer-button";
 import NavItem from "../ui/nav-item";
 
 const Header = () => {
@@ -29,9 +29,9 @@ const Header = () => {
         })}
       </nav>
       <div className="flex justify-end items-center">
-        <Button className="!p-5 cursor-pointer" variant={"outline"}>
+        <ShimmerButton background="white" shimmerColor="#000"  className="!p-3 !px-6 text-foreground !border border-black/10 cursor-pointer hover:border-black/20 transition-all duration-300">
           Apply Now
-        </Button>
+        </ShimmerButton>
       </div>
     </header>
   );

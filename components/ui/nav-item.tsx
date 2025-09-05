@@ -9,7 +9,7 @@ const NavItem = ({ title, href, svg, disabled, active }: NavItemType) => (
     href={href}
     className={cn(
       'nav-item relative inline-block px-4 p-4 transition-colors duration-300 ease-linear group',
-      active ? 'text-[rgb(183,28,28)]' : 'text-gray-700 hover:text-[#B71C1C]',
+      active ? 'text-[rgb(183,28,28)]' : 'text-foreground hover:text-[#B71C1C]',
       disabled ? 'pointer-events-none cursor-not-allowed opacity-50' : ''
     )}
   >
