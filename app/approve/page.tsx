@@ -1,5 +1,5 @@
-// app/approval/page.tsx
-"use clientcl";
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Mail, Phone } from "lucide-react";
 
