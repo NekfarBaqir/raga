@@ -46,12 +46,14 @@ export default function Sidebar({
             />
           ))}
         </nav>
-        <div className="p-4 absolute bottom-4 right-3">
-          <SidebarItem
-            label="Logout"
-            icon={LogOut}
-            onClick={() => (window.location.href = "/auth/logout")}
-          />
+        <div className="p-4 absolute bottom-4 ">
+          <div className="flex items-center justify-between">
+            <SidebarItem
+              label="Logout"
+              icon={LogOut}
+              onClick={() => (window.location.href = "/auth/logout")}
+            />
+          </div>
         </div>
       </aside>
       {mobileOpen && (

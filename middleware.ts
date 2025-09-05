@@ -18,17 +18,9 @@ export async function middleware(request: NextRequest) {
     const roles: string[] =
       accessTokenDecoded["https://raga.space/roles"] || [];
 
-    console.log("roles: ", roles);
-
     if (roles.length === 0 || !roles.includes("admin")) {
       return Response.redirect(new URL("/approve", request.url));
     }
-
-    // if (!roles.includes("admin")) {
-    //   return Response.redirect(
-    //     new URL("/auth/login?error=unauthorized", request.url)
-    //   );
-    // }
   }
 
   return await auth0.middleware(request);
