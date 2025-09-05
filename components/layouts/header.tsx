@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import { sideConfig } from "@/config/site";
 import Logo from "@/icons/logo";
@@ -28,6 +28,7 @@ const Header = () => {
           );
         })}
       </nav>
+      <a href="/dashboard">Dashboard</a>
       <div className="flex justify-end items-center">
         <Button className="!p-5 cursor-pointer" variant={"outline"}>
           Apply Now
