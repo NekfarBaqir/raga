@@ -181,6 +181,7 @@ export default function QuestionsTable() {
 
   const handleOnsubmit = async () => {
     const token = await getAccessToken();
+
     const newErrors = {
       text: "",
       importance: "",
@@ -218,7 +219,19 @@ export default function QuestionsTable() {
     if (hasError) return;
 
     try {
-      const payload: any = { ...newQuestion };
+      const payload: any = {
+        text: newQuestion.text,
+        type: newQuestion.type,
+        importance: newQuestion.importance ?? 1,
+        display_order: newQuestion.display_order ?? data.length + 1,
+      };
+
+      if (newQuestion.type === "dropdown") {
+        payload.options = newQuestion.options ?? [];
+      }
+
+      console.log("🚀 ~ handleOnsubmit ~ payload:", payload);
+
       const response = await axios.post<Question>(
         `${API_BASE_URL}/api/v1/questions`,
         payload,
@@ -229,6 +242,8 @@ export default function QuestionsTable() {
           },
         }
       );
+
+      console.log("🚀 ~ handleOnsubmit ~ response:", response);
 
       setData((prev) => [response.data, ...prev]);
       setNewQuestion({
@@ -241,6 +256,7 @@ export default function QuestionsTable() {
       });
       setIsDialogOpen(false);
     } catch (err: any) {
+      console.error(err);
       setError(err.response?.data?.detail || "Failed to save question.");
     }
   };
@@ -519,35 +535,88 @@ function RowActions({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editQuestion, setEditQuestion] = useState<Question>(row.original);
+  const [loading, setLoading] = useState({ edit: false, delete: false });
+
+  const validateQuestion = (question: Question) => {
+    if (!question.text || question.text.length > 500) {
+      alert("Question text is required and must be 1-500 characters.");
+      return false;
+    }
+    if (
+      question.importance !== null &&
+      (question.importance < 1 || question.importance > 5)
+    ) {
+      alert("Importance must be between 1 and 5.");
+      return false;
+    }
+    if (
+      (question.type === "dropdown" || question.type === "yes_no") &&
+      (!question.options || question.options.length === 0)
+    ) {
+      alert("Options are required for dropdown or yes/no questions.");
+      return false;
+    }
+    return true;
+  };
 
   const handleDelete = async () => {
     try {
       const token = await getAccessToken();
+
       await axios.delete(
         `${API_BASE_URL}/api/v1/questions/${row.original.id}`,
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
+      console.log("🚀 ~ handleDelete ~ row.original.id:", row.original.id);
+
       setData((prev) => prev.filter((q) => q.id !== row.original.id));
+
       setIsDeleteDialogOpen(false);
-    } catch (err) {
-      alert("Failed to delete question.");
+    } catch (err: any) {
+      console.error("Failed to delete question:", err);
     }
   };
 
   const handleEditSave = async () => {
+    if (!validateQuestion(editQuestion)) return;
+
+    let options: string[] | null = null;
+    if (editQuestion.type === "yes_no") {
+      options = ["Yes", "No"];
+    } else if (editQuestion.type === "dropdown") {
+      options = editQuestion.options ?? [];
+    }
+
+    const payload = {
+      text: editQuestion.text || null,
+      type: editQuestion.type || null,
+      importance: editQuestion.importance ?? null,
+      display_order: editQuestion.display_order ?? null,
+      options,
+    };
+
+    setLoading((prev) => ({ ...prev, edit: true }));
+
     try {
       const token = await getAccessToken();
       const response = await axios.patch(
         `${API_BASE_URL}/api/v1/questions/${row.original.id}`,
-        editQuestion,
+        payload,
         { headers: { Authorization: `Bearer ${token}` } }
       );
+
       setData((prev) =>
         prev.map((q) => (q.id === row.original.id ? response.data : q))
       );
       setIsEditDialogOpen(false);
     } catch (err) {
-      alert("Failed to update question.");
+      console.error("Failed to update question:", err);
+    } finally {
+      setLoading((prev) => ({ ...prev, edit: false }));
     }
   };
 
@@ -584,11 +653,16 @@ function RowActions({
             <Button
               variant="outline"
               onClick={() => setIsDeleteDialogOpen(false)}
+              disabled={loading.delete}
             >
               Cancel
             </Button>
-            <Button className="bg-foreground text-white" onClick={handleDelete}>
-              Delete
+            <Button
+              className="bg-foreground text-white"
+              onClick={handleDelete}
+              disabled={loading.delete}
+            >
+              {loading.delete ? "Deleting..." : "Delete"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -611,7 +685,12 @@ function RowActions({
             <Select
               value={editQuestion.type}
               onValueChange={(val) =>
-                setEditQuestion({ ...editQuestion, type: val as any })
+                setEditQuestion({
+                  ...editQuestion,
+                  type: val as any,
+                  options:
+                    val === "yes_no" ? ["Yes", "No"] : editQuestion.options,
+                })
               }
             >
               <SelectTrigger className="w-full">
@@ -668,11 +747,16 @@ function RowActions({
             <Button
               variant="outline"
               onClick={() => setIsEditDialogOpen(false)}
+              disabled={loading.edit}
             >
               Cancel
             </Button>
-            <Button onClick={handleEditSave} variant={"outline"}>
-              Save
+            <Button
+              onClick={handleEditSave}
+              variant={"outline"}
+              disabled={loading.edit}
+            >
+              {loading.edit ? "Saving..." : "Save"}
             </Button>
           </DialogFooter>
         </DialogContent>
