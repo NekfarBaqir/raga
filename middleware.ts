@@ -13,8 +13,12 @@ export async function middleware(request: NextRequest) {
       );
     }
 
+    if (!accessToken) {
+      return Response.redirect(
+        new URL("/auth/login?returnTo=/dashboard", request.url)
+      );
+    }
     const accessTokenDecoded: any = jwtDecode(accessToken);
-
     const roles: string[] =
       accessTokenDecoded["https://raga.space/roles"] || [];
 
