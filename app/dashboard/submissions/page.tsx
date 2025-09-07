@@ -2,9 +2,8 @@
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import { useUser, getAccessToken } from "@auth0/nextjs-auth0";
+import { withPageAuthRequired, getAccessToken } from "@auth0/nextjs-auth0";
 
-import { submissions, Submission } from "./data";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -28,14 +27,10 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   ChevronUpIcon,
-  CircleAlertIcon,
   CircleXIcon,
   Columns3Icon,
-  EllipsisIcon,
   Eye,
   ListFilterIcon,
-  PlusIcon,
-  TrashIcon,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -44,8 +39,6 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -80,11 +73,7 @@ type Submissions = {
   score: number;
   risk_level: string;
 };
-const multiColumnFilterFn: FilterFn<Submissions> = (
-  row,
-  columnId,
-  filterValue
-) => {
+const multiColumnFilterFn: FilterFn<Submissions> = (row, filterValue) => {
   const searchableRowContent = `${row.original.team_name}`.toLowerCase();
   const searchTerm = (filterValue ?? "").toLowerCase();
   return searchableRowContent.includes(searchTerm);
@@ -156,7 +145,7 @@ export default function Component() {
       try {
         const token = await getAccessToken();
 
-        const response = await axios.get<Submission[]>(
+        const response = await axios.get<Submissions[]>(
           `${API_BASE_URL}/api/v1/submissions`,
           {
             headers: {
@@ -177,6 +166,22 @@ export default function Component() {
 
     fetchQuestions();
   }, [API_BASE_URL]);
+
+  // useEffect(() => {
+  //   async function fetchQuestions() {
+  //     try {
+  //       const response = await axios.get("/api/submissions");
+  //       setData(response.data);
+  //     } catch (err) {
+  //       console.error(err);
+  //       setError("Failed to load questions.");
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   }
+
+  //   fetchQuestions();
+  // }, []);
 
   const table = useReactTable({
     data,
@@ -204,7 +209,7 @@ export default function Component() {
   if (data.length === 0)
     return <p className="text-center">No Submissions found.</p>;
   return (
-    <div className="space-y-4 px-20">
+    <div className="space-y-4 xl:px-20">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="relative">

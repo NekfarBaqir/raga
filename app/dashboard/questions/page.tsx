@@ -1,4 +1,5 @@
 "use client";
+
 import { SetStateAction, useEffect, useId, useRef, useState } from "react";
 import { getAccessToken } from "@auth0/nextjs-auth0";
 import { Textarea } from "@/components/ui/textarea";
@@ -19,8 +20,11 @@ import {
   VisibilityState,
 } from "@tanstack/react-table";
 import {
-  ChevronDownIcon,
-  ChevronUpIcon,
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+} from "@/components/ui/pagination";
+import {
   ChevronFirstIcon,
   ChevronLastIcon,
   ChevronLeftIcon,
@@ -79,11 +83,7 @@ type Question = {
   display_order: number;
 };
 
-const multiColumnFilterFn: FilterFn<Question> = (
-  row,
-  columnId,
-  filterValue
-) => {
+const multiColumnFilterFn: FilterFn<Question> = (row, filterValue) => {
   const searchableRowContent = `${row.original.text}`.toLowerCase();
   const searchTerm = (filterValue ?? "").toLowerCase();
   return searchableRowContent.includes(searchTerm);
@@ -125,6 +125,28 @@ export default function QuestionsTable() {
   });
 
   useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 640) {
+        setColumnVisibility({
+          type: false,
+          importance: false,
+          display_order: false,
+        });
+      } else if (window.innerWidth < 1024) {
+        setColumnVisibility({
+          importance: false,
+        });
+      } else {
+        setColumnVisibility({});
+      }
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
     async function fetchQuestions() {
       try {
         const response = await axios.get<Question[]>(
@@ -145,20 +167,33 @@ export default function QuestionsTable() {
       header: "Question",
       accessorKey: "text",
       cell: ({ row }) => (
-        <div className="font-medium">{row.getValue("text")}</div>
+        <div className="font-medium truncate">{row.getValue("text")}</div>
       ),
-      size: 300,
+      size: undefined,
+      minSize: 200,
       filterFn: multiColumnFilterFn,
       enableHiding: false,
     },
-    { header: "Type", accessorKey: "type", size: 100 },
-    { header: "Importance", accessorKey: "importance", size: 100 },
-    { header: "Display Order", accessorKey: "display_order", size: 100 },
+    { header: "Type", accessorKey: "type", size: undefined, minSize: 80 },
+    {
+      header: "Importance",
+      accessorKey: "importance",
+      size: undefined,
+      minSize: 100,
+    },
+    {
+      header: "Display Order",
+      accessorKey: "display_order",
+      size: undefined,
+      minSize: 120,
+    },
+
     {
       id: "actions",
       header: () => <span className="sr-only">Actions</span>,
       cell: ({ row }) => <RowActions row={row} setData={setData} />,
       size: 60,
+      minSize: 60,
       enableHiding: false,
     },
   ];
@@ -230,8 +265,6 @@ export default function QuestionsTable() {
         payload.options = newQuestion.options ?? [];
       }
 
-      console.log("🚀 ~ handleOnsubmit ~ payload:", payload);
-
       const response = await axios.post<Question>(
         `${API_BASE_URL}/api/v1/questions`,
         payload,
@@ -242,8 +275,6 @@ export default function QuestionsTable() {
           },
         }
       );
-
-      console.log("🚀 ~ handleOnsubmit ~ response:", response);
 
       setData((prev) => [response.data, ...prev]);
       setNewQuestion({
@@ -261,21 +292,21 @@ export default function QuestionsTable() {
     }
   };
 
-  if (loading) return <p className="text-center">Loading Questions...</p>;
-  if (error) return <p className="text-center">{error}</p>;
+  if (loading) return <p className="text-center py-4">Loading Questions...</p>;
+  if (error) return <p className="text-center py-4 text-red-500">{error}</p>;
   if (data.length === 0)
-    return <p className="text-center">No Questions found.</p>;
+    return <p className="text-center py-4">No Questions found.</p>;
 
   return (
-    <div className="space-y-4 px-20">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="relative">
+    <div className="space-y-4 w-full overflow-x-hidden px-2 sm:px-4 lg:px-6">
+      <div className="flex items-center justify-between gap-10">
+        <div className="flex items-center justify-between gap-10 w-full">
+          <div className="relative w-full sm:w-60">
             <Input
               id={`${id}-input`}
               ref={inputRef}
               className={cn(
-                "peer min-w-60 ps-9",
+                "peer w-full ps-9",
                 Boolean(table.getColumn("text")?.getFilterValue()) && "pe-9"
               )}
               value={
@@ -287,7 +318,7 @@ export default function QuestionsTable() {
               placeholder="Filter by question..."
               aria-label="Filter by question"
             />
-            <div className="text-muted-foreground/80 pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3">
+            <div className="text-muted-foreground pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3">
               <ListFilterIcon size={16} aria-hidden="true" />
             </div>
             {Boolean(table.getColumn("text")?.getFilterValue()) && (
@@ -306,8 +337,8 @@ export default function QuestionsTable() {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline">
-                <Columns3Icon size={16} /> View
+              <Button variant="outline" className="w-full sm:w-auto">
+                <Columns3Icon size={16} className="mr-2" /> View
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -332,10 +363,10 @@ export default function QuestionsTable() {
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button variant="outline">
-              <PlusIcon size={16} /> Add question
+              <PlusIcon size={16} className="mr-2" /> Add question
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="w-[95vw] sm:max-w-md lg:max-w-xl overflow-y-auto max-h-[90vh]">
             <DialogHeader>
               <DialogTitle>Add New Question</DialogTitle>
               <DialogDescription>
@@ -343,7 +374,7 @@ export default function QuestionsTable() {
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-1 gap-2">
+              <div className="grid gap-2">
                 <Label>Question Text</Label>
                 <Textarea
                   value={newQuestion.text}
@@ -351,13 +382,16 @@ export default function QuestionsTable() {
                     setNewQuestion({ ...newQuestion, text: e.target.value })
                   }
                   placeholder="Enter question text (1-500 chars)"
-                  className={errors.text ? "border-red-500" : ""}
+                  className={cn(
+                    errors.text ? "border-red-500" : "",
+                    "min-h-[100px]"
+                  )}
                 />
                 {errors.text && (
                   <p className="text-red-500 text-sm">{errors.text}</p>
                 )}
               </div>
-              <div className="grid grid-cols-1 gap-2">
+              <div className="grid gap-2">
                 <Label>Type</Label>
                 <Select
                   value={newQuestion.type}
@@ -379,7 +413,7 @@ export default function QuestionsTable() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid grid-cols-1 gap-2">
+              <div className="grid gap-2">
                 <Label>Importance</Label>
                 <Input
                   type="number"
@@ -397,7 +431,7 @@ export default function QuestionsTable() {
               </div>
               {(newQuestion.type === "dropdown" ||
                 newQuestion.type === "yes_no") && (
-                <div className="grid grid-cols-1 gap-2">
+                <div className="grid gap-2">
                   <Label>Options</Label>
                   <Input
                     value={newQuestion.options?.join(", ") ?? ""}
@@ -412,7 +446,7 @@ export default function QuestionsTable() {
                 </div>
               )}
             </div>
-            <DialogFooter>
+            <DialogFooter className="flex flex-col sm:flex-row sm:justify-end gap-2">
               <Button onClick={handleOnsubmit} variant={"outline"}>
                 Add Question
               </Button>
@@ -421,103 +455,167 @@ export default function QuestionsTable() {
         </Dialog>
       </div>
 
-      <div className="bg-background overflow-hidden border">
-        <Table className="table-fixed">
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <TableHead
-                    key={header.id}
-                    style={{ width: `${header.getSize()}px` }}
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows.length > 0 ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
+      <div className="bg-background overflow-x-auto border rounded-md w-full">
+        <div className="min-w-[600px]">
+          <Table className="min-w-full w-full">
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead
+                      key={header.id}
+                      className="px-4 py-3 text-left text-sm font-medium"
+                      style={{
+                        minWidth: `${header.column.columnDef.minSize ?? 0}px`,
+                      }}
+                    >
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
                   ))}
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={table.getAllColumns().length}
-                  className="text-center"
-                >
-                  No data
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows.length > 0 ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id} className="hover:bg-muted/50">
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell
+                        key={cell.id}
+                        className="px-4 py-3 text-sm truncate max-w-[120px] sm:max-w-[200px] md:max-w-none"
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={table.getAllColumns().length}
+                    className="text-center py-4"
+                  >
+                    No data
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
-      <div className="flex items-center justify-between gap-8">
+      <div className="flex items-center justify-between gap-8 ">
         <div className="flex items-center gap-3">
-          <Label htmlFor={id}>Rows per page</Label>
+          <Label htmlFor={id} className="max-sm:sr-only">
+            Rows per page
+          </Label>
           <Select
             value={table.getState().pagination.pageSize.toString()}
-            onValueChange={(value) => table.setPageSize(Number(value))}
+            onValueChange={(value) => {
+              table.setPageSize(Number(value));
+            }}
           >
-            <SelectTrigger id={id} className="w-fit">
-              <SelectValue />
+            <SelectTrigger id={id} className="w-fit whitespace-nowrap">
+              <SelectValue placeholder="Select number of results" />
             </SelectTrigger>
-            <SelectContent>
-              {[5, 10, 25, 50].map((size) => (
-                <SelectItem key={size} value={size.toString()}>
-                  {size}
+            <SelectContent className="[&_*[role=option]]:ps-2 [&_*[role=option]]:pe-8 [&_*[role=option]>span]:start-auto [&_*[role=option]>span]:end-2">
+              {[5, 10, 25, 50].map((pageSize) => (
+                <SelectItem key={pageSize} value={pageSize.toString()}>
+                  {pageSize}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
-        <div className="flex items-center gap-2">
-          <Button
-            onClick={() => table.firstPage()}
-            variant={"outline"}
-            disabled={!table.getCanPreviousPage()}
+
+        <div className="text-muted-foreground flex grow justify-end text-sm whitespace-nowrap">
+          <p
+            className="text-muted-foreground text-sm whitespace-nowrap"
+            aria-live="polite"
           >
-            <ChevronFirstIcon />
-          </Button>
-          <Button
-            onClick={() => table.previousPage()}
-            variant={"outline"}
-            disabled={!table.getCanPreviousPage()}
-          >
-            <ChevronLeftIcon />
-          </Button>
-          <Button
-            onClick={() => table.nextPage()}
-            variant={"outline"}
-            disabled={!table.getCanNextPage()}
-          >
-            <ChevronRightIcon />
-          </Button>
-          <Button
-            onClick={() => table.lastPage()}
-            variant={"outline"}
-            disabled={!table.getCanNextPage()}
-          >
-            <ChevronLastIcon />
-          </Button>
+            <span className="text-foreground">
+              {table.getState().pagination.pageIndex *
+                table.getState().pagination.pageSize +
+                1}
+              -
+              {Math.min(
+                Math.max(
+                  table.getState().pagination.pageIndex *
+                    table.getState().pagination.pageSize +
+                    table.getState().pagination.pageSize,
+                  0
+                ),
+                table.getRowCount()
+              )}
+            </span>{" "}
+            of{" "}
+            <span className="text-foreground">
+              {table.getRowCount().toString()}
+            </span>
+          </p>
+        </div>
+
+        <div>
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <Button
+                  size="icon"
+                  variant="outline"
+                  className="disabled:pointer-events-none disabled:opacity-50"
+                  onClick={() => table.firstPage()}
+                  disabled={!table.getCanPreviousPage()}
+                  aria-label="Go to first page"
+                >
+                  <ChevronFirstIcon size={16} aria-hidden="true" />
+                </Button>
+              </PaginationItem>
+              <PaginationItem>
+                <Button
+                  size="icon"
+                  variant="outline"
+                  className="disabled:pointer-events-none disabled:opacity-50"
+                  onClick={() => table.previousPage()}
+                  disabled={!table.getCanPreviousPage()}
+                  aria-label="Go to previous page"
+                >
+                  <ChevronLeftIcon size={16} aria-hidden="true" />
+                </Button>
+              </PaginationItem>
+              <PaginationItem>
+                <Button
+                  size="icon"
+                  variant="outline"
+                  className="disabled:pointer-events-none disabled:opacity-50"
+                  onClick={() => table.nextPage()}
+                  disabled={!table.getCanNextPage()}
+                  aria-label="Go to next page"
+                >
+                  <ChevronRightIcon size={16} aria-hidden="true" />
+                </Button>
+              </PaginationItem>
+              <PaginationItem>
+                <Button
+                  size="icon"
+                  variant="outline"
+                  className="disabled:pointer-events-none disabled:opacity-50"
+                  onClick={() => table.lastPage()}
+                  disabled={!table.getCanNextPage()}
+                  aria-label="Go to last page"
+                >
+                  <ChevronLastIcon size={16} aria-hidden="true" />
+                </Button>
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
         </div>
       </div>
     </div>
@@ -560,24 +658,36 @@ function RowActions({
   };
 
   const handleDelete = async () => {
+    setLoading((prev) => ({ ...prev, delete: true }));
     try {
+      const questionId = row?.original?.id;
+      if (!questionId) {
+        throw new Error("Missing question id (row.original.id is falsy).");
+      }
       const token = await getAccessToken();
 
-      await axios.delete(
-        `${API_BASE_URL}/api/v1/questions/${row.original.id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      console.log("🚀 ~ handleDelete ~ row.original.id:", row.original.id);
+      const url = `${API_BASE_URL}/api/v1/questions/${questionId}`;
 
-      setData((prev) => prev.filter((q) => q.id !== row.original.id));
+      await axios.delete(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        data: { question_id: questionId },
+      });
 
+      setData((prev) => prev.filter((q) => q.id !== questionId));
       setIsDeleteDialogOpen(false);
     } catch (err: any) {
       console.error("Failed to delete question:", err);
+      if (err?.response) {
+        console.error("Status:", err.response.status);
+        console.error("Response body:", err.response.data);
+      } else {
+        console.error("Message:", err.message);
+      }
+    } finally {
+      setLoading((prev) => ({ ...prev, delete: false }));
     }
   };
 
@@ -592,6 +702,7 @@ function RowActions({
     }
 
     const payload = {
+      id: row.original.id,
       text: editQuestion.text || null,
       type: editQuestion.type || null,
       importance: editQuestion.importance ?? null,
@@ -603,8 +714,9 @@ function RowActions({
 
     try {
       const token = await getAccessToken();
+
       const response = await axios.patch(
-        `${API_BASE_URL}/api/v1/questions/${row.original.id}`,
+        `${API_BASE_URL}/api/v1/questions`,
         payload,
         { headers: { Authorization: `Bearer ${token}` } }
       );
@@ -612,6 +724,7 @@ function RowActions({
       setData((prev) =>
         prev.map((q) => (q.id === row.original.id ? response.data : q))
       );
+
       setIsEditDialogOpen(false);
     } catch (err) {
       console.error("Failed to update question:", err);
@@ -644,12 +757,12 @@ function RowActions({
       </DropdownMenu>
 
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent className="sm:max-w-[400px]">
+        <DialogContent className="max-w-[90vw] sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Delete Question</DialogTitle>
             <DialogDescription>Are you sure?</DialogDescription>
           </DialogHeader>
-          <DialogFooter>
+          <DialogFooter className="flex flex-col sm:flex-row sm:justify-end gap-2">
             <Button
               variant="outline"
               onClick={() => setIsDeleteDialogOpen(false)}
@@ -669,67 +782,76 @@ function RowActions({
       </Dialog>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="max-w-[90vw] sm:max-w-md overflow-y-auto max-h-[90vh]">
           <DialogHeader>
             <DialogTitle>Edit Question</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <Label>Text</Label>
-            <Textarea
-              value={editQuestion.text}
-              onChange={(e) =>
-                setEditQuestion({ ...editQuestion, text: e.target.value })
-              }
-            />
-            <Label>Type</Label>
-            <Select
-              value={editQuestion.type}
-              onValueChange={(val) =>
-                setEditQuestion({
-                  ...editQuestion,
-                  type: val as any,
-                  options:
-                    val === "yes_no" ? ["Yes", "No"] : editQuestion.options,
-                })
-              }
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="text">Text</SelectItem>
-                <SelectItem value="yes_no">Yes/No</SelectItem>
-                <SelectItem value="dropdown">Dropdown</SelectItem>
-              </SelectContent>
-            </Select>
-            <Label>Importance</Label>
-            <Input
-              type="number"
-              min={1}
-              max={5}
-              value={editQuestion.importance ?? ""}
-              onChange={(e) =>
-                setEditQuestion({
-                  ...editQuestion,
-                  importance: Number(e.target.value),
-                })
-              }
-            />
-            <Label>Display Order</Label>
-            <Input
-              type="number"
-              min={0}
-              value={editQuestion.display_order ?? ""}
-              onChange={(e) =>
-                setEditQuestion({
-                  ...editQuestion,
-                  display_order: Number(e.target.value),
-                })
-              }
-            />
+            <div className="grid gap-2">
+              <Label>Text</Label>
+              <Textarea
+                value={editQuestion.text}
+                onChange={(e) =>
+                  setEditQuestion({ ...editQuestion, text: e.target.value })
+                }
+                className="min-h-[100px]"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label>Type</Label>
+              <Select
+                value={editQuestion.type}
+                onValueChange={(val) =>
+                  setEditQuestion({
+                    ...editQuestion,
+                    type: val as any,
+                    options:
+                      val === "yes_no" ? ["Yes", "No"] : editQuestion.options,
+                  })
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="text">Text</SelectItem>
+                  <SelectItem value="yes_no">Yes/No</SelectItem>
+                  <SelectItem value="dropdown">Dropdown</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-2">
+              <Label>Importance</Label>
+              <Input
+                type="number"
+                min={1}
+                max={5}
+                value={editQuestion.importance ?? ""}
+                onChange={(e) =>
+                  setEditQuestion({
+                    ...editQuestion,
+                    importance: Number(e.target.value),
+                  })
+                }
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label>Display Order</Label>
+              <Input
+                type="number"
+                min={0}
+                value={editQuestion.display_order ?? ""}
+                onChange={(e) =>
+                  setEditQuestion({
+                    ...editQuestion,
+                    display_order: Number(e.target.value),
+                  })
+                }
+              />
+            </div>
             {(editQuestion.type === "dropdown" ||
               editQuestion.type === "yes_no") && (
-              <>
+              <div className="grid gap-2">
                 <Label>Options</Label>
                 <Input
                   value={editQuestion.options?.join(", ") ?? ""}
@@ -740,10 +862,10 @@ function RowActions({
                     })
                   }
                 />
-              </>
+              </div>
             )}
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex flex-col sm:flex-row sm:justify-end gap-2">
             <Button
               variant="outline"
               onClick={() => setIsEditDialogOpen(false)}

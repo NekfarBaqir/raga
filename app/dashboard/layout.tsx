@@ -13,7 +13,6 @@ export default function DashboardLayout({
 
   return (
     <div className="flex h-screen">
-      {/* Sidebar */}
       <Sidebar pathname={pathname} />
       <div className="flex-1 flex flex-col">
         <Header />

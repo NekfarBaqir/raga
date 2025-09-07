@@ -116,6 +116,8 @@ export default function Component() {
     async function fetchContacts() {
       try {
         const token = await getAccessToken();
+        console.log("🚀 ~ fetchContacts ~ token:", token);
+
         const response = await axios.get<Contacts[]>(
           `${API_BASE_URL}/api/v1/contacts`,
           {
@@ -249,7 +251,7 @@ export default function Component() {
     return <p className="text-center">No Contacts found.</p>;
 
   return (
-    <div className="space-y-4 px-20">
+    <div className="space-y-4 xl:px-20">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="relative">
