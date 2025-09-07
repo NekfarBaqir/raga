@@ -39,7 +39,7 @@
   --font-sans: Inter, ui-sans-serif, sans-serif, system-ui;
   --font-serif: ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  --radius: 2.45rem;
+  --radius: 0.55rem;
   --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
   --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
   --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 1px 2px -1px hsl(0 0% 0% / 0.10);
@@ -87,7 +87,7 @@
   --sidebar-ring: oklch(0.4390 0 0);
   --font-inter: Inter, ui-sans-serif, sans-serif, system-ui;
   --font-poppins: Poppins, ui-sans-serif, sans-serif, system-ui;
-  --radius: 2.45rem;
+  --radius: 0.55rem;
   --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
   --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
   --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.10), 0 1px 2px -1px hsl(0 0% 0% / 0.10);
@@ -197,7 +197,6 @@
   }
 }
 
-/* Navigation SVG Animations */
 .nav-item .nav-svg {
   transition: opacity 0.3s ease-in-out;
 }
@@ -228,7 +227,6 @@
   }
 }
 
-/* Additional hover effects for smoother animations */
 .nav-item {
   position: relative;
   overflow: visible;

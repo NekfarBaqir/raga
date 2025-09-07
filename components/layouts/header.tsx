@@ -1,4 +1,4 @@
-'use client'
+"use client";
 
 import { sideConfig } from "@/config/site";
 import Logo from "@/icons/logo";
@@ -6,6 +6,7 @@ import { MainNavItem } from "@/types";
 import { usePathname } from "next/navigation";
 import { ShimmerButton } from "../magicui/shimmer-button";
 import NavItem from "../ui/nav-item";
+import Link from "next/link";
 
 const Header = () => {
   const pathname = usePathname();
@@ -29,9 +30,15 @@ const Header = () => {
         })}
       </nav>
       <div className="flex justify-end items-center">
-        <ShimmerButton background="white" shimmerColor="#000"  className="!p-3 !px-6 text-foreground !border border-black/10 cursor-pointer hover:border-black/20 transition-all duration-300">
-          Apply Now
-        </ShimmerButton>
+        <Link href="/apply">
+          <ShimmerButton
+            background="white"
+            shimmerColor="#000"
+            className="!p-3 !px-6 text-foreground !border border-black/10 cursor-pointer hover:border-black/20 transition-all duration-300"
+          >
+            Apply Now
+          </ShimmerButton>
+        </Link>
       </div>
     </header>
   );
