@@ -26,7 +26,7 @@ export const sideConfig: SideConfig = {
     },
     {
       title: 'Contact',
-      href: '/contact-us',
+      href: '/contact',
       svg: {
         width: '67',
         height: '20',
