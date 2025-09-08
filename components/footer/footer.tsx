@@ -10,7 +10,7 @@ export default function Footer() {
         <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-8">
           <div className="text-center text-background md:text-left space-y-3">
             <span className="text-2xl font-semibold text-background">RAGA</span>
-            <p className=" text-sm md:text-base">
+            <p className=" text-sm md:text-base text-background dark:text-foreground">
               The Perfect Work Space For All People.
             </p>
           </div>
