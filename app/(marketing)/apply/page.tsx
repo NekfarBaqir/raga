@@ -170,7 +170,7 @@ export default function ApplyPage() {
     );
 
   return (
-    <>
+    <section className="w-full py-16">
       {" "}
       <h1 className="text-4xl text-center mb-10">Application Form </h1>
       <div className="flex justify-center items-center min-h-screen px-4">
@@ -343,6 +343,6 @@ export default function ApplyPage() {
           </div>
         </form>
       </div>
-    </>
+    </section>
   );
 }

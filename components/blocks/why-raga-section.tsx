@@ -26,7 +26,7 @@ const WhyRagaSection = () => {
           <span>Where Innovation Meets</span> <span>Opportunity</span>{" "}
         </h2>
 
-        <p className="font-light">
+        <p className="font-light ">
           We provide the space in two shifts, the morning for <span className="underline">women starting at
           6:00 AM until 1:00 PM</span> and the afternoon for <span className="underline">men starting at 1:00 PM
           until 11:00 PM</span>.

@@ -24,7 +24,7 @@ const HeroSection = () => {
           />
         </motion.div>
 
-        <div className="w-[60%] mx-auto flex justify-center items-center h-full flex-col relative z-2">
+        <div className="w-[97%] md:w-[60%] mx-auto flex justify-center items-center h-full flex-col relative z-2">
           <div className="w-full min-h-[100px]">
             {animationIndex >= 0 && (
               <BlurText
@@ -35,7 +35,7 @@ const HeroSection = () => {
                 onAnimationComplete={() => {
                   setAnimationIndex(1);
                 }}
-                className="text-6xl font-extrabold mb-8 font-poppins justify-center "
+                className="text-4xl lg:text-6xl font-extrabold mb-8 font-poppins justify-center "
 
               />
             )}

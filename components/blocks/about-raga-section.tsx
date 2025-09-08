@@ -19,7 +19,7 @@ const AboutRagaSection = () => {
                 margin: "-90px",
               }}
               transition={{ duration: 0.5 }}
-              className="text-3xl font-normal w-full flex justify-center flex-nowrap text-nowrap"
+              className="text-2xl md:text-3xl font-normal w-full flex justify-center flex-nowrap text-nowrap"
             >
               More about
             </motion.p>
@@ -37,19 +37,19 @@ const AboutRagaSection = () => {
         </div>
       </div>
 
-      <div className="bg-[#FAFAFA] dark:bg-white/5 w-full max-w-[1800px] mx-auto p-5 flex justify-start items-center gap-5 py-20">
-        <div className="w-full flex flex-col justify-start items-start gap-1.5">
+      <div className="bg-[#FAFAFA] dark:bg-white/5 w-full max-w-[1800px] mx-auto p-5 flex justify-start items-center gap-5 py-7 pb-20">
+        <div className=" flex flex-col justify-start items-start gap-1.5 w-[90%] mx-auto">
           <ScrollReveal
             baseOpacity={0}
             enableBlur={true}
             baseRotation={2}
             blurStrength={10}
-            textClassName="justify-center text-center"
+            textClassName="justify-center text-center !text-base md:!text-lg lg:!text-xl xl:!text-2xl"
           >
             Founded by visionary engineer Reza Ahmadi, creator of Entop and pioneer behind Afghanistan's first sports car, Raga represents a bold leap forward in our nation's technological evolution. Drawing from years of groundbreaking innovation, Reza has created more than just a workspace—he's built a launchpad for Afghanistan's most ambitious minds. At Raga, talented engineers, creative designers, and forward-thinking entrepreneurs find the resources, community, and inspiration they need to transform ideas into reality and drive Afghanistan's digital renaissance.
           </ScrollReveal>
 
-           <div className="w-[80%] aspect-video h-auto rounded-3xl overflow-hidden mx-auto"><Video src="/videos/guide-video.mp4"/></div>
+           <div className="w-[95%] md:w-[80%] aspect-video h-auto rounded-3xl overflow-hidden mx-auto"><Video src="/videos/guide-video.mp4"/></div>
         </div>
       </div></>
   )
