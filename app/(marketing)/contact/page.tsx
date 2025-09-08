@@ -7,9 +7,18 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import axios from "axios";
 import { useState } from "react";
-import { getAccessToken } from "@auth0/nextjs-auth0";
-import { Lamp, Lightbulb, Mail, Phone } from "lucide-react";
 import { Label } from "@/components/ui/label";
+import { Lightbulb, Mail, Phone } from "lucide-react";
+
+// ShadCN Dialog imports
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 const formSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -31,39 +40,43 @@ export default function Contact() {
   });
 
   const [error, setError] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   const onSubmit = async (data: FormData) => {
     const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
     try {
+      setIsLoading(true);
       const payload = {
         name: `${data.firstName} ${data.lastName}`,
         email: data.email,
         message: data.message,
       };
 
-      const response = await axios.post(
-        `${API_BASE_URL}/api/v1/contacts`,
-        payload,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      await axios.post(`${API_BASE_URL}/api/v1/contacts`, payload, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
-      console.log("Contact submitted:", response.data);
       reset();
       setError(null);
+      setSuccessMessage("Your message was successfully submitted!");
+      setIsModalOpen(true);
     } catch (err: any) {
       console.error(err);
       setError(err.response?.data?.detail || "Failed to submit contact.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background text-foreground p-6">
       <div className="flex flex-col md:flex-row gap-16 max-w-7xl w-full">
+        {/* Left section */}
         <div className="flex-1">
           <button
             className="flex items-center cursor-pointer mb-10 gap-2 px-4 py-2 rounded-full border
@@ -98,6 +111,7 @@ export default function Contact() {
           </div>
         </div>
 
+        {/* Right section - Form */}
         <div className="flex-1 p-8 bg-card rounded-4xl shadow-2xl max-w-xl ">
           <h2 className="text-3xl font-bold mb-4 font-poppins">Write us</h2>
           <p className="mb-6 text-muted-foreground text-base">
@@ -186,6 +200,25 @@ export default function Contact() {
           </form>
         </div>
       </div>
+
+      {/* ShadCN Modal */}
+      <Dialog open={isModalOpen} onOpenChange={() => setIsModalOpen(false)}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>{isLoading ? "Sending..." : "Success!"}</DialogTitle>
+            <DialogDescription>
+              {isLoading
+                ? "Your message is being sent. Please wait..."
+                : successMessage}
+            </DialogDescription>
+          </DialogHeader>
+          {!isLoading && (
+            <DialogFooter>
+              <Button onClick={() => setIsModalOpen(false)}>Close</Button>
+            </DialogFooter>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
