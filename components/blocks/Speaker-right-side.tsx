@@ -22,8 +22,8 @@ const SpeakerComponentReversed = () => {
         style={{ backgroundColor: "var(--card)" }}
       >
         <Image
-          src="/images/entop.jpg"
-          alt="Smart Speaker"
+          src="/images/team.jpg"
+          alt="Team"
           fill
           className="object-cover"
         />

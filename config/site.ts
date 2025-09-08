@@ -15,7 +15,7 @@ export const sideConfig: SideConfig = {
     },
     {
       title: 'About',
-      href: '/about-us',
+      href: '/about',
       svg: {
         width: '70',
         height: '50',

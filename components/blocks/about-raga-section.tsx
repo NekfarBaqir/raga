@@ -1,41 +1,43 @@
-"use client"
+"use client";
 import { RagaTunnelLeft, RagaTunnelRight } from "@/icons/raga-tunnel";
 import { motion } from "motion/react";
-import Video from 'next-video';
+import Video from "next-video";
 import ScrollReveal from "../ui/text-scroll-reveal/text-scroll-reveal";
 
-const AboutRagaSection = () => {
+const AboutRagaSection = ({ showTheSVG = true }: { showTheSVG?: boolean }) => {
   return (
-   <>
-         <div className="min-h-fit w-full flex justify-center items-start -mt-[20px] z-0">
-        <div className="flex justify-center items-start gap-4 w-[60%]">
-          <RagaTunnelLeft className="" />
-          <div className="w-[20%] flex self-stretch  flex-col justify-start items-center pt-[5%] ">
-            <motion.p
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              viewport={{
-                amount: "all",
-                margin: "-90px",
-              }}
-              transition={{ duration: 0.5 }}
-              className="text-2xl md:text-3xl font-normal w-full flex justify-center flex-nowrap text-nowrap"
-            >
-              More about
-            </motion.p>
-            <motion.h2
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="flex-1 flex flex-col justify-center items-center font-extrabold text-4xl vertical-text"
-            >
-              RAGA
-            </motion.h2>
-          </div>
+    <>
+      {showTheSVG && (
+        <div className="min-h-fit w-full flex justify-center items-start -mt-[20px] z-0">
+          <div className="flex justify-center items-start gap-4 w-[60%]">
+            <RagaTunnelLeft className="" />
+            <div className="w-[20%] flex self-stretch  flex-col justify-start items-center pt-[5%] ">
+              <motion.p
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                viewport={{
+                  amount: "all",
+                  margin: "-90px",
+                }}
+                transition={{ duration: 0.5 }}
+                className="text-2xl md:text-3xl font-normal w-full flex justify-center flex-nowrap text-nowrap"
+              >
+                More about
+              </motion.p>
+              <motion.h2
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="flex-1 flex flex-col justify-center items-center font-extrabold text-4xl vertical-text"
+              >
+                RAGA
+              </motion.h2>
+            </div>
 
-          <RagaTunnelRight className="" />
+            <RagaTunnelRight className="" />
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="bg-[#FAFAFA] dark:bg-white/5 w-full max-w-[1800px] mx-auto p-5 flex justify-start items-center gap-5 py-7 pb-20">
         <div className=" flex flex-col justify-start items-start gap-1.5 w-[90%] mx-auto">
@@ -46,13 +48,24 @@ const AboutRagaSection = () => {
             blurStrength={10}
             textClassName="justify-center text-center !text-base md:!text-lg lg:!text-xl xl:!text-2xl"
           >
-            Founded by visionary engineer Reza Ahmadi, creator of Entop and pioneer behind Afghanistan's first sports car, Raga represents a bold leap forward in our nation's technological evolution. Drawing from years of groundbreaking innovation, Reza has created more than just a workspace—he's built a launchpad for Afghanistan's most ambitious minds. At Raga, talented engineers, creative designers, and forward-thinking entrepreneurs find the resources, community, and inspiration they need to transform ideas into reality and drive Afghanistan's digital renaissance.
+            Founded by visionary engineer Reza Ahmadi, creator of Entop and
+            pioneer behind Afghanistan's first sports car, Raga represents a
+            bold leap forward in our nation's technological evolution. Drawing
+            from years of groundbreaking innovation, Reza has created more than
+            just a workspace—he's built a launchpad for Afghanistan's most
+            ambitious minds. At Raga, talented engineers, creative designers,
+            and forward-thinking entrepreneurs find the resources, community,
+            and inspiration they need to transform ideas into reality and drive
+            Afghanistan's digital renaissance.
           </ScrollReveal>
 
-           <div className="w-[95%] md:w-[80%] aspect-video h-auto rounded-3xl overflow-hidden mx-auto"><Video src="/videos/guide-video.mp4"/></div>
+          <div className="w-[95%] md:w-[80%] aspect-video h-auto rounded-3xl overflow-hidden mx-auto">
+            <Video src="/videos/guide-video.mp4" />
+          </div>
         </div>
-      </div></>
-  )
-}
+      </div>
+    </>
+  );
+};
 
-export default AboutRagaSection
+export default AboutRagaSection;

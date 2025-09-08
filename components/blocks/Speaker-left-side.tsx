@@ -71,8 +71,8 @@ const SpeakerComponent = () => {
           style={{ backgroundColor: "var(--card)" }}
         >
           <Image
-            src="/images/entop.jpg"
-            alt="Smart Speaker"
+            src="/images/individual.jpg"
+            alt="Individual Engineer"
             fill
             className="object-cover"
           />
