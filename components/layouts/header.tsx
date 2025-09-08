@@ -6,6 +6,7 @@ import Logo from "@/icons/logo";
 import { cn } from "@/lib/utils";
 import { MainNavItem } from "@/types";
 import { motion, useCycle } from "framer-motion";
+import { ArrowRightIcon } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { RefObject, useEffect, useRef } from "react";
@@ -69,7 +70,7 @@ const Header = () => {
 
   return (
     <>
-      <header className="w-full h-fit py-4 px-5 flex justify-between items-center gap-2 max-w-[1800px] mx-auto relative z-40">
+      <header className="w-full h-fit py-2 px-5 flex justify-between items-center gap-2 max-w-[1800px] mx-auto relative z-40">
         <Link href="/" className="cursor-pointer">
           <Logo className="w-[100px] lg:w-[175px] !h-fit" />
         </Link>
@@ -98,9 +99,10 @@ const Header = () => {
               <ShimmerButton
                 background="white"
                 shimmerColor="#000"
-                className="!p-3 !px-6 text-foreground !border border-black/10 cursor-pointer hover:border-black/20 transition-all duration-300"
+                className="!p-3 !px-6 group text-foreground !border border-black/10 cursor-pointer hover:border-black/20 transition-all duration-300"
               >
                 Apply Now
+                <ArrowRightIcon className="w-4 h-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300" />
               </ShimmerButton>
             </Link>
           )}

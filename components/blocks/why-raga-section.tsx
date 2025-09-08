@@ -32,7 +32,7 @@ const WhyRagaSection = () => {
           until 11:00 PM</span>.
         </p>
       </motion.div>
-      <div className="w-full flex justify-center items-center gap-0">
+      <div className="w-full flex-col md:flex-row flex justify-center items-center gap-0">
           <motion.div
             initial={{ opacity: 0, x: -20, filter: "blur(10px)" }}
             whileInView={{ opacity: 1, x: 0, filter: "blur(0px)" }}

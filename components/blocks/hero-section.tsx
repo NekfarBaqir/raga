@@ -35,7 +35,7 @@ const HeroSection = () => {
                 onAnimationComplete={() => {
                   setAnimationIndex(1);
                 }}
-                className="text-4xl lg:text-6xl font-extrabold mb-8 font-poppins justify-center "
+                className="text-4xl lg:text-6xl font-extrabold mb-8 font-poppins justify-center  leading-tight"
 
               />
             )}
@@ -69,7 +69,7 @@ const HeroSection = () => {
             >
               <Button
                 variant={"secondary"}
-                className="bg-black/80 py-6 px-7 cursor-pointer hover:bg-black"
+                className="bg-black/80 py-6 px-7 cursor-pointer hover:bg-black rounded-full"
               >
                 Apply Now
               </Button>
