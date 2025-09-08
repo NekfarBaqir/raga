@@ -36,6 +36,10 @@ interface SubmissionDetail {
   keywords: string;
   risk_level: string;
   created_at: string;
+  answers: {
+    question_text: string;
+    answer: string;
+  }[];
 }
 
 export default function SubmissionDetailPage() {
@@ -167,113 +171,142 @@ export default function SubmissionDetailPage() {
             value="details"
             className="mt-10 grid place-items-center"
           >
-            <Card className="max-w-5xl w-full shadow-xl border rounded-2xl hover:shadow-2xl transition-shadow duration-300">
-              <CardContent className="p-8">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold">Applicant Information</h2>
+            <Card className="max-w-5xl w-full border rounded-2xl shadow-sm bg-background">
+              <CardContent className="p-8 space-y-8">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-2xl font-bold tracking-tight text-foreground">
+                    Applicant Information
+                  </h2>
                   <Button
-                    variant="outline"
+                    variant={editing ? "destructive" : "secondary"}
                     size="sm"
                     onClick={() => setEditing((prev) => !prev)}
-                    className="flex items-center gap-2"
                   >
-                    {editing ? "Cancel Edit" : "Edit"}
+                    {editing ? "Cancel" : "Edit"}
                   </Button>
                 </div>
 
-                <div className="overflow-x-auto">
-                  <table className="w-full table-auto border-collapse border border-gray-200">
-                    <tbody>
-                      <tr className="border-b border-gray-200">
-                        <td className="px-4 py-3 font-medium text-gray-500 w-1/3">
-                          Name
-                        </td>
-                        <td className="px-4 py-3">{submission.name}</td>
-                      </tr>
-                      <tr className="border-b border-gray-200">
-                        <td className="px-4 py-3 font-medium text-gray-500">
-                          Email
-                        </td>
-                        <td className="px-4 py-3">{submission.email}</td>
-                      </tr>
-                      <tr className="border-b border-gray-200">
-                        <td className="px-4 py-3 font-medium text-gray-500">
-                          Phone
-                        </td>
-                        <td className="px-4 py-3">{submission.phone}</td>
-                      </tr>
-                      <tr className="border-b border-gray-200">
-                        <td className="px-4 py-3 font-medium text-gray-500">
-                          Status
-                        </td>
-                        <td className="px-4 py-3">
-                          {editing ? (
-                            <Select
-                              value={editingStatus}
-                              onValueChange={(v) =>
-                                setEditingStatus(
-                                  v as SubmissionDetail["status"]
-                                )
-                              }
-                            >
-                              <SelectTrigger className="w-1/2">
-                                <SelectValue placeholder="Select status" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="approved">
-                                  Approved
-                                </SelectItem>
-                                <SelectItem value="pending">Pending</SelectItem>
-                                <SelectItem value="rejected">
-                                  Rejected
-                                </SelectItem>
-                              </SelectContent>
-                            </Select>
-                          ) : (
-                            <span className="text-gray-700 font-medium">
-                              {editingStatus}
-                            </span>
-                          )}
-                        </td>
-                      </tr>
+                <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
+                  <div>
+                    <dt className="text-sm font-medium text-muted-foreground">
+                      Team Name
+                    </dt>
+                    <dd className="mt-1">
+                      <div className="rounded-lg border bg-muted/30 px-3 py-2 text-base font-semibold text-foreground">
+                        {submission.team_name}
+                      </div>
+                    </dd>
+                  </div>
 
-                      <tr>
-                        <td className="px-4 py-3 font-medium text-gray-500 align-top">
-                          Notes
-                        </td>
-                        <td className="px-4 py-3">
-                          {editing ? (
-                            <Input
-                              value={editingNotes}
-                              onChange={(e) => setEditingNotes(e.target.value)}
-                              className="w-full"
-                            />
-                          ) : (
-                            <p className="text-gray-700">
-                              {editingNotes || "No notes added."}
-                            </p>
-                          )}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
+                  <div>
+                    <dt className="text-sm font-medium text-muted-foreground">
+                      Email
+                    </dt>
+                    <dd className="mt-1">
+                      <div className="rounded-lg border bg-muted/30 px-3 py-2 text-base text-foreground">
+                        {submission.email}
+                      </div>
+                    </dd>
+                  </div>
+
+                  <div>
+                    <dt className="text-sm font-medium text-muted-foreground">
+                      Phone
+                    </dt>
+                    <dd className="mt-1">
+                      <div className="rounded-lg border bg-muted/30 px-3 py-2 text-base text-foreground">
+                        {submission.phone}
+                      </div>
+                    </dd>
+                  </div>
+
+                  <div>
+                    <dt className="text-sm font-medium text-muted-foreground">
+                      Status
+                    </dt>
+                    <dd className="mt-1">
+                      {editing ? (
+                        <Select
+                          value={editingStatus}
+                          onValueChange={(v) =>
+                            setEditingStatus(v as SubmissionDetail["status"])
+                          }
+                        >
+                          <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="approved">Approved</SelectItem>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="rejected">Rejected</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      ) : (
+                        <div className="rounded-lg border bg-muted/30 px-3 py-2 text-base font-medium text-foreground">
+                          {editingStatus.charAt(0).toUpperCase() +
+                            editingStatus.slice(1)}
+                        </div>
+                      )}
+                    </dd>
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <dt className="text-sm font-medium text-muted-foreground">
+                      Notes
+                    </dt>
+                    <dd className="mt-2">
+                      {editing ? (
+                        <Input
+                          value={editingNotes}
+                          onChange={(e) => setEditingNotes(e.target.value)}
+                          placeholder="Enter notes..."
+                        />
+                      ) : (
+                        <div className="rounded-lg border bg-muted/30 px-3 py-2 text-base text-foreground">
+                          {editingNotes || "No notes added."}
+                        </div>
+                      )}
+                    </dd>
+                  </div>
+                </dl>
 
                 {editing && (
-                  <div className="flex justify-end mt-6">
-                    <Button
-                      onClick={handleSave}
-                      disabled={saving}
-                      className="transition-transform hover:scale-105"
-                    >
+                  <div className="flex justify-end">
+                    <Button onClick={handleSave} disabled={saving}>
                       {saving ? "Saving..." : "Save Changes"}
                     </Button>
                   </div>
                 )}
 
-                <p className="text-sm text-gray-400 mt-4">
+                <p className="text-xs text-muted-foreground">
                   Submitted: {new Date(submission.created_at).toLocaleString()}
                 </p>
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground mb-4">
+                    Answers
+                  </h3>
+                  {submission.answers && submission.answers.length > 0 ? (
+                    <div className="space-y-4">
+                      {submission.answers.map((ans, idx) => (
+                        <div
+                          key={idx}
+                          className="rounded-xl border border-border bg-muted/40 p-5 hover:bg-muted/60 transition-colors"
+                        >
+                          <p className="font-medium text-foreground">
+                            {idx + 1}. {ans.question_text}
+                          </p>
+                          <p className="mt-2 text-muted-foreground">
+                            {ans.answer}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-muted-foreground italic">
+                      No answers provided.
+                    </p>
+                  )}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

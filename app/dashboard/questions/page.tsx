@@ -359,7 +359,6 @@ export default function QuestionsTable() {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button variant="outline">
@@ -453,6 +452,7 @@ export default function QuestionsTable() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+        het
       </div>
 
       <div className="bg-background overflow-x-auto border rounded-md w-full">

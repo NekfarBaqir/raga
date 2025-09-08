@@ -25,9 +25,8 @@ import {
   ChevronLastIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  CircleXIcon,
-  Columns3Icon,
   ListFilterIcon,
+  Columns3Icon,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -67,8 +66,8 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 type Contacts = {
   id: number;
@@ -111,13 +110,12 @@ export default function Component() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editContact, setEditContact] = useState<Contacts | null>(null);
   const [status, setStatus] = useState<Contacts["status"]>("new");
+  const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     async function fetchContacts() {
       try {
         const token = await getAccessToken();
-        console.log("🚀 ~ fetchContacts ~ token:", token);
-
         const response = await axios.get<Contacts[]>(
           `${API_BASE_URL}/api/v1/contacts`,
           {
@@ -150,25 +148,13 @@ export default function Component() {
     if (!editContact) return;
 
     const validStatuses: StatusType[] = ["new", "in_progress", "resolved"];
-    if (!validStatuses.includes(status)) {
-      console.error("Invalid status:", status);
-      return;
-    }
+    if (!validStatuses.includes(status)) return;
 
     try {
       const token = await getAccessToken();
-
-      console.log("Sending status update:", {
-        id: editContact.id,
-        status,
-      });
-
       const response = await axios.patch<Contacts>(
         `${API_BASE_URL}/api/v1/contacts`,
-        {
-          id: editContact.id,
-          status,
-        },
+        { id: editContact.id, status },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -189,14 +175,7 @@ export default function Component() {
       setStatus("new");
       setIsDialogOpen(false);
     } catch (err: any) {
-      if (axios.isAxiosError(err)) {
-        console.error("Axios error details:", {
-          status: err.response?.status,
-          data: err.response?.data,
-        });
-      } else {
-        console.error("Unexpected error:", err);
-      }
+      console.error("Error updating contact:", err);
     }
   };
 
@@ -252,6 +231,7 @@ export default function Component() {
 
   return (
     <div className="space-y-4 xl:px-20">
+      {/* Filters */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="relative">
@@ -300,8 +280,8 @@ export default function Component() {
         </div>
       </div>
 
-      <div className="bg-background overflow-hidden border">
-        <Table className="table-fixed">
+      <div className="hidden md:flex overflow-x-auto border rounded-lg">
+        <Table className="table-fixed min-w-[600px] border">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
@@ -309,6 +289,7 @@ export default function Component() {
                   <TableHead
                     key={header.id}
                     style={{ width: `${header.getSize()}px` }}
+                    className="border-b"
                   >
                     {flexRender(
                       header.column.columnDef.header,
@@ -320,17 +301,102 @@ export default function Component() {
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id}>
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
+            {table.getRowModel().rows.map((row) => {
+              const isExpanded = !!expandedRows[row.original.id];
+              const message = row.getValue("message") as string;
+              const displayMessage = isExpanded
+                ? message
+                : message.slice(0, 50);
+
+              return (
+                <TableRow key={row.id} className="border-b">
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell
+                      key={cell.id}
+                      className="text-sm lg:text-xs break-words max-w-xs"
+                    >
+                      {cell.column.id === "message" ? (
+                        <div>
+                          <p className="break-words">{displayMessage}</p>
+                          {message.length > 50 && (
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="p-0 mt-1 bg-transparent hover:bg-transparent focus:ring-0"
+                              onClick={() =>
+                                setExpandedRows((prev) => ({
+                                  ...prev,
+                                  [row.original.id]: !prev[row.original.id],
+                                }))
+                              }
+                            >
+                              {isExpanded ? "Show Less" : "Read More"}
+                            </Button>
+                          )}
+                        </div>
+                      ) : (
+                        flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
+      </div>
+
+      <div className="md:hidden space-y-4">
+        {data.map((row) => (
+          <div
+            key={row.id}
+            className="border rounded-lg p-4 shadow-sm bg-background space-y-3"
+          >
+            <div>
+              <Label>Name</Label>
+              <Input value={row.name} readOnly className="bg-muted/10" />
+            </div>
+
+            <div>
+              <Label>Email</Label>
+              <Input value={row.email} readOnly className="bg-muted/10" />
+            </div>
+
+            <div>
+              <Label>Status</Label>
+              <Input value={row.status} readOnly className="bg-muted/10" />
+            </div>
+
+            <div>
+              <Label>Message</Label>
+              <Textarea value={row.message} readOnly className="bg-muted/10" />
+            </div>
+
+            <div>
+              <Label>Date</Label>
+              <Input
+                value={new Date(row.created_at).toLocaleString()}
+                readOnly
+                className="bg-muted/10"
+              />
+            </div>
+
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-full"
+              onClick={() => {
+                setEditContact(row);
+                setIsDialogOpen(true);
+              }}
+            >
+              Edit
+            </Button>
+          </div>
+        ))}
       </div>
 
       <div className="flex items-center justify-between gap-8">
@@ -424,6 +490,7 @@ export default function Component() {
         </div>
       </div>
 
+      {/* Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -440,7 +507,7 @@ export default function Component() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="new">New</SelectItem>
-                <SelectItem value="in_progress">In_Progress</SelectItem>
+                <SelectItem value="in_progress">In Progress</SelectItem>
                 <SelectItem value="resolved">Resolved</SelectItem>
               </SelectContent>
             </Select>

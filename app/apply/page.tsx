@@ -20,12 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 type QuestionType = "text" | "yes_no" | "dropdown";
 
@@ -51,8 +46,8 @@ const buildQuestionSchema = (questions: Question[]) => {
         .max(500, `${q.text} must be 500 characters or less`);
     } else if (q.type === "yes_no") {
       schemaObj[q.id.toString()] = z
-        .boolean()
-        .refine((val) => val === true || val === false, {
+        .string()
+        .refine((val) => val === "yes" || val === "no", {
           message: `${q.text} is required`,
         });
     } else if (q.type === "dropdown") {
@@ -71,31 +66,6 @@ const ApplicantSchema = z.object({
   phone: z.string().min(5, "Invalid phone number"),
 });
 
-interface ToggleProps {
-  checked: boolean;
-  onChange: (value: boolean) => void;
-}
-
-const Toggle: React.FC<ToggleProps> = ({ checked, onChange }) => (
-  <button
-    type="button"
-    role="switch"
-    aria-checked={checked}
-    onClick={() => onChange(!checked)}
-    className={`
-      relative inline-flex h-7 w-14 items-center rounded-full transition-colors
-      ${checked ? "bg-black dark:bg-black" : "bg-gray-300 dark:bg-stone-900"}
-    `}
-  >
-    <span
-      className={`
-        inline-block h-5 w-5 transform rounded-full dark:bg-white bg-black shadow transition-transform
-        ${checked ? "translate-x-7" : "translate-x-1"}
-      `}
-    />
-  </button>
-);
-
 export default function ApplyPage() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState(true);
@@ -109,12 +79,17 @@ export default function ApplyPage() {
   const form = useForm({
     resolver: zodResolver(CombinedSchema),
     mode: "onChange",
+    reValidateMode: "onChange",
+    defaultValues: {
+      team_name: "",
+      email: "",
+      phone: "",
+    },
   });
 
   const {
     register,
     handleSubmit,
-    watch,
     setValue,
     formState: { errors, isSubmitting, isValid },
   } = form;
@@ -148,7 +123,7 @@ export default function ApplyPage() {
         question_text: q.text,
         answer:
           q.type === "yes_no"
-            ? data[q.id.toString()]
+            ? data[q.id.toString()] === "yes"
               ? "Yes"
               : "No"
             : data[q.id.toString()],
@@ -199,139 +174,164 @@ export default function ApplyPage() {
     );
 
   return (
-    <div className="container mx-auto p-4 max-w-9xl">
-      <Card className="shadow-lg background">
-        <CardHeader>
-          <CardTitle className="text-center text-2xl">
-            Application Form
-          </CardTitle>
-          <p className="text-center dark:text-white mt-4">
-            Please read the question and answer them.
-          </p>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="flex flex-col">
-                <Label htmlFor="team_name" className="mb-3 ml-2">
-                  Team Name
-                </Label>
+    <>
+      {" "}
+      <h1 className="text-4xl text-center mb-10">Application Form </h1>
+      <div className="flex justify-center items-center min-h-screen px-4">
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="w-full max-w-4xl space-y-8"
+        >
+          <div className="grid grid-cols-1  gap-6">
+            <Card className="p-6 shadow-sm">
+              <CardHeader className="p-0 mb-3">
+                <CardTitle className="text-lg font-medium">Team Name</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
                 <Input
                   id="team_name"
                   {...register("team_name")}
-                  placeholder="Team Name"
-                  className={errors.team_name ? "border-red-500" : ""}
+                  placeholder="Enter team name..."
+                  className={`border-0 border-b focus-visible:ring-0 rounded-none ${
+                    errors.team_name ? "border-red-500" : "border-gray-300"
+                  }`}
                 />
                 {errors.team_name && (
                   <p className="text-red-500 text-sm mt-1">
                     {errors.team_name.message}
                   </p>
                 )}
-              </div>
-              <div className="flex flex-col">
-                <Label htmlFor="email" className="mb-3 ml-2">
-                  Email
-                </Label>
+              </CardContent>
+            </Card>
+
+            <Card className="p-6 shadow-sm">
+              <CardHeader className="p-0 mb-3">
+                <CardTitle className="text-lg font-medium">Email</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
                 <Input
                   id="email"
                   {...register("email")}
-                  placeholder="Email"
-                  className={errors.email ? "border-red-500" : ""}
+                  placeholder="Enter your email..."
+                  className={`border-0 border-b focus-visible:ring-0 rounded-none ${
+                    errors.email ? "border-red-500" : "border-gray-300"
+                  }`}
                 />
                 {errors.email && (
                   <p className="text-red-500 text-sm mt-1">
                     {errors.email.message}
                   </p>
                 )}
-              </div>
-              <div className="flex flex-col">
-                <Label htmlFor="phone" className="mb-3 ml-2">
-                  Phone
-                </Label>
+              </CardContent>
+            </Card>
+
+            <Card className="p-6 shadow-sm">
+              <CardHeader className="p-0 mb-3">
+                <CardTitle className="text-lg font-medium">Phone</CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
                 <Input
                   id="phone"
                   {...register("phone")}
-                  placeholder="Phone"
-                  className={errors.phone ? "border-red-500" : ""}
+                  placeholder="Enter your phone number..."
+                  className={`border-0 border-b focus-visible:ring-0 rounded-none ${
+                    errors.phone ? "border-red-500" : "border-gray-300"
+                  }`}
                 />
                 {errors.phone && (
                   <p className="text-red-500 text-sm mt-1">
                     {errors.phone.message}
                   </p>
                 )}
-              </div>
-            </div>
+              </CardContent>
+            </Card>
+          </div>
 
-            <Accordion
-              type="single"
-              collapsible
-              className="w-full grid grid-cols-1 md:grid-cols-2 gap-10 gap-x-16"
-            >
-              {questions.map((q, idx) => (
-                <AccordionItem key={q.id} value={q.id.toString()}>
-                  <AccordionTrigger className="text-base md:text-lg lg:text-xl">
+          <div className="grid grid-cols-1 gap-8">
+            {questions.map((q, idx) => (
+              <Card key={q.id} className="p-6 shadow-sm">
+                <CardHeader className="p-0 mb-3">
+                  <CardTitle className="text-lg font-medium">
                     {idx + 1}. {q.text}
-                  </AccordionTrigger>
-                  <AccordionContent className="mt-2">
-                    {q.type === "text" && (
-                      <Textarea
-                        {...register(q.id.toString())}
-                        placeholder={`Enter the your answer...`}
-                        className={
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  {q.type === "text" && (
+                    <Textarea
+                      {...register(q.id.toString())}
+                      placeholder="Enter your answer..."
+                      className={`border-0 border-b focus-visible:ring-0 rounded-none resize-none ${
+                        (errors as any)[q.id.toString()]
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      }`}
+                    />
+                  )}
+
+                  {q.type === "yes_no" && (
+                    <RadioGroup
+                      onValueChange={(v) => setValue(q.id.toString(), v)}
+                      className="flex gap-6 mt-2"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem
+                          value="yes"
+                          id={`yes-${q.id}`}
+                          className="border-gray-400"
+                        />
+                        <Label htmlFor={`yes-${q.id}`}>Yes</Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem
+                          value="no"
+                          id={`no-${q.id}`}
+                          className="border-gray-400"
+                        />
+                        <Label htmlFor={`no-${q.id}`}>No</Label>
+                      </div>
+                    </RadioGroup>
+                  )}
+
+                  {q.type === "dropdown" && q.options && (
+                    <Select
+                      onValueChange={(v) => setValue(q.id.toString(), v)}
+                      defaultValue=""
+                    >
+                      <SelectTrigger
+                        className={`border-0 border-b focus-visible:ring-0 rounded-none ${
                           (errors as any)[q.id.toString()]
                             ? "border-red-500"
-                            : ""
-                        }
-                      />
-                    )}
-                    {q.type === "yes_no" && (
-                      <div className="flex items-center gap-2 mt-2">
-                        <Label>No</Label>
-                        <Toggle
-                          checked={!!watch(q.id.toString())}
-                          onChange={(v) => setValue(q.id.toString(), v)}
-                        />
-                        <Label>Yes</Label>
-                      </div>
-                    )}
-                    {q.type === "dropdown" && q.options && (
-                      <Select
-                        onValueChange={(v) => setValue(q.id.toString(), v)}
-                        defaultValue=""
+                            : "border-gray-300"
+                        }`}
                       >
-                        <SelectTrigger
-                          className={
-                            (errors as any)[q.id.toString()]
-                              ? "border-red-500"
-                              : ""
-                          }
-                        >
-                          <SelectValue placeholder="Select an option" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {q.options.map((opt) => (
-                            <SelectItem key={opt} value={opt}>
-                              {opt}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                    {(errors as any)[q.id.toString()] && (
-                      <p className="text-red-500 text-sm mt-1">
-                        {(errors as any)[q.id.toString()]?.message?.toString()}
-                      </p>
-                    )}
-                  </AccordionContent>
-                </AccordionItem>
-              ))}
-            </Accordion>
+                        <SelectValue placeholder="Select an option" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {q.options.map((opt) => (
+                          <SelectItem key={opt} value={opt}>
+                            {opt}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
 
+                  {(errors as any)[q.id.toString()] && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {(errors as any)[q.id.toString()]?.message?.toString()}
+                    </p>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          <div className="flex justify-center">
             <Button
-              variant={"outline"}
+              variant="outline"
               type="submit"
-              disabled={isSubmitting || !isValid}
-              className={`flex items-center justify-center w-44 py-6 cursor-pointer mt-4 ${
+              disabled={isSubmitting}
+              className={`w-44 py-6 ${
                 !isValid ? "opacity-50 cursor-not-allowed" : ""
               }`}
             >
@@ -344,9 +344,9 @@ export default function ApplyPage() {
                 "Submit Application"
               )}
             </Button>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
+          </div>
+        </form>
+      </div>
+    </>
   );
 }

@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Mail, Phone } from "lucide-react";
 
 export default function ApprovalPage() {
-  const adminEmail = "admin@yourdomain.com";
-  const adminPhone = "+1 234 567 890";
+  const adminEmail = "mahdi100th@gamil.com";
+  const adminPhone = "+93 73 133 3905";
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 px-4 text-center gap-6">

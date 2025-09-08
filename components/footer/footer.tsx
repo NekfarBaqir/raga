@@ -5,58 +5,72 @@ import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer className="bg-black text-white py-6 px-4 md:px-8 mt-10">
-      <div className="max-w-7xl mx-auto relative z-10">
-        <div className="block md:flex items-center justify-between">
-          <div className="block md:flex items-center justify-center pl-10 gap-5">
-            <span className="text-2xl">RAGA</span>
-            <hr className="flex md:hidden mt-4 mb-4" />
-            <span className="hidden md:flex">|</span>
-            <p>The Perfect Work Space For All People.</p>
+    <footer className="bg-background text-white py-10 px-6 md:px-12 mt-10">
+      <div className="max-w-7xl mx-auto">
+        <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-8">
+          <div className="text-center text-foreground md:text-left space-y-3">
+            <span className="text-2xl font-semibold">RAGA</span>
+            <p className="text-gray-300 text-sm md:text-base">
+              The Perfect Work Space For All People.
+            </p>
           </div>
-          <div className="block md:flex item-center justify-center pt-10 pr-20 gap-10">
-            <div>
-              <h2 className="text-xl mb-3">Company</h2>
-              <div className="flex flex-col">
-                <Link href="/about" className="mb-4">
+
+          <div className="flex flex-col sm:flex-row items-center md:items-start gap-10">
+            <div className="text-center sm:text-left">
+              <h2 className="text-lg font-medium mb-3 text-foreground">
+                Company
+              </h2>
+              <div className="flex flex-col gap-2 text-gray-300">
+                <Link href="/about" className="hover:text-foreground">
                   About
                 </Link>
-                <Link href="/contact">Contact</Link>
+                <Link href="/contact" className="hover:text-foreground">
+                  Contact
+                </Link>
               </div>
             </div>
-            <div className="mt-10 md:mt-0">
-              <h2 className="text-xl mb-3">Legal</h2>
-              <div className="flex flex-col ">
-                <Link href="/about" className="mb-4">
+            <div className="text-center sm:text-left text-foreground">
+              <h2 className="text-lg font-medium mb-3">Legal</h2>
+              <div className="flex flex-col gap-2 text-gray-300">
+                <Link href="/terms" className="hover:text-foreground">
                   Terms of Service
                 </Link>
-                <Link href="/contact">Privacy Policy</Link>
+                <Link href="/privacy" className="hover:text-foreground">
+                  Privacy Policy
+                </Link>
               </div>
             </div>
           </div>
         </div>
-        <div className="flex items-center justify-center md:mt-10 md:mb-10">
+
+        <div className="flex justify-center my-10">
           <Link href="/">
-            {" "}
-            <Logo className="h-24 md:h-[300px] opacity-60" />
+            <Logo
+              className="
+                h-20 w-auto      
+                md:h-52 md:w-auto
+                lg:h-[230px]  
+                xl:h-[300px] xl:w-auto 
+                opacity-70
+              "
+            />
           </Link>
         </div>
-        <div className="flex flex-col md:flex-row items-center justify-between mt-10 gap-4 mb-8 text-xs text-gray-500">
-          <div className="text-base md:text-lg">
-            © 2025. All rights reserved. Baqir Nekfer
-          </div>
-          <div className="flex items-center justify-center gap-3">
+
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-xs md:text-sm text-gray-400">
+          <div>© 2025. All rights reserved. Baqir Nekfer</div>
+          <div className="flex items-center gap-3">
             <a
               href="mailto:shadcn@shadcnblocks.com"
-              className="hover:text-white text-lg"
+              className="hover:text-white"
             >
               @ragaspace.com
             </a>
-            <span>|</span>
+            <span className="hidden sm:block">|</span>
             <a href="#" className="hover:text-white">
               X
             </a>
-            <span>|</span>
+            <span className="hidden sm:block">|</span>
             <a href="#" className="hover:text-white">
               ©
             </a>

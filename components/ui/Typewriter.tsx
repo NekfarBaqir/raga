@@ -6,15 +6,19 @@ interface AIEvaluationProps {
   submission: any;
 }
 
-function Typewriter({ text, speed = 20 }: { text: string; speed?: number }) {
+function Typewriter({ text, speed = 40 }: { text: string; speed?: number }) {
   const [displayed, setDisplayed] = useState("");
+  const [done, setDone] = useState(false);
 
   useEffect(() => {
     let i = 0;
     const interval = setInterval(() => {
       setDisplayed((prev) => prev + text.charAt(i));
       i++;
-      if (i >= text.length) clearInterval(interval);
+      if (i >= text.length) {
+        clearInterval(interval);
+        setDone(true);
+      }
     }, speed);
 
     return () => clearInterval(interval);
@@ -23,26 +27,20 @@ function Typewriter({ text, speed = 20 }: { text: string; speed?: number }) {
   const lines = displayed.split("\n");
 
   return (
-    <div className="space-y-4 font-sans text-gray-700">
+    <div className="space-y-4 font-sans text-gray-700 dark:text-gray-200">
       {lines.map((line, idx) => {
         const [label, ...rest] = line.split(":");
         const value = rest.join(":").trim();
 
         return (
-          <p
-            key={idx}
-            className="text-lg"
-            style={{
-              opacity: displayed.length === 0 ? 0 : 1,
-              transition: "opacity 0.3s",
-            }}
-          >
-            <span className="font-bold dark:text-white">{label}:</span>{" "}
-            <span className="dark:text-white light:text-black">{value}</span>
+          <p key={idx} className="text-lg leading-relaxed">
+            <span className="font-bold">{label}:</span> <span>{value}</span>
+            {idx === lines.length - 1 && !done && (
+              <span className="animate-pulse text-indigo-600">|</span>
+            )}
           </p>
         );
       })}
-      <span className="animate-pulse text-indigo-600">|</span>
     </div>
   );
 }
