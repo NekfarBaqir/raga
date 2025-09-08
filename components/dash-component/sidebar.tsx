@@ -1,16 +1,16 @@
 "use client";
 
+import Logo from "@/icons/logo";
+import { cn } from "@/lib/utils";
 import {
   BarChart3,
+  Contact as ContactIcon,
   HelpCircle,
   Inbox,
-  Contact as ContactIcon,
   LogOut,
   Menu,
   X,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import Logo from "@/icons/logo";
 import Link from "next/link";
 import { useState } from "react";
 
@@ -19,7 +19,7 @@ const tabs = [
   { icon: HelpCircle, label: "Questions", href: "/dashboard/questions" },
   { icon: Inbox, label: "Submissions", href: "/dashboard/submissions" },
   { icon: ContactIcon, label: "Contacts", href: "/dashboard/contacts" },
-] as const;
+] as { icon: React.ComponentType<{ className?: string }>; label: string; href: string }[];
 
 export default function Sidebar({ pathname }: { pathname: string }) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -118,7 +118,7 @@ const SidebarItem = ({
   active,
   onClick,
 }: {
-  icon: React.ElementType;
+  icon: React.ComponentType<{ className?: string }>;
   label: string;
   href: string;
   active?: boolean;
