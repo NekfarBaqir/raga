@@ -3,11 +3,15 @@
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 
-const Logo = ({ className }: { className?: string }) => {
+const Logo = ({ className, theme:preDefinedTheme }: { className?: string, theme?: string }) => {
   const [fill, setFill] = useState("#262626");
   const { theme, systemTheme } = useTheme();
 
   useEffect(() => {
+    if(preDefinedTheme){
+      setFill(preDefinedTheme === "light" ? "#262626" : "#fff");
+      return;
+    }
     if (theme === "system") {
       setFill(systemTheme === "light" ? "#262626" : "#fff");
       return;
@@ -17,7 +21,7 @@ const Logo = ({ className }: { className?: string }) => {
     } else {
       setFill("#fff");
     }
-  }, [theme, systemTheme]);
+  }, [theme, systemTheme, preDefinedTheme]);
 
   return (
     <svg

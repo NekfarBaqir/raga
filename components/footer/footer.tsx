@@ -5,37 +5,37 @@ import Link from "next/link";
 
 export default function Footer() {
   return (
-    <footer className="bg-background text-white py-10 px-6 md:px-12 mt-10">
+    <footer className="bg-[#1B1E22] text-white py-10 px-6 md:px-12 mt-10">
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row items-center md:items-start justify-between gap-8">
-          <div className="text-center text-foreground md:text-left space-y-3">
-            <span className="text-2xl font-semibold">RAGA</span>
-            <p className="text-gray-300 text-sm md:text-base">
+          <div className="text-center text-background md:text-left space-y-3">
+            <span className="text-2xl font-semibold text-background">RAGA</span>
+            <p className=" text-sm md:text-base">
               The Perfect Work Space For All People.
             </p>
           </div>
 
           <div className="flex flex-col sm:flex-row items-center md:items-start gap-10">
             <div className="text-center sm:text-left">
-              <h2 className="text-lg font-medium mb-3 text-foreground">
+              <h2 className="text-lg font-medium mb-3 text-background">
                 Company
               </h2>
               <div className="flex flex-col gap-2 text-gray-300">
-                <Link href="/about" className="hover:text-foreground">
+                <Link href="/about" className="hover:text-background">
                   About
                 </Link>
-                <Link href="/contact" className="hover:text-foreground">
+                <Link href="/contact" className="hover:text-background">
                   Contact
                 </Link>
               </div>
             </div>
-            <div className="text-center sm:text-left text-foreground">
+            <div className="text-center sm:text-left text-background">
               <h2 className="text-lg font-medium mb-3">Legal</h2>
               <div className="flex flex-col gap-2 text-gray-300">
-                <Link href="/terms" className="hover:text-foreground">
+                <Link href="/terms" className="hover:text-background">
                   Terms of Service
                 </Link>
-                <Link href="/privacy" className="hover:text-foreground">
+                <Link href="/privacy" className="hover:text-background">
                   Privacy Policy
                 </Link>
               </div>
@@ -53,6 +53,7 @@ export default function Footer() {
                 xl:h-[300px] xl:w-auto 
                 opacity-70
               "
+              theme="dark"
             />
           </Link>
         </div>
