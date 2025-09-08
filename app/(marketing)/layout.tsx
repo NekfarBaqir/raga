@@ -1,7 +1,6 @@
 import "@/app/globals.css";
+import Footer from "@/components/footer/footer";
 import Header from "@/components/layouts/header";
-
-
 
 export default function Layout({
   children,
@@ -9,9 +8,9 @@ export default function Layout({
   children: React.ReactNode;
 }>) {
   return (
-   <div className="w-full flex flex-col justify-start ites">
-    <Header/>
-    {children}
-   </div>
+    <div className="w-full flex flex-col justify-start ites">
+      <Header />
+      {children}
+    </div>
   );
 }
