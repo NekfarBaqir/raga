@@ -52,9 +52,9 @@ export function TrendChart({ data }: TrendChartProps) {
     cutoff.setDate(cutoff.getDate() - days);
 
     return data
-      .filter((d) => new Date(d.activity_date) >= cutoff)
-      .map((d) => ({
-        date: new Date(d.activity_date).toLocaleDateString("en-US", {
+      ?.filter((d) => new Date(d?.activity_date) >= cutoff)
+      ?.map((d) => ({
+        date: new Date(d?.activity_date).toLocaleDateString("en-US", {
           month: "short",
           day: "numeric",
         }),

@@ -19,6 +19,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Loader2 } from "lucide-react";
 
 type QuestionType = "text" | "yes_no" | "dropdown";
@@ -71,6 +77,14 @@ export default function ApplyPage() {
   const [error, setError] = useState<string | null>(null);
   const [schema, setSchema] = useState<z.ZodObject<any> | null>(null);
 
+  // modal states
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalStatus, setModalStatus] = useState<
+    "loading" | "success" | "error" | null
+  >(null);
+  const [modalMessage, setModalMessage] = useState("");
+  const [modalScore, setModalScore] = useState<number | null>(null);
+
   const CombinedSchema = schema
     ? ApplicantSchema.merge(schema)
     : ApplicantSchema;
@@ -91,6 +105,7 @@ export default function ApplyPage() {
     handleSubmit,
     setValue,
     formState: { errors, isSubmitting, isValid },
+    reset,
   } = form;
 
   useEffect(() => {
@@ -114,6 +129,11 @@ export default function ApplyPage() {
   }, []);
 
   const onSubmit = async (data: any) => {
+    setModalOpen(true);
+    setModalStatus("loading");
+    setModalMessage("Submitting your application...");
+    setModalScore(null);
+
     try {
       const answers = questions.map((q) => ({
         question_id: q.id,
@@ -132,6 +152,7 @@ export default function ApplyPage() {
         email: data.email,
         phone: data.phone,
       };
+      console.log("🚀 ~ onSubmit ~ payload:", payload);
 
       const res = await axios.post(
         `${API_BASE_URL}/api/v1/submissions`,
@@ -142,16 +163,29 @@ export default function ApplyPage() {
           },
         }
       );
+      console.log("🚀 ~ onSubmit ~ res:", res);
+      console.log("🚀 ~ onSubmit ~ API_BASE_URL:", API_BASE_URL);
 
       if (res.data.status === "rejected") {
-        alert(`Submission rejected. Score: ${res.data.score}`);
+        setModalStatus("error");
+        setModalMessage(
+          " Unfortunately, you are not eligible for this program at this time."
+        );
+        setModalScore(res.data.score);
       } else {
-        alert("Application submitted successfully!");
-        form.reset();
+        setModalStatus("success");
+        setModalMessage(
+          "Congratulations! You’ve been accepted into the program. Our team will contact you shortly."
+        );
+        setModalScore(res.data.score);
+        reset();
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      alert("Failed to submit application. Check all fields.");
+      setModalStatus("error");
+      setModalMessage(
+        " Whoops… looks like we hit a snag. Please try again later."
+      );
     }
   };
 
@@ -173,7 +207,7 @@ export default function ApplyPage() {
     <section className="w-full py-16">
       {" "}
       <h1 className="text-4xl text-center mb-10">Application Form </h1>
-      <div className="flex justify-center items-center min-h-screen px-4">
+      <div className="flex justify-center items-center min-h-screen px-1 md:px-4">
         <form
           onSubmit={handleSubmit(onSubmit)}
           className="w-full max-w-4xl space-y-8"
@@ -181,7 +215,9 @@ export default function ApplyPage() {
           <div className="grid grid-cols-1  gap-6">
             <Card className="p-6 shadow-sm">
               <CardHeader className="p-0 mb-3">
-                <CardTitle className="text-lg font-medium">Team Name</CardTitle>
+                <CardTitle className="text-base md:text-lg font-medium">
+                  Team Name
+                </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 <Input
@@ -202,7 +238,9 @@ export default function ApplyPage() {
 
             <Card className="p-6 shadow-sm">
               <CardHeader className="p-0 mb-3">
-                <CardTitle className="text-lg font-medium">Email</CardTitle>
+                <CardTitle className="text-base md:text-lg font-medium">
+                  Email
+                </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 <Input
@@ -223,7 +261,9 @@ export default function ApplyPage() {
 
             <Card className="p-6 shadow-sm">
               <CardHeader className="p-0 mb-3">
-                <CardTitle className="text-lg font-medium">Phone</CardTitle>
+                <CardTitle className="text-base md:text-lg font-medium">
+                  Phone
+                </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 <Input
@@ -247,7 +287,7 @@ export default function ApplyPage() {
             {questions.map((q, idx) => (
               <Card key={q.id} className="p-6 shadow-sm">
                 <CardHeader className="p-0 mb-3">
-                  <CardTitle className="text-lg font-medium">
+                  <CardTitle className=" text-sm md:text-lg font-normal md:font-medium">
                     {idx + 1}. {q.text}
                   </CardTitle>
                 </CardHeader>
@@ -256,7 +296,7 @@ export default function ApplyPage() {
                     <Textarea
                       {...register(q.id.toString())}
                       placeholder="Enter your answer..."
-                      className={`border-0 border-b focus-visible:ring-0 rounded-none resize-none ${
+                      className={`border-0 border-b focus-visible:ring-0 bg-transparent rounded-none resize-none ${
                         (errors as any)[q.id.toString()]
                           ? "border-red-500"
                           : "border-gray-300"
@@ -269,21 +309,31 @@ export default function ApplyPage() {
                       onValueChange={(v) => setValue(q.id.toString(), v)}
                       className="flex gap-6 mt-2"
                     >
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-3">
                         <RadioGroupItem
                           value="yes"
                           id={`yes-${q.id}`}
                           className="border-gray-400"
                         />
-                        <Label htmlFor={`yes-${q.id}`}>Yes</Label>
+                        <Label
+                          htmlFor={`yes-${q.id}`}
+                          className="cursor-pointer"
+                        >
+                          Yes
+                        </Label>
                       </div>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-3">
                         <RadioGroupItem
                           value="no"
                           id={`no-${q.id}`}
                           className="border-gray-400"
                         />
-                        <Label htmlFor={`no-${q.id}`}>No</Label>
+                        <Label
+                          htmlFor={`no-${q.id}`}
+                          className="cursor-pointer"
+                        >
+                          No
+                        </Label>
                       </div>
                     </RadioGroup>
                   )}
@@ -322,13 +372,15 @@ export default function ApplyPage() {
             ))}
           </div>
 
-          <div className="flex justify-center">
+          <div className="flex justify-center mb-20">
             <Button
               variant="outline"
               type="submit"
               disabled={isSubmitting}
               className={`w-44 py-6 ${
-                !isValid ? "opacity-50 cursor-not-allowed" : ""
+                !isValid
+                  ? "opacity-50 cursor-not-allowed"
+                  : "bg-primary text-muted hover:bg-primary hover:text-muted cursor-pointer"
               }`}
             >
               {isSubmitting ? (
@@ -343,6 +395,44 @@ export default function ApplyPage() {
           </div>
         </form>
       </div>
+      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {modalStatus === "loading" && "Processing Submission"}
+              {modalStatus === "success" && "Application Accepted"}
+              {modalStatus === "error" && "Application Update"}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="py-4 text-center">
+            {modalStatus === "loading" && (
+              <div className="flex flex-col items-center gap-3">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                <p>{modalMessage}</p>
+              </div>
+            )}
+
+            {modalStatus !== "loading" && (
+              <div className="space-y-4">
+                <p>{modalMessage}</p>
+                {modalScore !== null && (
+                  <p className="font-medium">
+                    Your score:{" "}
+                    <span className="text-primary font-bold">{modalScore}</span>
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-center">
+            {modalStatus !== "loading" && (
+              <Button onClick={() => setModalOpen(false)}>Close</Button>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }
