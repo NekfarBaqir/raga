@@ -35,6 +35,10 @@ import {
   EllipsisIcon,
   CircleXIcon,
   Columns3Icon,
+  Loader,
+  CheckCircle,
+  AlertCircle,
+  Inbox,
 } from "lucide-react";
 import {
   Dialog,
@@ -263,8 +267,19 @@ export default function QuestionsTable() {
     setErrors(newErrors);
     if (hasError) return;
 
-    const toastId = toast.loading(" Adding question...", {
+    const toastId = toast("Adding question...", {
+      icon: <Loader className="animate-spin h-5 w-5" />,
       duration: Infinity,
+      style: {
+        borderRadius: "12px",
+        background: "#1F2937",
+        color: "#fff",
+        fontWeight: "bold",
+        padding: "12px 16px",
+        display: "flex",
+        alignItems: "center",
+        gap: "8px",
+      },
     });
 
     try {
@@ -301,29 +316,37 @@ export default function QuestionsTable() {
       });
       setIsDialogOpen(false);
 
-      toast.success("🎉 Question added successfully!", {
+      toast.success("Question added successfully!", {
         id: toastId,
         duration: 4000,
+        icon: <CheckCircle className="h-5 w-5" />,
         style: {
           borderRadius: "10px",
           background: "#006400",
           color: "#fff",
           fontWeight: "bold",
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
         },
       });
     } catch (err: any) {
       console.error(err);
 
       toast.error(
-        `⚠️ Failed to save question: ${err.response?.data?.detail || ""}`,
+        `Failed to save question: ${err.response?.data?.detail || ""}`,
         {
           id: toastId,
           duration: 4000,
+          icon: <AlertCircle className="h-5 w-5" />,
           style: {
             borderRadius: "10px",
             background: "#8B0000",
             color: "#fff",
             fontWeight: "bold",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
           },
         }
       );
@@ -331,9 +354,21 @@ export default function QuestionsTable() {
   };
   if (loading)
     return <TableSkeleton columnWidths={[250, 100, 100, 120, 60]} rows={8} />;
-  if (error) return <p className="text-center py-4 text-red-500">{error}</p>;
+  if (error)
+    return (
+      <div className="flex flex-col items-center justify-center text-center text-red-600 space-y-2 py-8">
+        <AlertCircle className="h-8 w-8" />
+        <p className="font-semibold">{error}</p>
+      </div>
+    );
+
   if (data.length === 0)
-    return <p className="text-center py-4">No Questions found.</p>;
+    return (
+      <div className="flex flex-col items-center justify-center text-center text-gray-500 space-y-2 py-8">
+        <Inbox className="h-8 w-8" />
+        <p className="font-medium">No Questions found.</p>
+      </div>
+    );
 
   return (
     <div className="space-y-4 w-full overflow-x-hidden px-2 sm:px-4 lg:px-6">
@@ -751,21 +786,57 @@ function RowActions({
 
   const validateQuestion = (question: Question) => {
     if (!question.text || question.text.length > 500) {
-      toast.error("Question text is required and must be 1-500 characters.");
+      toast.error("Question text is required and must be 1-500 characters.", {
+        icon: <AlertCircle className="h-5 w-5" />,
+        duration: 4000,
+        style: {
+          borderRadius: "10px",
+          background: "#8B0000",
+          color: "#fff",
+          fontWeight: "bold",
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+        },
+      });
       return false;
     }
     if (
       question.importance !== null &&
       (question.importance < 1 || question.importance > 5)
     ) {
-      toast.error("Importance must be between 1 and 5.");
+      toast.error("Importance must be between 1 and 5.", {
+        icon: <AlertCircle className="h-5 w-5" />,
+        duration: 4000,
+        style: {
+          borderRadius: "10px",
+          background: "#8B0000",
+          color: "#fff",
+          fontWeight: "bold",
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+        },
+      });
       return false;
     }
     if (
       (question.type === "dropdown" || question.type === "yes_no") &&
       (!question.options || question.options.length === 0)
     ) {
-      toast.error("Options are required for dropdown or yes/no questions.");
+      toast.error("Options are required for dropdown or yes/no questions.", {
+        icon: <AlertCircle className="h-5 w-5" />,
+        duration: 4000,
+        style: {
+          borderRadius: "10px",
+          background: "#8B0000",
+          color: "#fff",
+          fontWeight: "bold",
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+        },
+      });
       return false;
     }
     return true;
@@ -773,8 +844,19 @@ function RowActions({
 
   const handleDelete = async () => {
     setLoading((prev) => ({ ...prev, delete: true }));
-    const toastId = toast.loading("⏳ Deleting question...", {
+    const toastId = toast("Deleting question...", {
+      icon: <Loader className="animate-spin h-5 w-5" />,
       duration: Infinity,
+      style: {
+        borderRadius: "12px",
+        background: "#1F2937",
+        color: "#fff",
+        fontWeight: "bold",
+        display: "flex",
+        alignItems: "center",
+        gap: "8px",
+        padding: "12px 16px",
+      },
     });
 
     try {
@@ -793,25 +875,35 @@ function RowActions({
       toast.success("Question deleted successfully!", {
         id: toastId,
         duration: 4000,
+        icon: <CheckCircle className="h-5 w-5" />,
         style: {
           borderRadius: "10px",
-          background: "#8B0000",
+          background: "#006400",
           color: "#fff",
           fontWeight: "bold",
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          padding: "12px 16px",
         },
       });
     } catch (err: any) {
       console.error(err);
       toast.error(
-        `⚠️ Failed to delete: ${err?.response?.data?.detail || err.message}`,
+        `Failed to delete: ${err?.response?.data?.detail || err.message}`,
         {
           id: toastId,
           duration: 4000,
+          icon: <AlertCircle className="h-5 w-5" />,
           style: {
             borderRadius: "10px",
             background: "#8B0000",
             color: "#fff",
             fontWeight: "bold",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            padding: "12px 16px",
           },
         }
       );
@@ -838,8 +930,19 @@ function RowActions({
     };
 
     setLoading((prev) => ({ ...prev, edit: true }));
-    const toastId = toast.loading("⏳ Saving changes...", {
+    const toastId = toast.loading("Saving changes...", {
+      icon: <Loader className="animate-spin h-5 w-5" />,
       duration: Infinity,
+      style: {
+        borderRadius: "12px",
+        background: "#1F2937",
+        color: "#fff",
+        fontWeight: "bold",
+        display: "flex",
+        alignItems: "center",
+        gap: "8px",
+        padding: "12px 16px",
+      },
     });
 
     try {
@@ -857,28 +960,38 @@ function RowActions({
       );
       setIsEditDialogOpen(false);
 
-      toast.success("✅ Question updated successfully!", {
+      toast.success("Question updated successfully!", {
         id: toastId,
         duration: 4000,
+        icon: <CheckCircle className="h-5 w-5" />,
         style: {
           borderRadius: "10px",
           background: "#006400",
           color: "#fff",
           fontWeight: "bold",
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          padding: "12px 16px",
         },
       });
     } catch (err: any) {
       console.error(err);
       toast.error(
-        `⚠️ Failed to save: ${err?.response?.data?.detail || err.message}`,
+        `Failed to save: ${err?.response?.data?.detail || err.message}`,
         {
           id: toastId,
           duration: 4000,
+          icon: <AlertCircle className="h-5 w-5" />,
           style: {
             borderRadius: "10px",
             background: "#8B0000",
             color: "#fff",
             fontWeight: "bold",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+            padding: "12px 16px",
           },
         }
       );

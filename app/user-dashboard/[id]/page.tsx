@@ -7,24 +7,16 @@ import { getAccessToken } from "@auth0/nextjs-auth0";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, User, Brain } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Loader2, User, Brain, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { toast, Toaster } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
+import { toast, Toaster } from "sonner";
 
 interface SubmissionDetail {
   id: number;
   team_name: string;
   name: string;
   email: string;
-  phone: string;
   notes: string;
   status: "approved" | "pending" | "rejected";
   score: number;
@@ -44,12 +36,14 @@ export default function SubmissionDetailPage() {
   const [submission, setSubmission] = useState<SubmissionDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [editing, setEditing] = useState(false);
-  const [editingStatus, setEditingStatus] = useState<
-    SubmissionDetail["status"] | ""
-  >("");
-  const [editingNotes, setEditingNotes] = useState("");
-  const [saving, setSaving] = useState(false);
+
+  const [messages, setMessages] = useState<
+    { sender: "user" | "admin"; text: string }[]
+  >([
+    { sender: "admin", text: "Welcome! You can ask your questions here." },
+    { sender: "user", text: "Thanks, I will." },
+  ]);
+  const [newMessage, setNewMessage] = useState("");
 
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -68,8 +62,6 @@ export default function SubmissionDetailPage() {
         );
         9;
         setSubmission(response.data);
-        setEditingStatus(response.data.status);
-        setEditingNotes(response.data.notes);
       } catch (err: any) {
         console.error(err);
         setError("Failed to load submission details.");
@@ -81,64 +73,11 @@ export default function SubmissionDetailPage() {
     fetchSubmission();
   }, [API_BASE_URL]);
 
-  const handleSave = async () => {
-    if (!submission) return;
-
-    setSaving(true);
-
-    const statusMap: Record<string, SubmissionDetail["status"]> = {
-      Approved: "approved",
-      Pending: "pending",
-      Rejected: "rejected",
-    };
-    const toastId = toast.loading("⏳ Updating the status...");
-
-    try {
-      const token = await getAccessToken();
-      const body = {
-        status: statusMap[editingStatus] || editingStatus,
-        notes: editingNotes,
-        submission_id: submission.id,
-      };
-      const response = await axios.patch<SubmissionDetail>(
-        `${API_BASE_URL}/api/v1/submissions/${submission.id}`,
-        body,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      console.log("Response", response);
-      setSubmission((prev) => prev && { ...prev, ...response.data });
-      setEditing(false);
-      toast.success("🎉 Your status has been updated successfully!", {
-        id: toastId,
-        duration: 4000,
-        style: {
-          borderRadius: "10px",
-          background: "#006400",
-          color: "#fff",
-          fontWeight: "bold",
-        },
-      });
-    } catch (err: any) {
-      console.error("Failed to update submission:", err);
-      toast.error("Whoops! Something went wrong while updating status.", {
-        id: toastId,
-        duration: 4000,
-        style: {
-          borderRadius: "10px",
-          background: "#8B0000",
-          color: "#fff",
-          fontWeight: "bold",
-        },
-      });
-    } finally {
-      setSaving(false);
-    }
+  const handleSendMessage = () => {
+    if (!newMessage.trim()) return;
+    setMessages((prev) => [...prev, { sender: "user", text: newMessage }]);
+    setNewMessage("");
+    toast.success("Message sent!");
   };
 
   if (loading)
@@ -171,10 +110,10 @@ export default function SubmissionDetailPage() {
       <Toaster position="top-center" />
       <div className="container mx-auto">
         <div className="flex flex-col items-center gap-4 text-center mb-10">
-          <Badge variant="outline" className="px-4 py-1 text-sm">
-            Team: {submission.team_name}
+          <Badge variant="outline" className="px-6 rounded-md py-3 text-lg">
+            Team : {submission.team_name}
           </Badge>
-          <h1 className="max-w-2xl text-3xl font-bold md:text-4xl">
+          <h1 className="max-w-2xl text-xl font-bold md:text-2xl">
             Submission Details & AI Evaluation
           </h1>
           <p className="text-muted-foreground max-w-lg">
@@ -186,17 +125,25 @@ export default function SubmissionDetailPage() {
           <TabsList className="flex flex-col sm:flex-row justify-center gap-4">
             <TabsTrigger
               value="details"
-              className="flex items-center cursor-pointer  gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-muted-foreground data-[state=active]:bg-muted data-[state=active]:text-primary"
+              className="flex items-center cursor-pointer  gap-2 rounded-xl px-8 py-4 text-sm font-semibold text-muted-foreground data-[state=active]:bg-muted data-[state=active]:text-primary"
             >
               <User className="h-4 w-4" />
               Details
             </TabsTrigger>
             <TabsTrigger
               value="evaluation"
-              className="flex items-center cursor-pointer gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-muted-foreground data-[state=active]:bg-muted data-[state=active]:text-primary"
+              className="flex items-center cursor-pointer gap-2 rounded-xl px-8 py-4 text-sm font-semibold text-muted-foreground data-[state=active]:bg-muted data-[state=active]:text-primary"
             >
               <Brain className="h-4 w-4" />
               AI Evaluation
+            </TabsTrigger>
+
+            <TabsTrigger
+              value="questions"
+              className="flex items-center cursor-pointer gap-2 rounded-xl px-8 py-4 text-sm font-semibold text-muted-foreground data-[state=active]:bg-muted data-[state=active]:text-primary"
+            >
+              <MessageSquare className="h-4 w-4" />
+              Ask Question
             </TabsTrigger>
           </TabsList>
 
@@ -204,20 +151,12 @@ export default function SubmissionDetailPage() {
             value="details"
             className="mt-10 grid place-items-center"
           >
-            <Card className="max-w-5xl w-full border rounded-2xl shadow-sm bg-background">
+            <Card className="max-w-6xl w-full border rounded-2xl  bg-background">
               <CardContent className="p-8 space-y-8">
                 <div className="flex justify-between items-center">
                   <h2 className="text-2xl font-bold tracking-tight text-foreground">
                     Applicant Information
                   </h2>
-                  <Button
-                    variant={editing ? "outline" : "secondary"}
-                    size="sm"
-                    className="cursor-pointer"
-                    onClick={() => setEditing((prev) => !prev)}
-                  >
-                    {editing ? "Cancel" : "Edit"}
-                  </Button>
                 </div>
 
                 <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-5">
@@ -243,81 +182,17 @@ export default function SubmissionDetailPage() {
                     </dd>
                   </div>
 
-                  <div>
-                    <dt className="text-sm font-medium text-muted-foreground">
-                      Phone
-                    </dt>
-                    <dd className="mt-1">
-                      <div className="rounded-lg border bg-muted/30 px-3 py-2 text-base text-foreground">
-                        {submission.phone}
-                      </div>
-                    </dd>
-                  </div>
-
-                  <div>
-                    <dt className="text-sm font-medium text-muted-foreground">
-                      Status
-                    </dt>
-                    <dd className="mt-1">
-                      {editing ? (
-                        <Select
-                          value={editingStatus}
-                          onValueChange={(v) =>
-                            setEditingStatus(v as SubmissionDetail["status"])
-                          }
-                        >
-                          <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Select status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="approved">Approved</SelectItem>
-                            <SelectItem value="pending">Pending</SelectItem>
-                            <SelectItem value="rejected">Rejected</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <div className="rounded-lg border bg-muted/30 px-3 py-2 text-base font-medium text-foreground">
-                          {editingStatus
-                            ? editingStatus.charAt(0).toUpperCase() +
-                              editingStatus.slice(1)
-                            : "Pending"}
-                        </div>
-                      )}
-                    </dd>
-                  </div>
-
                   <div className="sm:col-span-2">
                     <dt className="text-sm font-medium text-muted-foreground">
                       Notes
                     </dt>
                     <dd className="mt-2">
-                      {editing ? (
-                        <Textarea
-                          value={editingNotes}
-                          onChange={(e) => setEditingNotes(e.target.value)}
-                          placeholder="Enter notes..."
-                        />
-                      ) : (
-                        <div className="rounded-lg border bg-muted/30 px-3 py-2 text-base text-foreground">
-                          {editingNotes || "No notes added."}
-                        </div>
-                      )}
+                      <div className="rounded-lg border bg-muted/30 px-3 py-2 text-base text-foreground">
+                        {submission.notes || "No notes added."}
+                      </div>
                     </dd>
                   </div>
                 </dl>
-
-                {editing && (
-                  <div className="flex justify-end">
-                    <Button
-                      onClick={handleSave}
-                      className="cursor-pointer"
-                      disabled={saving}
-                      variant={"outline"}
-                    >
-                      {saving ? "Saving..." : "Save Changes"}
-                    </Button>
-                  </div>
-                )}
 
                 <p className="text-xs text-muted-foreground">
                   Submitted: {new Date(submission.created_at).toLocaleString()}
@@ -356,7 +231,7 @@ export default function SubmissionDetailPage() {
             value="evaluation"
             className="mt-10 grid place-items-center px-4"
           >
-            <Card className="w-full max-w-5xl shadow-xl border border-gray-200 rounded-2xl bg-white">
+            <Card className="w-full max-w-6xl  border border-gray-200 rounded-2xl bg-white">
               <CardContent className="p-6 md:p-8 space-y-6">
                 <h2 className="text-3xl font-bold text-gray-800 text-center">
                   AI Evaluation Report
@@ -398,6 +273,70 @@ export default function SubmissionDetailPage() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent
+            value="questions"
+            className="mt-10 grid place-items-center px-4"
+          >
+            <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Card className="rounded-2xl shadow-md">
+                <CardContent className="p-0 h-[480px] flex flex-col">
+                  <div className="px-6 py-4 border-b">
+                    <h3 className="text-lg font-semibold text-foreground">
+                      Message History
+                    </h3>
+                  </div>
+                  <div className="flex-1 space-y-3 overflow-y-auto px-6 py-4 bg-muted/20">
+                    {messages.length > 0 ? (
+                      messages.map((m, i) => (
+                        <div
+                          key={i}
+                          className={`max-w-[80%] px-4 py-2 rounded-2xl text-sm ${
+                            m.sender === "user"
+                              ? "ml-auto bg-neutral-200 text-foreground rounded-br-none"
+                              : "mr-auto bg-muted text-foreground rounded-bl-none"
+                          }`}
+                        >
+                          {m.text}
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-muted-foreground italic text-sm">
+                        No messages yet.
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="rounded-2xl shadow-md">
+                <CardContent className="p-0 h-[480px] flex flex-col">
+                  <div className="px-6 py-4 border-b">
+                    <h3 className="text-lg font-semibold text-foreground">
+                      Send a Message
+                    </h3>
+                  </div>
+                  <div className="flex-1 flex flex-col px-6 py-4">
+                    <Textarea
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      placeholder="Type your message..."
+                      className="flex-1 resize-none"
+                    />
+                  </div>
+                  <div className="px-6 py-4 border-t">
+                    <Button
+                      onClick={handleSendMessage}
+                      className="w-full cursor-pointer py-6"
+                      variant={"outline"}
+                    >
+                      Send Message
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
         </Tabs>
       </div>

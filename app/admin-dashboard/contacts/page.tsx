@@ -27,6 +27,9 @@ import {
   ChevronRightIcon,
   ListFilterIcon,
   Columns3Icon,
+  Loader,
+  AlertCircle,
+  Inbox,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -148,7 +151,10 @@ export default function Component() {
       "resolved",
     ];
     if (!validStatuses.includes(status)) return;
-    const toastId = toast.loading("⏳ Updating the status...");
+    const toastId = toast("Updating the status...", {
+      icon: <Loader className="animate-spin h-5 w-5" />,
+      duration: Infinity,
+    });
     try {
       const token = await getAccessToken();
       const response = await axios.patch<Contacts>(
@@ -187,6 +193,7 @@ export default function Component() {
       toast.error("Whoops! Something went wrong while updating status.", {
         id: toastId,
         duration: 4000,
+        icon: <AlertCircle className="h-5 w-5" />,
         style: {
           borderRadius: "10px",
           background: "#8B0000",
@@ -266,9 +273,21 @@ export default function Component() {
   if (loading)
     return <TableSkeleton columnWidths={[250, 100, 100, 120, 60]} rows={8} />;
 
-  if (error) return <p className="text-center">{error}</p>;
+  if (error)
+    return (
+      <div className="flex flex-col items-center justify-center text-center text-red-600 space-y-2 mt-10">
+        <AlertCircle className="h-8 w-8" />
+        <p>{error}</p>
+      </div>
+    );
+
   if (data.length === 0)
-    return <p className="text-center">No Contacts found.</p>;
+    return (
+      <div className="flex flex-col items-center justify-center text-center text-indigo-700 space-y-2 mt-10">
+        <Inbox className="h-8 w-8" />
+        <p>No contacts found.</p>
+      </div>
+    );
 
   return (
     <div className="space-y-4 xl:px-5">

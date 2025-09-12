@@ -21,6 +21,7 @@ import {
   VisibilityState,
 } from "@tanstack/react-table";
 import {
+  AlertCircle,
   ChevronDownIcon,
   ChevronFirstIcon,
   ChevronLastIcon,
@@ -30,6 +31,7 @@ import {
   CircleXIcon,
   Columns3Icon,
   Eye,
+  Inbox,
   ListFilterIcon,
 } from "lucide-react";
 
@@ -177,7 +179,7 @@ export default function SubmissionsPage() {
         setData(response.data);
       } catch (err: any) {
         console.error(err);
-        setError("Failed to load questions.");
+        setError("Failed to load submissions.");
       } finally {
         setLoading(false);
       }
@@ -209,9 +211,21 @@ export default function SubmissionsPage() {
   if (loading)
     return <TableSkeleton columnWidths={[250, 100, 100, 120, 60]} rows={8} />;
 
-  if (error) return <p className="text-center">{error}</p>;
+  if (error)
+    return (
+      <div className="flex flex-col items-center justify-center text-center text-red-600 space-y-2 py-8">
+        <AlertCircle className="h-8 w-8" />
+        <p className="font-semibold">{error}</p>
+      </div>
+    );
+
   if (data.length === 0)
-    return <p className="text-center">No Submissions found.</p>;
+    return (
+      <div className="flex flex-col items-center justify-center text-center text-gray-500 space-y-2 py-8">
+        <Inbox className="h-8 w-8" />
+        <p className="font-medium">No Submissions found.</p>
+      </div>
+    );
   return (
     <div className="space-y-4 xl:px-5">
       <div className="flex flex-wrap items-center justify-between gap-3">

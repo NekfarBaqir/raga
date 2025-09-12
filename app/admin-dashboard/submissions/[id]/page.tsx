@@ -8,7 +8,7 @@ import { getAccessToken } from "@auth0/nextjs-auth0";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, User, Brain } from "lucide-react";
+import { Loader2, User, Brain, CheckCircle, AlertCircle } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -25,7 +25,6 @@ interface SubmissionDetail {
   team_name: string;
   name: string;
   email: string;
-  phone: string;
   notes: string;
   status: "approved" | "pending" | "rejected";
   score: number;
@@ -53,7 +52,6 @@ export default function SubmissionDetailPage() {
   const [saving, setSaving] = useState(false);
 
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-
   useEffect(() => {
     const fetchSubmission = async () => {
       try {
@@ -116,14 +114,19 @@ export default function SubmissionDetailPage() {
       console.log("Response", response);
       setSubmission((prev) => prev && { ...prev, ...response.data });
       setEditing(false);
-      toast.success("🎉 Your status has been updated successfully!", {
+      toast.success("Your status has been updated successfully!", {
         id: toastId,
         duration: 4000,
+        icon: <CheckCircle className="h-5 w-5" />,
         style: {
           borderRadius: "10px",
           background: "#006400",
           color: "#fff",
           fontWeight: "bold",
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          padding: "12px 16px",
         },
       });
     } catch (err: any) {
@@ -131,11 +134,16 @@ export default function SubmissionDetailPage() {
       toast.error("Whoops! Something went wrong while updating status.", {
         id: toastId,
         duration: 4000,
+        icon: <AlertCircle className="h-5 w-5" />,
         style: {
           borderRadius: "10px",
           background: "#8B0000",
           color: "#fff",
           fontWeight: "bold",
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          padding: "12px 16px",
         },
       });
     } finally {
@@ -227,17 +235,6 @@ export default function SubmissionDetailPage() {
                     <dd className="mt-1">
                       <div className="rounded-lg border bg-muted/30 px-3 py-2 text-base text-foreground">
                         {submission.email}
-                      </div>
-                    </dd>
-                  </div>
-
-                  <div>
-                    <dt className="text-sm font-medium text-muted-foreground">
-                      Phone
-                    </dt>
-                    <dd className="mt-1">
-                      <div className="rounded-lg border bg-muted/30 px-3 py-2 text-base text-foreground">
-                        {submission.phone}
                       </div>
                     </dd>
                   </div>

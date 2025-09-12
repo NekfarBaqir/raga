@@ -17,8 +17,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CheckCircle2, XCircle, Loader2, Loader } from "lucide-react";
+import { CheckCircle2, XCircle, Loader } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import { usePathname } from "next/navigation";
+import { getAccessToken } from "@auth0/nextjs-auth0";
+import { useRouter } from "next/navigation";
 
 type QuestionType = "text" | "yes_no" | "dropdown";
 interface Question {
@@ -59,10 +62,6 @@ const buildQuestionSchema = (questions: Question[]) => {
 
 const ApplicantSchema = z.object({
   team_name: z.string().min(1, "Team name is required"),
-  email: z.string().email("Invalid email"),
-  phone: z
-    .string()
-    .regex(/^\+?[0-9]{7,15}$/, "Invalid phone number (7–15 digits)"),
 });
 
 export default function ApplyPage() {
@@ -71,7 +70,7 @@ export default function ApplyPage() {
   const [error, setError] = useState<string | null>(null);
   const [schema, setSchema] = useState<z.ZodObject<any> | null>(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
-
+  const router = useRouter();
   const CombinedSchema = schema
     ? ApplicantSchema.merge(schema)
     : ApplicantSchema;
@@ -82,8 +81,6 @@ export default function ApplyPage() {
     reValidateMode: "onChange",
     defaultValues: {
       team_name: "",
-      email: "",
-      phone: "",
     },
   });
 
@@ -129,13 +126,14 @@ export default function ApplyPage() {
   }, [errors, form]);
 
   const onSubmit = async (data: any) => {
+    const token = await getAccessToken();
     const loadingToast = toast.loading("Submitting your application...", {
       icon: <Loader className="animate-spin text-gray-500" />,
       duration: Infinity,
       style: {
         borderRadius: "10px",
         background: "#f9f9f9",
-        color: "#333",
+        color: "#000000",
         fontWeight: "500",
       },
     });
@@ -155,14 +153,17 @@ export default function ApplyPage() {
       const payload = {
         answers,
         team_name: data.team_name,
-        email: data.email,
-        phone: data.phone,
       };
 
       const res = await axios.post(
         `${API_BASE_URL}/api/v1/submissions`,
         payload,
-        { headers: { "Content-Type": "application/json" } }
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
       );
 
       if (res.data.status === "rejected") {
@@ -192,7 +193,10 @@ export default function ApplyPage() {
             },
           }
         );
-        reset();
+
+        setTimeout(() => {
+          router.push("/user-dashboard");
+        }, 1000);
       }
     } catch (err: any) {
       const msg =
@@ -229,213 +233,182 @@ export default function ApplyPage() {
     );
 
   return (
-    <section className="w-full py-16">
-      <Toaster position="top-center" />
-      <h1 className="text-4xl text-center mb-10 font-bold">Application Form</h1>
-      <div className="flex justify-center items-center min-h-screen px-2 md:px-4">
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="w-full max-w-3xl px-2 sm:px-0 space-y-10"
-        >
-          <div>
-            <h2 className="text-xl font-semibold mb-4">Applicant Info</h2>
-            <div className="flex flex-col gap-6">
-              <div className="flex flex-col gap-2">
-                <label htmlFor="team_name" className="font-medium text-base">
-                  Team Name
-                </label>
-                <Input
-                  id="team_name"
-                  {...register("team_name")}
-                  placeholder="Enter team name..."
-                  className={`p-3 py-7 ${
-                    errors.team_name ? "border-red-500" : "border-gray-300"
-                  }`}
-                />
-                {errors.team_name && (
-                  <p className="text-red-500 text-sm">
-                    {errors.team_name.message}
-                  </p>
-                )}
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label htmlFor="email" className="font-medium text-base">
-                  Email
-                </label>
-                <Input
-                  id="email"
-                  {...register("email")}
-                  placeholder="Enter your email..."
-                  className={`p-3 py-7 ${
-                    errors.email ? "border-red-500" : "border-gray-300"
-                  }`}
-                />
-                {errors.email && (
-                  <p className="text-red-500 text-sm">{errors.email.message}</p>
-                )}
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label htmlFor="phone" className="font-medium text-base">
-                  Phone Number
-                </label>
-                <Input
-                  id="phone"
-                  {...register("phone")}
-                  placeholder="Enter your phone number..."
-                  className={`p-3 py-7 ${
-                    errors.phone ? "border-red-500" : "border-gray-300"
-                  }`}
-                />
-                {errors.phone && (
-                  <p className="text-red-500 text-sm">{errors.phone.message}</p>
-                )}
+    <>
+      <section className="w-full py-16">
+        <Toaster position="top-center" />
+        <h1 className="text-4xl text-center mb-10 font-bold">
+          Application Form
+        </h1>
+        <div className="flex justify-center items-center min-h-screen px-2 md:px-4">
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="w-full max-w-3xl px-2 sm:px-0 space-y-10"
+          >
+            <div>
+              <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-2">
+                  <label htmlFor="team_name" className="font-medium text-base">
+                    What is your team or project name?
+                  </label>
+                  <Input
+                    id="team_name"
+                    {...register("team_name")}
+                    placeholder="Enter team name..."
+                    className={`p-3 py-7 ${
+                      errors.team_name ? "border-red-500" : "border-gray-300"
+                    }`}
+                  />
+                  {errors.team_name && (
+                    <p className="text-red-500 text-sm">
+                      {errors.team_name.message}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
 
-          <div>
-            <h2 className="text-xl font-semibold mb-6">Questions</h2>
-            <div className="grid grid-cols-1 gap-8">
-              {questions.map((q, idx) => (
-                <div key={q.id} className="flex flex-col gap-2">
-                  <label className="font-medium text-base">
-                    <span className="text-gray-500 mr-1">{idx + 1}.</span>{" "}
-                    {q.text}
-                  </label>
+            <div>
+              <h2 className="text-xl font-semibold mb-6">Questions</h2>
+              <div className="grid grid-cols-1 gap-8">
+                {questions.map((q, idx) => (
+                  <div key={q.id} className="flex flex-col gap-2">
+                    <label className="font-medium text-base">
+                      <span className="text-gray-500 mr-1">{idx + 1}.</span>{" "}
+                      {q.text}
+                    </label>
 
-                  {q.type === "text" && (
-                    <Textarea
-                      {...register(q.id.toString())}
-                      placeholder="Enter your answer..."
-                      className={`border p-2 rounded resize-y h-36 ${
-                        (errors as any)[q.id.toString()]
-                          ? "border-red-500"
-                          : "border-gray-300"
-                      }`}
-                    />
-                  )}
-
-                  {q.type === "yes_no" && (
-                    <RadioGroup
-                      onValueChange={(v) => setValue(q.id.toString(), v)}
-                      className="flex gap-6 mt-1"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem
-                          value="yes"
-                          id={`yes-${q.id}`}
-                          aria-label={`${q.text} - Yes`}
-                        />
-                        <label
-                          htmlFor={`yes-${q.id}`}
-                          className="cursor-pointer"
-                        >
-                          Yes
-                        </label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem
-                          value="no"
-                          id={`no-${q.id}`}
-                          aria-label={`${q.text} - No`}
-                        />
-                        <label
-                          htmlFor={`no-${q.id}`}
-                          className="cursor-pointer"
-                        >
-                          No
-                        </label>
-                      </div>
-                    </RadioGroup>
-                  )}
-
-                  {q.type === "dropdown" && q.options && (
-                    <Select
-                      onValueChange={(v) => setValue(q.id.toString(), v)}
-                      defaultValue=""
-                    >
-                      <SelectTrigger
-                        className={`border p-3 rounded ${
+                    {q.type === "text" && (
+                      <Textarea
+                        {...register(q.id.toString())}
+                        placeholder="Enter your answer..."
+                        className={`border p-2 rounded resize-y h-36 ${
                           (errors as any)[q.id.toString()]
                             ? "border-red-500"
                             : "border-gray-300"
                         }`}
-                      >
-                        <SelectValue placeholder="Select an option" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {q.options.map((opt) => (
-                          <SelectItem key={opt} value={opt}>
-                            {opt}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
+                      />
+                    )}
 
-                  {(errors as any)[q.id.toString()] && (
-                    <p className="text-red-500 text-sm mt-1">
-                      {(errors as any)[q.id.toString()]?.message?.toString()}
-                    </p>
-                  )}
-                </div>
-              ))}
+                    {q.type === "yes_no" && (
+                      <RadioGroup
+                        onValueChange={(v) => setValue(q.id.toString(), v)}
+                        className="flex gap-6 mt-1"
+                      >
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem
+                            value="yes"
+                            id={`yes-${q.id}`}
+                            aria-label={`${q.text} - Yes`}
+                          />
+                          <label
+                            htmlFor={`yes-${q.id}`}
+                            className="cursor-pointer"
+                          >
+                            Yes
+                          </label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem
+                            value="no"
+                            id={`no-${q.id}`}
+                            aria-label={`${q.text} - No`}
+                          />
+                          <label
+                            htmlFor={`no-${q.id}`}
+                            className="cursor-pointer"
+                          >
+                            No
+                          </label>
+                        </div>
+                      </RadioGroup>
+                    )}
+
+                    {q.type === "dropdown" && q.options && (
+                      <Select
+                        onValueChange={(v) => setValue(q.id.toString(), v)}
+                        defaultValue=""
+                      >
+                        <SelectTrigger
+                          className={`border p-3 rounded ${
+                            (errors as any)[q.id.toString()]
+                              ? "border-red-500"
+                              : "border-gray-300"
+                          }`}
+                        >
+                          <SelectValue placeholder="Select an option" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {q.options.map((opt) => (
+                            <SelectItem key={opt} value={opt}>
+                              {opt}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+
+                    {(errors as any)[q.id.toString()] && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {(errors as any)[q.id.toString()]?.message?.toString()}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-          <div className="flex items-start space-x-4 p-4 border rounded-xl  transition-shadow cursor-pointer bg-white">
-            <Checkbox
-              id="terms"
-              checked={acceptedTerms}
-              onCheckedChange={(checked) => setAcceptedTerms(!!checked)}
-              className="cursor-pointer"
-            />
-            <label htmlFor="terms" className="text-sm text-gray-700">
-              I confirm that the information I’ve provided is accurate, and I
-              agree to the{" "}
-              <a
-                href="/terms-of-service"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 underline hover:text-blue-700 transition-colors"
+            <div className="flex items-start space-x-4 p-4 border rounded-md  transition-shadow cursor-pointer bg-white">
+              <Checkbox
+                id="terms"
+                checked={acceptedTerms}
+                onCheckedChange={(checked) => setAcceptedTerms(!!checked)}
+                className="cursor-pointe"
+              />
+              <label htmlFor="terms" className="text-sm text-gray-700">
+                I confirm that the information I’ve provided is accurate, and I
+                agree to the{" "}
+                <a
+                  href="/tos"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 underline hover:text-blue-700 transition-colors"
+                >
+                  Terms of Service
+                </a>{" "}
+                and{" "}
+                <a
+                  href="/privacy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 underline hover:text-blue-700 transition-colors"
+                >
+                  Privacy Policy
+                </a>
+              </label>
+            </div>
+            <div className="flex justify-center mb-20">
+              <Button
+                variant="outline"
+                type="submit"
+                disabled={isSubmitting || !isValid || !acceptedTerms}
+                className={`w-52 py-7 cursor-pointer ${
+                  !isValid
+                    ? " cursor-not-allowed"
+                    : "bg-primary text-muted hover:bg-primary hover:text-muted cursor-pointer"
+                }`}
               >
-                Terms of Service
-              </a>{" "}
-              and{" "}
-              <a
-                href="/privacy-policy"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-600 underline hover:text-blue-700 transition-colors"
-              >
-                Privacy Policy
-              </a>
-            </label>
-          </div>
-          <div className="flex justify-center mb-20">
-            <Button
-              variant="outline"
-              type="submit"
-              disabled={isSubmitting || !isValid || !acceptedTerms}
-              className={`w-44 py-6 ${
-                !isValid
-                  ? "opacity-50 cursor-not-allowed"
-                  : "bg-primary text-muted hover:bg-primary hover:text-muted cursor-pointer"
-              }`}
-            >
-              {isSubmitting ? (
-                <>
-                  <Loader className="h-4 w-4 mr-2 animate-spin" />
-                  Submitting...
-                </>
-              ) : (
-                "Submit Application"
-              )}
-            </Button>
-          </div>
-        </form>
-      </div>
-    </section>
+                {isSubmitting ? (
+                  <>
+                    <Loader className="h-4 w-4 mr-2 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  "Submit Application"
+                )}
+              </Button>
+            </div>
+          </form>
+        </div>
+      </section>
+    </>
   );
 }
