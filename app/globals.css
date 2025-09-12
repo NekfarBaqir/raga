@@ -187,7 +187,7 @@
 
   * {
     @apply border-border outline-ring/50;
-    font-family: var(--font-inter);
+    font-family: var(--font-poppins);
   }
   body {
     @apply bg-background text-foreground;
