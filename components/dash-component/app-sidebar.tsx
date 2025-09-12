@@ -3,13 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  FileText,
-  MessageCircle,
-  ChartColumn,
-  CircleQuestionMark,
-} from "lucide-react";
-
+import { IconFileText, IconMessageUser } from "@tabler/icons-react";
 import {
   Sidebar,
   SidebarContent,
@@ -20,35 +14,30 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import Logo from "@/icons/logo";
-import { NavUser } from "@/components/dash-component/nav-user";
+import { NavUser } from "./nav-user";
 import { useUser } from "@auth0/nextjs-auth0";
+import { ChartGantt } from "lucide-react";
 
 const navMain = [
   {
-    title: "Insight",
-    url: "/admin-dashboard",
-    icon: ChartColumn,
+    title: "Dashboard",
+    url: "/user-dashboard",
+    icon: ChartGantt,
   },
-  {
-    title: "Questions",
-    url: "/admin-dashboard/questions",
-    icon: CircleQuestionMark,
-  },
-  {
-    title: "Submissions",
-    url: "/admin-dashboard/submissions",
-    icon: FileText,
-  },
+
   {
     title: "Contact",
-    url: "/admin-dashboard/contacts",
-    icon: MessageCircle,
+    url: "/user-dashboard/contact",
+    icon: IconMessageUser,
+  },
+  {
+    title: "Submission",
+    url: "/user-dashboard/submissions",
+    icon: IconFileText,
   },
 ];
 
-export default function AppSidebar({
-  ...props
-}: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user, isLoading } = useUser();
   const pathname = usePathname();
 

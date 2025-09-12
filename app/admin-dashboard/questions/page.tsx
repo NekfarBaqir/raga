@@ -3,6 +3,7 @@
 import { SetStateAction, useEffect, useId, useRef, useState } from "react";
 import { getAccessToken } from "@auth0/nextjs-auth0";
 import { Textarea } from "@/components/ui/textarea";
+import { toast, Toaster } from "sonner";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -73,6 +74,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import axios from "axios";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Question = {
   id: number;
@@ -83,10 +85,13 @@ type Question = {
   display_order: number;
 };
 
-const multiColumnFilterFn: FilterFn<Question> = (row, filterValue) => {
-  const searchableRowContent = `${row.original.text}`.toLowerCase();
-  const searchTerm = (filterValue ?? "").toLowerCase();
-  return searchableRowContent.includes(searchTerm);
+const multiColumnFilterFn: FilterFn<Question> = (
+  row,
+  columnId,
+  filterValue
+) => {
+  const value = row.getValue<string>(columnId) ?? "";
+  return value.toLowerCase().includes((filterValue ?? "").toLowerCase());
 };
 
 export default function QuestionsTable() {
@@ -123,6 +128,15 @@ export default function QuestionsTable() {
     options: "",
     display_order: "",
   });
+  useEffect(() => {
+    if (data.length > 0) {
+      const lastOrder = Math.max(...data.map((q) => q.display_order ?? 0));
+      setNewQuestion((prev) => ({
+        ...prev,
+        display_order: lastOrder + 1,
+      }));
+    }
+  }, [data]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -166,11 +180,6 @@ export default function QuestionsTable() {
     {
       header: "Question",
       accessorKey: "text",
-      cell: ({ row }) => (
-        <div className="font-medium truncate">{row.getValue("text")}</div>
-      ),
-      size: undefined,
-      minSize: 200,
       filterFn: multiColumnFilterFn,
       enableHiding: false,
     },
@@ -246,12 +255,17 @@ export default function QuestionsTable() {
       hasError = true;
     }
     if (newQuestion.display_order < 0) {
-      newErrors.display_order = "Display order must be 0 or greater.";
+      newErrors.display_order =
+        "Display order must be greater than the last display order.";
       hasError = true;
     }
 
     setErrors(newErrors);
     if (hasError) return;
+
+    const toastId = toast.loading(" Adding question...", {
+      duration: Infinity,
+    });
 
     try {
       const payload: any = {
@@ -286,21 +300,46 @@ export default function QuestionsTable() {
         display_order: data.length + 1,
       });
       setIsDialogOpen(false);
+
+      toast.success("🎉 Question added successfully!", {
+        id: toastId,
+        duration: 4000,
+        style: {
+          borderRadius: "10px",
+          background: "#006400",
+          color: "#fff",
+          fontWeight: "bold",
+        },
+      });
     } catch (err: any) {
       console.error(err);
-      setError(err.response?.data?.detail || "Failed to save question.");
+
+      toast.error(
+        `⚠️ Failed to save question: ${err.response?.data?.detail || ""}`,
+        {
+          id: toastId,
+          duration: 4000,
+          style: {
+            borderRadius: "10px",
+            background: "#8B0000",
+            color: "#fff",
+            fontWeight: "bold",
+          },
+        }
+      );
     }
   };
-
-  if (loading) return <p className="text-center py-4">Loading Questions...</p>;
+  if (loading)
+    return <TableSkeleton columnWidths={[250, 100, 100, 120, 60]} rows={8} />;
   if (error) return <p className="text-center py-4 text-red-500">{error}</p>;
   if (data.length === 0)
     return <p className="text-center py-4">No Questions found.</p>;
 
   return (
     <div className="space-y-4 w-full overflow-x-hidden px-2 sm:px-4 lg:px-6">
-      <div className="flex items-center justify-between gap-10">
-        <div className="flex items-center justify-between gap-10 w-full">
+      <Toaster position="top-center" />
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
           <div className="relative w-full sm:w-60">
             <Input
               id={`${id}-input`}
@@ -318,6 +357,7 @@ export default function QuestionsTable() {
               placeholder="Filter by question..."
               aria-label="Filter by question"
             />
+
             <div className="text-muted-foreground pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3">
               <ListFilterIcon size={16} aria-hidden="true" />
             </div>
@@ -338,7 +378,7 @@ export default function QuestionsTable() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="w-full sm:w-auto">
-                <Columns3Icon size={16} className="mr-2" /> View
+                <Columns3Icon size={16} className="mr-2 cursor-pointer" /> View
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -359,9 +399,13 @@ export default function QuestionsTable() {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button variant="outline">
+            <Button
+              variant="outline"
+              className="w-full cursor-pointer sm:w-auto"
+            >
               <PlusIcon size={16} className="mr-2" /> Add question
             </Button>
           </DialogTrigger>
@@ -390,6 +434,7 @@ export default function QuestionsTable() {
                   <p className="text-red-500 text-sm">{errors.text}</p>
                 )}
               </div>
+
               <div className="grid gap-2">
                 <Label>Type</Label>
                 <Select
@@ -412,24 +457,42 @@ export default function QuestionsTable() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid gap-2">
-                <Label>Importance</Label>
-                <Input
-                  type="number"
-                  min={1}
-                  max={5}
-                  value={newQuestion.importance ?? ""}
-                  onChange={(e) =>
-                    setNewQuestion({
-                      ...newQuestion,
-                      importance:
-                        e.target.value === "" ? null : Number(e.target.value),
-                    })
-                  }
-                />
+
+              <div className="flex items-center justify-between gap-4 mt-4 mb-4">
+                <div className="grid gap-2 w-full">
+                  <Label>Display Order</Label>
+                  <Input
+                    type="number"
+                    value={newQuestion.display_order ?? ""}
+                    onChange={(e) =>
+                      setNewQuestion({
+                        ...newQuestion,
+                        display_order:
+                          e.target.value === "" ? 0 : Number(e.target.value),
+                      })
+                    }
+                  />
+                </div>
+
+                <div className="grid gap-2 w-full">
+                  <Label>Importance (1-5)</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={5}
+                    value={newQuestion.importance ?? ""}
+                    onChange={(e) =>
+                      setNewQuestion({
+                        ...newQuestion,
+                        importance:
+                          e.target.value === "" ? null : Number(e.target.value),
+                      })
+                    }
+                  />
+                </div>
               </div>
-              {(newQuestion.type === "dropdown" ||
-                newQuestion.type === "yes_no") && (
+
+              {newQuestion.type === "dropdown" && (
                 <div className="grid gap-2">
                   <Label>Options</Label>
                   <Input
@@ -445,17 +508,17 @@ export default function QuestionsTable() {
                 </div>
               )}
             </div>
+
             <DialogFooter className="flex flex-col sm:flex-row sm:justify-end gap-2">
-              <Button onClick={handleOnsubmit} variant={"outline"}>
+              <Button onClick={handleOnsubmit} variant="outline">
                 Add Question
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
-        het
       </div>
 
-      <div className="bg-background overflow-x-auto border rounded-md w-full">
+      <div className="bg-background overflow-x-auto border rounded-xl w-full">
         <div className="min-w-[600px]">
           <Table className="min-w-full w-full">
             <TableHeader>
@@ -621,6 +684,57 @@ export default function QuestionsTable() {
     </div>
   );
 }
+function TableSkeleton({
+  rows = 8,
+  columnWidths = [250, 100, 100, 120, 60],
+}: {
+  rows?: number;
+  columnWidths?: number[];
+}) {
+  return (
+    <div className="bg-background overflow-x-auto border rounded-xl w-full animate-pulse">
+      <div className="min-w-[600px]">
+        <Table className="min-w-full w-full">
+          <TableHeader>
+            <TableRow>
+              {columnWidths.map((width, i) => (
+                <TableHead
+                  key={i}
+                  style={{ minWidth: width }}
+                  className="px-4 py-3"
+                >
+                  <Skeleton className="h-4 w-3/4 rounded-md" />
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {Array.from({ length: rows }).map((_, rowIndex) => (
+              <TableRow
+                key={rowIndex}
+                className="hover:bg-muted/20 transition-colors duration-200"
+              >
+                {columnWidths.map((width, colIndex) => (
+                  <TableCell
+                    key={colIndex}
+                    style={{ minWidth: width }}
+                    className="px-4 py-3"
+                  >
+                    <Skeleton
+                      className={`h-4 rounded-md w-${
+                        3 + Math.floor(Math.random() * 4)
+                      }/4`}
+                    />
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  );
+}
 
 function RowActions({
   row,
@@ -637,21 +751,21 @@ function RowActions({
 
   const validateQuestion = (question: Question) => {
     if (!question.text || question.text.length > 500) {
-      alert("Question text is required and must be 1-500 characters.");
+      toast.error("Question text is required and must be 1-500 characters.");
       return false;
     }
     if (
       question.importance !== null &&
       (question.importance < 1 || question.importance > 5)
     ) {
-      alert("Importance must be between 1 and 5.");
+      toast.error("Importance must be between 1 and 5.");
       return false;
     }
     if (
       (question.type === "dropdown" || question.type === "yes_no") &&
       (!question.options || question.options.length === 0)
     ) {
-      alert("Options are required for dropdown or yes/no questions.");
+      toast.error("Options are required for dropdown or yes/no questions.");
       return false;
     }
     return true;
@@ -659,33 +773,48 @@ function RowActions({
 
   const handleDelete = async () => {
     setLoading((prev) => ({ ...prev, delete: true }));
+    const toastId = toast.loading("⏳ Deleting question...", {
+      duration: Infinity,
+    });
+
     try {
       const questionId = row?.original?.id;
-      if (!questionId) {
-        throw new Error("Missing question id (row.original.id is falsy).");
-      }
+      if (!questionId) throw new Error("Missing question ID.");
+
       const token = await getAccessToken();
-
-      const url = `${API_BASE_URL}/api/v1/questions/${questionId}`;
-
-      await axios.delete(url, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
+      await axios.delete(`${API_BASE_URL}/api/v1/questions/${questionId}`, {
+        headers: { Authorization: `Bearer ${token}` },
         data: { question_id: questionId },
       });
 
       setData((prev) => prev.filter((q) => q.id !== questionId));
       setIsDeleteDialogOpen(false);
+
+      toast.success("Question deleted successfully!", {
+        id: toastId,
+        duration: 4000,
+        style: {
+          borderRadius: "10px",
+          background: "#8B0000",
+          color: "#fff",
+          fontWeight: "bold",
+        },
+      });
     } catch (err: any) {
-      console.error("Failed to delete question:", err);
-      if (err?.response) {
-        console.error("Status:", err.response.status);
-        console.error("Response body:", err.response.data);
-      } else {
-        console.error("Message:", err.message);
-      }
+      console.error(err);
+      toast.error(
+        `⚠️ Failed to delete: ${err?.response?.data?.detail || err.message}`,
+        {
+          id: toastId,
+          duration: 4000,
+          style: {
+            borderRadius: "10px",
+            background: "#8B0000",
+            color: "#fff",
+            fontWeight: "bold",
+          },
+        }
+      );
     } finally {
       setLoading((prev) => ({ ...prev, delete: false }));
     }
@@ -695,39 +824,64 @@ function RowActions({
     if (!validateQuestion(editQuestion)) return;
 
     let options: string[] | null = null;
-    if (editQuestion.type === "yes_no") {
-      options = ["Yes", "No"];
-    } else if (editQuestion.type === "dropdown") {
+    if (editQuestion.type === "yes_no") options = ["Yes", "No"];
+    else if (editQuestion.type === "dropdown")
       options = editQuestion.options ?? [];
-    }
 
     const payload = {
       id: row.original.id,
-      text: editQuestion.text || null,
-      type: editQuestion.type || null,
+      text: editQuestion.text,
+      type: editQuestion.type,
       importance: editQuestion.importance ?? null,
       display_order: editQuestion.display_order ?? null,
       options,
     };
 
     setLoading((prev) => ({ ...prev, edit: true }));
+    const toastId = toast.loading("⏳ Saving changes...", {
+      duration: Infinity,
+    });
 
     try {
       const token = await getAccessToken();
-
       const response = await axios.patch(
         `${API_BASE_URL}/api/v1/questions`,
         payload,
-        { headers: { Authorization: `Bearer ${token}` } }
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
 
       setData((prev) =>
         prev.map((q) => (q.id === row.original.id ? response.data : q))
       );
-
       setIsEditDialogOpen(false);
-    } catch (err) {
-      console.error("Failed to update question:", err);
+
+      toast.success("✅ Question updated successfully!", {
+        id: toastId,
+        duration: 4000,
+        style: {
+          borderRadius: "10px",
+          background: "#006400",
+          color: "#fff",
+          fontWeight: "bold",
+        },
+      });
+    } catch (err: any) {
+      console.error(err);
+      toast.error(
+        `⚠️ Failed to save: ${err?.response?.data?.detail || err.message}`,
+        {
+          id: toastId,
+          duration: 4000,
+          style: {
+            borderRadius: "10px",
+            background: "#8B0000",
+            color: "#fff",
+            fontWeight: "bold",
+          },
+        }
+      );
     } finally {
       setLoading((prev) => ({ ...prev, edit: false }));
     }
@@ -743,12 +897,15 @@ function RowActions({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuGroup>
-            <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
+            <DropdownMenuItem
+              onClick={() => setIsEditDialogOpen(true)}
+              className="cursor-pointer"
+            >
               Edit
             </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuItem
-            className="text-destructive"
+            className="text-destructive cursor-pointer"
             onClick={() => setIsDeleteDialogOpen(true)}
           >
             Delete
@@ -766,12 +923,13 @@ function RowActions({
             <Button
               variant="outline"
               onClick={() => setIsDeleteDialogOpen(false)}
+              className="cursor-pointer"
               disabled={loading.delete}
             >
               Cancel
             </Button>
             <Button
-              className="bg-foreground text-white"
+              className="bg-foreground text-white cursor-pointer"
               onClick={handleDelete}
               disabled={loading.delete}
             >
@@ -868,6 +1026,7 @@ function RowActions({
           <DialogFooter className="flex flex-col sm:flex-row sm:justify-end gap-2">
             <Button
               variant="outline"
+              className="cursor-pointer"
               onClick={() => setIsEditDialogOpen(false)}
               disabled={loading.edit}
             >
@@ -875,7 +1034,8 @@ function RowActions({
             </Button>
             <Button
               onClick={handleEditSave}
-              variant={"outline"}
+              variant="outline"
+              className="cursor-pointer"
               disabled={loading.edit}
             >
               {loading.edit ? "Saving..." : "Save"}

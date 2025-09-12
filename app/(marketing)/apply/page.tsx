@@ -2,15 +2,13 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast, Toaster } from "sonner";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
@@ -19,16 +17,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Loader2 } from "lucide-react";
+import { CheckCircle2, XCircle, Loader2, Loader } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type QuestionType = "text" | "yes_no" | "dropdown";
-
 interface Question {
   id: number;
   text: string;
@@ -68,7 +60,9 @@ const buildQuestionSchema = (questions: Question[]) => {
 const ApplicantSchema = z.object({
   team_name: z.string().min(1, "Team name is required"),
   email: z.string().email("Invalid email"),
-  phone: z.string().min(5, "Invalid phone number"),
+  phone: z
+    .string()
+    .regex(/^\+?[0-9]{7,15}$/, "Invalid phone number (7–15 digits)"),
 });
 
 export default function ApplyPage() {
@@ -76,14 +70,7 @@ export default function ApplyPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [schema, setSchema] = useState<z.ZodObject<any> | null>(null);
-
-  // modal states
-  const [modalOpen, setModalOpen] = useState(false);
-  const [modalStatus, setModalStatus] = useState<
-    "loading" | "success" | "error" | null
-  >(null);
-  const [modalMessage, setModalMessage] = useState("");
-  const [modalScore, setModalScore] = useState<number | null>(null);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const CombinedSchema = schema
     ? ApplicantSchema.merge(schema)
@@ -119,6 +106,12 @@ export default function ApplyPage() {
         );
         setQuestions(sorted);
         setSchema(buildQuestionSchema(sorted));
+
+        const defaults: Record<string, string> = {};
+        sorted.forEach((q) => {
+          defaults[q.id.toString()] = "";
+        });
+        reset((prev) => ({ ...prev, ...defaults }));
       } catch {
         setError("Failed to load questions.");
       } finally {
@@ -126,13 +119,26 @@ export default function ApplyPage() {
       }
     };
     fetchQuestions();
-  }, []);
+  }, [reset]);
+
+  useEffect(() => {
+    const firstError = Object.keys(errors)[0];
+    if (firstError) {
+      form.setFocus(firstError as any);
+    }
+  }, [errors, form]);
 
   const onSubmit = async (data: any) => {
-    setModalOpen(true);
-    setModalStatus("loading");
-    setModalMessage("Submitting your application...");
-    setModalScore(null);
+    const loadingToast = toast.loading("Submitting your application...", {
+      icon: <Loader className="animate-spin text-gray-500" />,
+      duration: Infinity,
+      style: {
+        borderRadius: "10px",
+        background: "#f9f9f9",
+        color: "#333",
+        fontWeight: "500",
+      },
+    });
 
     try {
       const answers = questions.map((q) => ({
@@ -152,47 +158,66 @@ export default function ApplyPage() {
         email: data.email,
         phone: data.phone,
       };
-      console.log("🚀 ~ onSubmit ~ payload:", payload);
 
       const res = await axios.post(
         `${API_BASE_URL}/api/v1/submissions`,
         payload,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
+        { headers: { "Content-Type": "application/json" } }
       );
-      console.log("🚀 ~ onSubmit ~ res:", res);
-      console.log("🚀 ~ onSubmit ~ API_BASE_URL:", API_BASE_URL);
 
       if (res.data.status === "rejected") {
-        setModalStatus("error");
-        setModalMessage(
-          " Unfortunately, you are not eligible for this program at this time."
-        );
-        setModalScore(res.data.score);
+        toast.error("Unfortunately, you are not eligible for this program.", {
+          id: loadingToast,
+          icon: <XCircle className="text-red-500" />,
+          duration: 5000,
+          style: {
+            borderRadius: "10px",
+            background: "#ffecec",
+            color: "#b00020",
+            fontWeight: "bold",
+          },
+        });
       } else {
-        setModalStatus("success");
-        setModalMessage(
-          "Congratulations! You’ve been accepted into the program. Our team will contact you shortly."
+        toast.success(
+          "🎉 Congratulations! You’ve been accepted in this program.",
+          {
+            id: loadingToast,
+            icon: <CheckCircle2 className="text-green-600" />,
+            duration: 4000,
+            style: {
+              borderRadius: "10px",
+              background: "#e6ffed",
+              color: "#065f46",
+              fontWeight: "bold",
+            },
+          }
         );
-        setModalScore(res.data.score);
         reset();
       }
-    } catch (err) {
-      console.error(err);
-      setModalStatus("error");
-      setModalMessage(
-        " Whoops… looks like we hit a snag. Please try again later."
-      );
+    } catch (err: any) {
+      const msg =
+        axios.isAxiosError(err) && err.response?.data?.message
+          ? err.response.data.message
+          : "Whoops… looks like we hit a snag. Try again later.";
+
+      toast.error(msg, {
+        id: loadingToast,
+        icon: <XCircle className="text-red-500" />,
+        duration: 5000,
+        style: {
+          borderRadius: "10px",
+          background: "#ffecec",
+          color: "#b00020",
+          fontWeight: "bold",
+        },
+      });
     }
   };
 
   if (loading)
     return (
       <div className="flex justify-center items-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
+        <Loader className="h-8 w-8 animate-spin" />
       </div>
     );
 
@@ -205,98 +230,86 @@ export default function ApplyPage() {
 
   return (
     <section className="w-full py-16">
-      {" "}
-      <h1 className="text-4xl text-center mb-10">Application Form </h1>
-      <div className="flex justify-center items-center min-h-screen px-1 md:px-4">
+      <Toaster position="top-center" />
+      <h1 className="text-4xl text-center mb-10 font-bold">Application Form</h1>
+      <div className="flex justify-center items-center min-h-screen px-2 md:px-4">
         <form
           onSubmit={handleSubmit(onSubmit)}
-          className="w-full max-w-4xl space-y-8"
+          className="w-full max-w-3xl px-2 sm:px-0 space-y-10"
         >
-          <div className="grid grid-cols-1  gap-6">
-            <Card className="p-6 shadow-sm">
-              <CardHeader className="p-0 mb-3">
-                <CardTitle className="text-base md:text-lg font-medium">
+          <div>
+            <h2 className="text-xl font-semibold mb-4">Applicant Info</h2>
+            <div className="flex flex-col gap-6">
+              <div className="flex flex-col gap-2">
+                <label htmlFor="team_name" className="font-medium text-base">
                   Team Name
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
+                </label>
                 <Input
                   id="team_name"
                   {...register("team_name")}
                   placeholder="Enter team name..."
-                  className={`border-0 border-b focus-visible:ring-0 rounded-none ${
+                  className={`p-3 py-7 ${
                     errors.team_name ? "border-red-500" : "border-gray-300"
                   }`}
                 />
                 {errors.team_name && (
-                  <p className="text-red-500 text-sm mt-1">
+                  <p className="text-red-500 text-sm">
                     {errors.team_name.message}
                   </p>
                 )}
-              </CardContent>
-            </Card>
+              </div>
 
-            <Card className="p-6 shadow-sm">
-              <CardHeader className="p-0 mb-3">
-                <CardTitle className="text-base md:text-lg font-medium">
+              <div className="flex flex-col gap-2">
+                <label htmlFor="email" className="font-medium text-base">
                   Email
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
+                </label>
                 <Input
                   id="email"
                   {...register("email")}
                   placeholder="Enter your email..."
-                  className={`border-0 border-b focus-visible:ring-0 rounded-none ${
+                  className={`p-3 py-7 ${
                     errors.email ? "border-red-500" : "border-gray-300"
                   }`}
                 />
                 {errors.email && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.email.message}
-                  </p>
+                  <p className="text-red-500 text-sm">{errors.email.message}</p>
                 )}
-              </CardContent>
-            </Card>
+              </div>
 
-            <Card className="p-6 shadow-sm">
-              <CardHeader className="p-0 mb-3">
-                <CardTitle className="text-base md:text-lg font-medium">
-                  Phone
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
+              <div className="flex flex-col gap-2">
+                <label htmlFor="phone" className="font-medium text-base">
+                  Phone Number
+                </label>
                 <Input
                   id="phone"
                   {...register("phone")}
                   placeholder="Enter your phone number..."
-                  className={`border-0 border-b focus-visible:ring-0 rounded-none ${
+                  className={`p-3 py-7 ${
                     errors.phone ? "border-red-500" : "border-gray-300"
                   }`}
                 />
                 {errors.phone && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {errors.phone.message}
-                  </p>
+                  <p className="text-red-500 text-sm">{errors.phone.message}</p>
                 )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-8">
-            {questions.map((q, idx) => (
-              <Card key={q.id} className="p-6 shadow-sm">
-                <CardHeader className="p-0 mb-3">
-                  <CardTitle className=" text-sm md:text-lg font-normal md:font-medium">
-                    {idx + 1}. {q.text}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-0">
+          <div>
+            <h2 className="text-xl font-semibold mb-6">Questions</h2>
+            <div className="grid grid-cols-1 gap-8">
+              {questions.map((q, idx) => (
+                <div key={q.id} className="flex flex-col gap-2">
+                  <label className="font-medium text-base">
+                    <span className="text-gray-500 mr-1">{idx + 1}.</span>{" "}
+                    {q.text}
+                  </label>
+
                   {q.type === "text" && (
                     <Textarea
                       {...register(q.id.toString())}
                       placeholder="Enter your answer..."
-                      className={`border-0 border-b focus-visible:ring-0 bg-transparent rounded-none resize-none ${
+                      className={`border p-2 rounded resize-y h-36 ${
                         (errors as any)[q.id.toString()]
                           ? "border-red-500"
                           : "border-gray-300"
@@ -307,33 +320,33 @@ export default function ApplyPage() {
                   {q.type === "yes_no" && (
                     <RadioGroup
                       onValueChange={(v) => setValue(q.id.toString(), v)}
-                      className="flex gap-6 mt-2"
+                      className="flex gap-6 mt-1"
                     >
-                      <div className="flex items-center space-x-3">
+                      <div className="flex items-center space-x-2">
                         <RadioGroupItem
                           value="yes"
                           id={`yes-${q.id}`}
-                          className="border-gray-400"
+                          aria-label={`${q.text} - Yes`}
                         />
-                        <Label
+                        <label
                           htmlFor={`yes-${q.id}`}
                           className="cursor-pointer"
                         >
                           Yes
-                        </Label>
+                        </label>
                       </div>
-                      <div className="flex items-center space-x-3">
+                      <div className="flex items-center space-x-2">
                         <RadioGroupItem
                           value="no"
                           id={`no-${q.id}`}
-                          className="border-gray-400"
+                          aria-label={`${q.text} - No`}
                         />
-                        <Label
+                        <label
                           htmlFor={`no-${q.id}`}
                           className="cursor-pointer"
                         >
                           No
-                        </Label>
+                        </label>
                       </div>
                     </RadioGroup>
                   )}
@@ -344,7 +357,7 @@ export default function ApplyPage() {
                       defaultValue=""
                     >
                       <SelectTrigger
-                        className={`border-0 border-b focus-visible:ring-0 rounded-none ${
+                        className={`border p-3 rounded ${
                           (errors as any)[q.id.toString()]
                             ? "border-red-500"
                             : "border-gray-300"
@@ -367,16 +380,44 @@ export default function ApplyPage() {
                       {(errors as any)[q.id.toString()]?.message?.toString()}
                     </p>
                   )}
-                </CardContent>
-              </Card>
-            ))}
+                </div>
+              ))}
+            </div>
           </div>
-
+          <div className="flex items-start space-x-4 p-4 border rounded-xl  transition-shadow cursor-pointer bg-white">
+            <Checkbox
+              id="terms"
+              checked={acceptedTerms}
+              onCheckedChange={(checked) => setAcceptedTerms(!!checked)}
+              className="cursor-pointer"
+            />
+            <label htmlFor="terms" className="text-sm text-gray-700">
+              I confirm that the information I’ve provided is accurate, and I
+              agree to the{" "}
+              <a
+                href="/terms-of-service"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 underline hover:text-blue-700 transition-colors"
+              >
+                Terms of Service
+              </a>{" "}
+              and{" "}
+              <a
+                href="/privacy-policy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 underline hover:text-blue-700 transition-colors"
+              >
+                Privacy Policy
+              </a>
+            </label>
+          </div>
           <div className="flex justify-center mb-20">
             <Button
               variant="outline"
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !isValid || !acceptedTerms}
               className={`w-44 py-6 ${
                 !isValid
                   ? "opacity-50 cursor-not-allowed"
@@ -385,7 +426,7 @@ export default function ApplyPage() {
             >
               {isSubmitting ? (
                 <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  <Loader className="h-4 w-4 mr-2 animate-spin" />
                   Submitting...
                 </>
               ) : (
@@ -395,44 +436,6 @@ export default function ApplyPage() {
           </div>
         </form>
       </div>
-      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>
-              {modalStatus === "loading" && "Processing Submission"}
-              {modalStatus === "success" && "Application Accepted"}
-              {modalStatus === "error" && "Application Update"}
-            </DialogTitle>
-          </DialogHeader>
-
-          <div className="py-4 text-center">
-            {modalStatus === "loading" && (
-              <div className="flex flex-col items-center gap-3">
-                <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                <p>{modalMessage}</p>
-              </div>
-            )}
-
-            {modalStatus !== "loading" && (
-              <div className="space-y-4">
-                <p>{modalMessage}</p>
-                {modalScore !== null && (
-                  <p className="font-medium">
-                    Your score:{" "}
-                    <span className="text-primary font-bold">{modalScore}</span>
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
-
-          <div className="flex justify-center">
-            {modalStatus !== "loading" && (
-              <Button onClick={() => setModalOpen(false)}>Close</Button>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
     </section>
   );
 }

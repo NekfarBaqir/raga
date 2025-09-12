@@ -2,15 +2,12 @@
 
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
 import { getAccessToken } from "@auth0/nextjs-auth0";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, User, Brain } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -19,7 +16,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import AIEvaluation from "@/components/ui/Typewriter";
+import { toast, Toaster } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
 
 interface SubmissionDetail {
   id: number;
@@ -43,13 +41,13 @@ interface SubmissionDetail {
 }
 
 export default function SubmissionDetailPage() {
-  const { id } = useParams();
   const [submission, setSubmission] = useState<SubmissionDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
-  const [editingStatus, setEditingStatus] =
-    useState<SubmissionDetail["status"]>("pending");
+  const [editingStatus, setEditingStatus] = useState<
+    SubmissionDetail["status"] | ""
+  >("");
   const [editingNotes, setEditingNotes] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -61,15 +59,14 @@ export default function SubmissionDetailPage() {
         const token = await getAccessToken();
 
         const response = await axios.get<SubmissionDetail>(
-          `${API_BASE_URL}/api/v1/submissions/${id}`,
+          `${API_BASE_URL}/api/v1/submissions/user`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
             },
           }
         );
-
+        9;
         setSubmission(response.data);
         setEditingStatus(response.data.status);
         setEditingNotes(response.data.notes);
@@ -81,8 +78,8 @@ export default function SubmissionDetailPage() {
       }
     };
 
-    if (id) fetchSubmission();
-  }, [API_BASE_URL, id]);
+    fetchSubmission();
+  }, [API_BASE_URL]);
 
   const handleSave = async () => {
     if (!submission) return;
@@ -94,6 +91,7 @@ export default function SubmissionDetailPage() {
       Pending: "pending",
       Rejected: "rejected",
     };
+    const toastId = toast.loading("⏳ Updating the status...");
 
     try {
       const token = await getAccessToken();
@@ -116,8 +114,28 @@ export default function SubmissionDetailPage() {
       console.log("Response", response);
       setSubmission((prev) => prev && { ...prev, ...response.data });
       setEditing(false);
+      toast.success("🎉 Your status has been updated successfully!", {
+        id: toastId,
+        duration: 4000,
+        style: {
+          borderRadius: "10px",
+          background: "#006400",
+          color: "#fff",
+          fontWeight: "bold",
+        },
+      });
     } catch (err: any) {
       console.error("Failed to update submission:", err);
+      toast.error("Whoops! Something went wrong while updating status.", {
+        id: toastId,
+        duration: 4000,
+        style: {
+          borderRadius: "10px",
+          background: "#8B0000",
+          color: "#fff",
+          fontWeight: "bold",
+        },
+      });
     } finally {
       setSaving(false);
     }
@@ -132,10 +150,25 @@ export default function SubmissionDetailPage() {
     );
 
   if (error) return <p>{error}</p>;
-  if (!submission) return <p>No submission found.</p>;
+  if (!submission) {
+    return (
+      <div className="flex flex-col items-center justify-center h-64 text-center space-y-4">
+        <p className="text-lg text-muted-foreground">
+          You have not submitted an application yet.
+        </p>
+        <Button
+          variant="default"
+          onClick={() => (window.location.href = "/apply")}
+        >
+          Go to Apply Page
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <section className="py-16">
+      <Toaster position="top-center" />
       <div className="container mx-auto">
         <div className="flex flex-col items-center gap-4 text-center mb-10">
           <Badge variant="outline" className="px-4 py-1 text-sm">
@@ -153,14 +186,14 @@ export default function SubmissionDetailPage() {
           <TabsList className="flex flex-col sm:flex-row justify-center gap-4">
             <TabsTrigger
               value="details"
-              className="flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-muted-foreground data-[state=active]:bg-muted data-[state=active]:text-primary"
+              className="flex items-center cursor-pointer  gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-muted-foreground data-[state=active]:bg-muted data-[state=active]:text-primary"
             >
               <User className="h-4 w-4" />
               Details
             </TabsTrigger>
             <TabsTrigger
               value="evaluation"
-              className="flex items-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-muted-foreground data-[state=active]:bg-muted data-[state=active]:text-primary"
+              className="flex items-center cursor-pointer gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-muted-foreground data-[state=active]:bg-muted data-[state=active]:text-primary"
             >
               <Brain className="h-4 w-4" />
               AI Evaluation
@@ -178,8 +211,9 @@ export default function SubmissionDetailPage() {
                     Applicant Information
                   </h2>
                   <Button
-                    variant={editing ? "destructive" : "secondary"}
+                    variant={editing ? "outline" : "secondary"}
                     size="sm"
+                    className="cursor-pointer"
                     onClick={() => setEditing((prev) => !prev)}
                   >
                     {editing ? "Cancel" : "Edit"}
@@ -243,8 +277,10 @@ export default function SubmissionDetailPage() {
                         </Select>
                       ) : (
                         <div className="rounded-lg border bg-muted/30 px-3 py-2 text-base font-medium text-foreground">
-                          {editingStatus.charAt(0).toUpperCase() +
-                            editingStatus.slice(1)}
+                          {editingStatus
+                            ? editingStatus.charAt(0).toUpperCase() +
+                              editingStatus.slice(1)
+                            : "Pending"}
                         </div>
                       )}
                     </dd>
@@ -256,7 +292,7 @@ export default function SubmissionDetailPage() {
                     </dt>
                     <dd className="mt-2">
                       {editing ? (
-                        <Input
+                        <Textarea
                           value={editingNotes}
                           onChange={(e) => setEditingNotes(e.target.value)}
                           placeholder="Enter notes..."
@@ -272,7 +308,12 @@ export default function SubmissionDetailPage() {
 
                 {editing && (
                   <div className="flex justify-end">
-                    <Button onClick={handleSave} disabled={saving}>
+                    <Button
+                      onClick={handleSave}
+                      className="cursor-pointer"
+                      disabled={saving}
+                      variant={"outline"}
+                    >
                       {saving ? "Saving..." : "Save Changes"}
                     </Button>
                   </div>
@@ -313,12 +354,48 @@ export default function SubmissionDetailPage() {
 
           <TabsContent
             value="evaluation"
-            className="mt-10 grid place-items-center"
+            className="mt-10 grid place-items-center px-4"
           >
-            <Card className="max-w-5xl w-full shadow-xl border rounded-2xl">
-              <CardContent className="p-8 space-y-6">
-                <h2 className="text-xl font-bold mb-4">AI Evaluation</h2>
-                <AIEvaluation submission={submission} />
+            <Card className="w-full max-w-5xl shadow-xl border border-gray-200 rounded-2xl bg-white">
+              <CardContent className="p-6 md:p-8 space-y-6">
+                <h2 className="text-3xl font-bold text-gray-800 text-center">
+                  AI Evaluation Report
+                </h2>
+                <div className="space-y-1">
+                  <h3 className="text-lg font-semibold text-gray-700">
+                    Score :
+                  </h3>
+                  <p className="text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                    {submission.score ?? "-"}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <h3 className="text-xl font-semibold text-gray-700">
+                    Feedback :
+                  </h3>
+                  <p className="text-gray-600 bg-gray-50 p-4 rounded-lg border border-gray-100">
+                    {submission.feedback || "No feedback provided."}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <h3 className="text-lg font-semibold text-gray-700">
+                      Strengths :
+                    </h3>
+                    <p className="text-gray-600 bg-green-50 p-3 rounded-lg border border-green-100">
+                      {submission.strengths || "-"}
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <h3 className="text-lg font-semibold text-gray-700">
+                      Weaknesses :
+                    </h3>
+                    <p className="text-gray-600 bg-red-50 p-3 rounded-lg border border-red-100">
+                      {submission.weaknesses || "-"}
+                    </p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

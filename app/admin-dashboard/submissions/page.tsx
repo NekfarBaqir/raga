@@ -64,6 +64,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Submissions = {
   id: number;
@@ -71,8 +72,8 @@ type Submissions = {
   email: string;
   status: string;
   score: number;
-  risk_level: string;
 };
+
 const multiColumnFilterFn: FilterFn<Submissions> = (row, filterValue) => {
   const searchableRowContent = `${row.original.team_name}`.toLowerCase();
   const searchTerm = (filterValue ?? "").toLowerCase();
@@ -82,7 +83,8 @@ const columns: ColumnDef<Submissions>[] = [
   {
     header: "Team Name",
     accessorKey: "team_name",
-    size: 100,
+    size: undefined,
+    minSize: 180,
   },
   {
     header: "Email",
@@ -90,35 +92,52 @@ const columns: ColumnDef<Submissions>[] = [
     cell: ({ row }) => (
       <div className="font-medium">{row.getValue("email")}</div>
     ),
-    size: 150,
+    size: undefined,
+    minSize: 220,
     filterFn: multiColumnFilterFn,
     enableHiding: false,
   },
   {
     header: "Status",
     accessorKey: "status",
-    size: 100,
+    size: undefined,
+    minSize: 100,
+    cell: ({ row }) => {
+      const status = row.getValue("status") as string;
+
+      let statusColor = "bg-gray-200 text-gray-800";
+      if (status === "approved") statusColor = "bg-green-100 text-green-800";
+      else if (status === "pending")
+        statusColor = "bg-yellow-400/20 text-yellow-700";
+      else if (status === "rejected") statusColor = "bg-red-100 text-red-800";
+
+      return (
+        <span
+          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${statusColor}`}
+        >
+          {status}
+        </span>
+      );
+    },
   },
   {
     header: "Score",
     accessorKey: "score",
-    size: 100,
+    size: undefined,
+    minSize: 20,
   },
-  {
-    header: "Risk Level",
-    accessorKey: "risk_level",
-    size: 100,
-  },
+
   {
     id: "actions",
     header: () => <span className="sr-only">Actions</span>,
     cell: ({ row }) => <RowActions row={row} />,
-    size: 60,
+    size: undefined,
+    minSize: 20,
     enableHiding: false,
   },
 ];
 
-export default function Component() {
+export default function SubmissionsPage() {
   const id = useId();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -130,7 +149,7 @@ export default function Component() {
 
   const [sorting, setSorting] = useState<SortingState>([
     {
-      id: "risk_level",
+      id: "team_name",
       desc: false,
     },
   ]);
@@ -167,22 +186,6 @@ export default function Component() {
     fetchQuestions();
   }, [API_BASE_URL]);
 
-  // useEffect(() => {
-  //   async function fetchQuestions() {
-  //     try {
-  //       const response = await axios.get("/api/submissions");
-  //       setData(response.data);
-  //     } catch (err) {
-  //       console.error(err);
-  //       setError("Failed to load questions.");
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   }
-
-  //   fetchQuestions();
-  // }, []);
-
   const table = useReactTable({
     data,
     columns,
@@ -203,13 +206,14 @@ export default function Component() {
       columnVisibility,
     },
   });
+  if (loading)
+    return <TableSkeleton columnWidths={[250, 100, 100, 120, 60]} rows={8} />;
 
-  if (loading) return <p className="text-center">Loading Submissions...</p>;
   if (error) return <p className="text-center">{error}</p>;
   if (data.length === 0)
     return <p className="text-center">No Submissions found.</p>;
   return (
-    <div className="space-y-4 xl:px-20">
+    <div className="space-y-4 xl:px-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="relative">
@@ -286,7 +290,7 @@ export default function Component() {
         </div>
       </div>
 
-      <div className="bg-background overflow-hidden  border">
+      <div className="bg-background overflow-hidden rounded-lg border">
         <Table className="table-fixed">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -493,7 +497,7 @@ function RowActions({ row }: { row: Row<Submissions> }) {
   const router = useRouter();
   const handleViewClick = () => {
     const id = row.original.id;
-    router.push(`/dashboard/submissions/${id}`);
+    router.push(`/admin-dashboard/submissions/${id}`);
   };
   return (
     <DropdownMenu>
@@ -511,5 +515,57 @@ function RowActions({ row }: { row: Row<Submissions> }) {
         </div>
       </DropdownMenuTrigger>
     </DropdownMenu>
+  );
+}
+
+function TableSkeleton({
+  rows = 8,
+  columnWidths = [250, 100, 100, 120, 60],
+}: {
+  rows?: number;
+  columnWidths?: number[];
+}) {
+  return (
+    <div className="bg-background overflow-x-auto border rounded-xl w-full animate-pulse">
+      <div className="min-w-[600px]">
+        <Table className="min-w-full w-full">
+          <TableHeader>
+            <TableRow>
+              {columnWidths.map((width, i) => (
+                <TableHead
+                  key={i}
+                  style={{ minWidth: width }}
+                  className="px-4 py-3"
+                >
+                  <Skeleton className="h-4 w-3/4 rounded-md" />
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {Array.from({ length: rows }).map((_, rowIndex) => (
+              <TableRow
+                key={rowIndex}
+                className="hover:bg-muted/20 transition-colors duration-200"
+              >
+                {columnWidths.map((width, colIndex) => (
+                  <TableCell
+                    key={colIndex}
+                    style={{ minWidth: width }}
+                    className="px-4 py-3"
+                  >
+                    <Skeleton
+                      className={`h-4 rounded-md w-${
+                        3 + Math.floor(Math.random() * 4)
+                      }/4`}
+                    />
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
   );
 }
