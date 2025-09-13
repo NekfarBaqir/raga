@@ -4,15 +4,15 @@ import CornerCroppedButton from "../ui/corner-cropped-button";
 
 const WhoCanJoinUS = () => {
   return (
-    <section className="relative w-full flex justify-start items-start h-fit overflow-hidden max-w-[1800px] mx-auto px-12 md:px-16 lg:px-20">
-      <div className="w-[50%] self-stretch flex justify-center items-center">
+    <section className="relative w-full flex flex-col md:flex-row justify-start items-start h-fit overflow-hidden max-w-[1800px] mx-auto px-12 md:px-16 lg:px-20 gap-10">
+      <div className="w-full md:w-[50%] self-stretch flex justify-center items-center pt-7 md:pt-0">
         <motion.div
           initial={{ opacity: 0, y: 10, filter: "blur(10px)" }}
           whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
           exit={{ opacity: 0, filter: "blur(10px)" }}
           viewport={{ amount: 0.3 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="relative  aspect-[424/618] h-[618px] w-auto"
+          className="relative  aspect-[424/618] h-[300px] md:h-[618px] w-auto"
         >
           <Image
             src={"/images/team.jpg"}
@@ -23,14 +23,14 @@ const WhoCanJoinUS = () => {
           />
         </motion.div>
       </div>
-      <div className="w-[50%] self-stretch relative flex flex-col justify-end items-start gap-10 pb-[4%]">
+      <div className="w-full md:w-[50%] self-stretch relative flex flex-col justify-end items-start gap-6 md:gap-5 pb-[4%]">
         <motion.h2
           initial={{ opacity: 0, y: 10, filter: "blur(10px)" }}
           whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
           exit={{ opacity: 0, filter: "blur(10px)" }}
           viewport={{ amount: 0.3 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="text-5xl font-bold font-poppins"
+          className="text-2xl md:text-5xl font-bold font-poppins"
         >
           WHO CAN <span className="block">JON US?</span>
         </motion.h2>
@@ -40,7 +40,7 @@ const WhoCanJoinUS = () => {
           exit={{ opacity: 0, filter: "blur(10px)" }}
           viewport={{ amount: 0.3 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="text-lg flex flex-col justify-start items-start gap-3"
+          className="text-sm md:text-lg flex flex-col justify-start items-start gap-3"
         >
           We welcome two kinds of changemakers:
           <p>
@@ -68,7 +68,7 @@ const WhoCanJoinUS = () => {
         </motion.div>
       </div>
 
-      <span className="absolute top-0 right-0 text-sm font-light px-12 md:px-16 lg:px-20 uppercase">
+      <span className="absolute top-0 right-0 text-xs md:text-sm font-light px-12 md:px-16 lg:px-20 uppercase">
         A place for visionaries.
       </span>
     </section>

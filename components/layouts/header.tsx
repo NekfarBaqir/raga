@@ -2,6 +2,7 @@
 
 import { sideConfig } from "@/config/site";
 import { useDimensions } from "@/hooks/use-dimensions";
+import { useTheme } from "@/hooks/useTheme";
 import { cn } from "@/lib/utils";
 import { MainNavItem } from "@/types";
 import { useUser } from "@auth0/nextjs-auth0";
@@ -9,7 +10,7 @@ import { motion, useCycle } from "framer-motion";
 import { ArrowRightIcon, LayoutDashboard, LogOut } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { RefObject, useEffect, useRef, useState } from "react";
+import { RefObject, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatedThemeToggler } from "../magicui/animated-theme-toggler";
 import { ShimmerButton } from "../magicui/shimmer-button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -23,44 +24,52 @@ import NavItem from "../ui/nav-item";
 import { MenuToggle } from "./MenuToggle";
 import { Navigation } from "./Navigation";
 
-const sidebar = {
-  open: (height = 1000) => ({
-    clipPath: `circle(${height * 2 + 200}px at calc(100% - 40px) 40px)`,
-    backgroundColor: "rgba(255, 255, 255, 1)",
-    transition: {
-      clipPath: {
-        type: "spring" as const,
-        stiffness: 20,
-        restDelta: 2,
-      },
-    },
-  }),
-  closed: {
-    clipPath: "circle(20px at calc(100% - 32px) 30px)",
-    backgroundColor: "rgba(255, 255, 255, 0)",
-    transition: {
-      clipPath: {
-        delay: 0.5,
-        type: "spring" as const,
-        stiffness: 400,
-        damping: 40,
-      },
-      backgroundColor: {
-        duration: 0.1,
-        delay: 0.8,
-      },
-    },
-  },
-};
+
 
 const Header = () => {
   const [role, setRole] = useState<string>("user");
+  const theme = useTheme();
   const { user } = useUser();
   const [isOpen, toggleOpen] = useCycle(false, true);
   const containerRef = useRef<HTMLElement>(null);
   const { height } = useDimensions(containerRef as RefObject<HTMLElement>);
   const router = useRouter();
   const pathname = usePathname();
+
+
+
+  const sidebar = useMemo(() => {
+    return {
+      open: (height = 1000) => ({
+        clipPath: `circle(${height * 2 + 200}px at calc(100% - 40px) 40px)`,
+        backgroundColor: theme === "light" ? "rgba(255, 255, 255, 1)" : "rgba(0, 0, 0, 1)",
+        transition: {
+          clipPath: {
+            type: "spring" as const,
+            stiffness: 20,
+            restDelta: 2,
+          },
+        },
+      }),
+      closed: {
+        clipPath: "circle(20px at calc(100% - 32px) 30px)",
+        backgroundColor: theme === "light" ? "rgba(255, 255, 255, 0)" : "rgba(0, 0, 0, 0)",
+        transition: {
+          clipPath: {
+            delay: 0.5,
+            type: "spring" as const,
+            stiffness: 400,
+            damping: 40,
+          },
+          backgroundColor: {
+            duration: 0.1,
+            delay: 0.8,
+          },
+        },
+      },
+    };
+  }, [theme]);
+
 
   useEffect(() => {
     const roles = (user as any)?.["https://raga.space/roles"] as
@@ -164,7 +173,8 @@ const Header = () => {
           )}
         </div>
 
-        <div className="md:hidden">
+        <div className="md:hidden flex justify-end items-center gap-1.5 w-full p-2 py-3">
+        <AnimatedThemeToggler className="cursor-pointer mx-3" />
           <MenuToggle toggle={() => toggleOpen()} isOpen={isOpen} />
         </div>
       </header>
@@ -188,7 +198,7 @@ const Header = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-black/20 z-20 md:hidden"
+          className="fixed inset-0 bg-background/20 z-20 md:hidden"
           onClick={() => toggleOpen()}
         />
       )}

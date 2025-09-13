@@ -41,8 +41,8 @@ export const MenuItem: React.FC<MenuItemProps> = ({ item, isActive, onItemClick 
         href={item.href} 
         className={`flex items-center w-full p-4 rounded-lg transition-colors duration-200 ${
           isActive 
-            ? 'bg-black/10 text-black font-semibold' 
-            : 'text-gray-700 hover:bg-black/5 hover:text-black'
+            ? 'bg-background/10 text-primary font-semibold' 
+            : ' hover:bg-background/5 hover:text-primary'
         }`}
       >
       

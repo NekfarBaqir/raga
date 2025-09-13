@@ -4,15 +4,15 @@ import CornerCroppedButton from "../ui/corner-cropped-button";
 
 const WhyWeDotItSection = () => {
   return (
-    <section className="relative w-full flex justify-start items-start h-fit overflow-hidden max-w-[1800px] mx-auto px-12 md:px-16 lg:px-20">
-      <div className="w-[50%] self-stretch flex justify-center items-center">
+    <section className="relative w-full flex-col md:flex-row  flex justify-start items-start h-fit overflow-hidden max-w-[1800px] mx-auto px-12 md:px-16 lg:px-20 gap-10">
+      <div className="w-full md:w-[50%] self-stretch flex justify-center items-center pt-7 md:pt-0">
         <motion.div
           initial={{ opacity: 0, y: 10, filter: "blur(10px)" }}
           whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
           exit={{ opacity: 0, filter: "blur(10px)" }}
           viewport={{ amount: 0.3 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="relative  aspect-[424/618] h-[618px] w-auto"
+          className="relative  aspect-[424/618] h-[300px] md:h-[618px] w-auto"
         >
           <Image
             src={"/images/hero-section-bg.png"}
@@ -23,14 +23,14 @@ const WhyWeDotItSection = () => {
           />
         </motion.div>
       </div>
-      <div className="w-[50%] self-stretch relative flex flex-col justify-end items-start gap-10 pb-[4%]">
+      <div className="w-full md:w-[50%] self-stretch relative flex flex-col justify-end items-start gap-6 md:gap-5 pb-[4%]">
         <motion.h2
           initial={{ opacity: 0, y: 10, filter: "blur(10px)" }}
           whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
           exit={{ opacity: 0, filter: "blur(10px)" }}
           viewport={{ amount: 0.3 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="text-5xl font-bold font-poppins"
+          className="text-2xl md:text-5xl font-bold font-poppins"
         >
           WHY WE <span className="block">DO?</span>
         </motion.h2>
@@ -40,7 +40,7 @@ const WhyWeDotItSection = () => {
           exit={{ opacity: 0, filter: "blur(10px)" }}
           viewport={{ amount: 0.3 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="text-lg"
+          className="text-sm md:text-lg"
         >
           Raga was created to empower Afghanistan's brightest minds with the
           tools, space, and community they need to thrive. We believe innovation
@@ -61,7 +61,7 @@ const WhyWeDotItSection = () => {
         </motion.div>
       </div>
 
-      <span className="absolute top-0 right-0 text-sm font-light px-12 md:px-16 lg:px-20">
+      <span className="absolute top-0 right-0 text-xs md:text-sm font-light px-12 md:px-16 lg:px-20">
         ABOUT US
       </span>
     </section>

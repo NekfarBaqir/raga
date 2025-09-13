@@ -5,15 +5,15 @@ import CornerCroppedButton from "../ui/corner-cropped-button";
 
 const WhatWeDoSection = () => {
   return (
-    <section className="relative w-full flex justify-start items-start h-fit overflow-hidden max-w-[1800px] mx-auto px-12 md:px-16 lg:px-20 gap-10 py-10  ">
-      <div className="w-[40%] self-stretch relative flex flex-col justify-start items-start gap-10 pb-[4%] ">
+    <section className="relative w-full flex flex-col md:flex-row justify-start items-start h-fit overflow-hidden max-w-[1800px] mx-auto px-12 md:px-16 lg:px-20 gap-10 py-10">
+      <div className="w-full md:w-[40%] self-stretch relative flex flex-col justify-start items-start gap-10 pb-[4%] ">
         <motion.h2
           initial={{ opacity: 0, y: 10, filter: "blur(10px)" }}
           whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
           exit={{ opacity: 0, filter: "blur(10px)" }}
           viewport={{ amount: 0.3 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="text-5xl font-bold font-poppins"
+          className="text-2xl md:text-5xl font-bold font-poppins"
         >
           WHAT WE <span className="block">DO?</span>
         </motion.h2>
@@ -23,7 +23,7 @@ const WhatWeDoSection = () => {
           exit={{ opacity: 0, filter: "blur(10px)" }}
           viewport={{ amount: 0.3 }}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          className="text-lg flex flex-col justify-start items-start gap-3"
+          className="text-sm md:text-lg flex flex-col justify-start items-start gap-3"
         >
           At Raga, you'll find everything needed to focus on building:
           <ul className="text-sm list-disc pl-[5%]">
@@ -51,8 +51,8 @@ const WhatWeDoSection = () => {
         </motion.div>
       </div>
 
-      <div className="w-[60%] flex justify-end items-center">
-        <div className="w-[90%] self-stretch flex justify-center items-center">
+      <div className="w-full md:w-[60%] flex justify-end items-center">
+        <div className="w-full md:w-[90%] self-stretch flex justify-center items-center">
           <motion.div
             initial={{ opacity: 0, y: 10, filter: "blur(10px)" }}
             whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
@@ -66,7 +66,7 @@ const WhatWeDoSection = () => {
         </div>
       </div>
 
-      <span className="absolute top-0 left-0 text-sm font-light px-12 md:px-16 lg:px-20 uppercase">
+      <span className="absolute top-0 left-0 text-xs md:text-sm font-light px-12 md:px-16 lg:px-20 uppercase">
         A launchpad for innovation.
       </span>
     </section>

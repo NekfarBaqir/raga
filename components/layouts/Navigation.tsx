@@ -65,7 +65,7 @@ export const Navigation: React.FC<NavigationProps> = ({ onItemClick }) => {
               <ShimmerButton
                 background="black"
                 shimmerColor="#fff"
-                className="!p-3 !px-6 text-white !border border-black/20 cursor-pointer hover:border-black/40 transition-all duration-300 w-full"
+                className="!p-3 !px-6 dark:text-foreground text-background !border border-black/20 cursor-pointer hover:border-black/40 transition-all duration-300 w-full"
               >
                 Apply Now
               </ShimmerButton>
