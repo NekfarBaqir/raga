@@ -44,7 +44,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="flex justify-center relative">
+        <div className="flex justify-center flex-col">
           <Link href="/">
             <Logo
               className="
@@ -52,14 +52,14 @@ export default function Footer() {
                 md:h-52 md:w-auto
                 lg:h-[230px]  
                 xl:h-[300px] xl:w-auto 
-                opacity-70
+                opacity-100
               "
             />
           </Link>
-          <div className="absolute inset-0 bg-gradient-to-b from-background/0 via-background/50 to-background/100  z-[3000] flex flex-col justify-end items-between">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-xs md:text-sm text-stone-700 dark:text-gray-400">
-              <div className="pl-8">© 2025. All rights reserved.</div>
-              <div className="flex items-center gap-3 pr-10">
+
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-xs md:text-sm text-stone-700 dark:text-gray-400">
+              <div className="md:pl-8 w-full text-center md:text-left ">© 2025. All rights reserved.</div>
+              <div className="flex items-center justify-center gap-3 pr-10">
                 Youtube
                 <span className="hidden sm:block">|</span>
                 <a
@@ -77,7 +77,7 @@ export default function Footer() {
                 </a>
               </div>
             </div>
-          </div>
+        
         </div>
       </div>
     </footer>

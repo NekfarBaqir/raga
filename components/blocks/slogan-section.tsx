@@ -5,10 +5,10 @@ import { motion } from "motion/react";
 
 const SloganSection = () => {
   return (
-    <div className="w-full h-fit overflow-visible -mt-[80vh]  md:-mt-[65vh] ">
-      <section className="w-[94%] aspect-[1361/2800] md:aspect-[1361/984] h-auto relative mx-auto  flex">
-        <ExtendedLogo className="object-contain w-full h-fit absolute" />
-        <div className="relative self-stretch w-full md:w-[94%]   flex justify-start items-start max-w-[1320px] mx-auto">
+    <div className="w-full h-fit overflow-visible -mt-[75vh]  md:-mt-[65vh] ">
+      <section className="w-[94%] aspect-[1361/2800] md:aspect-[1361/984] h-fit relative mx-auto  flex">
+        <ExtendedLogo className="absolute inset-0 w-full h-full object-contain z-0 pointer-events-none" />
+        <div className="absolute inset-0 z-10 w-full  flex justify-start items-start mx-auto">
           <div className="self-stretch w-[50%] flex flex-col justify-start pt-[35%] md:pt-0 md:justify-center items-center">
             <motion.div
               initial={{ opacity: 0, y: 10, filter: "blur(10px)" }}
