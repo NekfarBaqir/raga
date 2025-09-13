@@ -3,27 +3,30 @@ import { auth0 } from "@/lib/auth0";
 import { jwtDecode } from "jwt-decode";
 
 export async function middleware(request: NextRequest) {
-  if (request.nextUrl.pathname.startsWith("/dashboard")) {
+  const { pathname } = request.nextUrl;
+
+  if (
+    pathname.startsWith("/admin-dashboard") ||
+    pathname.startsWith("/user-dashboard")
+  ) {
     const session = await auth0.getSession(request);
     const accessToken = session?.tokenSet.accessToken;
 
-    if (!session?.user) {
+    if (!session?.user || !accessToken) {
+      const returnTo = pathname;
       return Response.redirect(
-        new URL("/auth/login?returnTo=/dashboard", request.url)
+        new URL(`/auth/login?returnTo=${returnTo}`, request.url)
       );
     }
 
-    if (!accessToken) {
-      return Response.redirect(
-        new URL("/auth/login?returnTo=/dashboard", request.url)
-      );
-    }
     const accessTokenDecoded: any = jwtDecode(accessToken);
     const roles: string[] =
       accessTokenDecoded["https://raga.space/roles"] || [];
 
-    if (roles.length === 0 || !roles.includes("admin")) {
-      return Response.redirect(new URL("/approve", request.url));
+    if (pathname.startsWith("/admin-dashboard")) {
+      if (!roles.includes("admin")) {
+        return Response.redirect(new URL("/approve", request.url));
+      }
     }
   }
 

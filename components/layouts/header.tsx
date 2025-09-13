@@ -4,13 +4,21 @@ import { sideConfig } from "@/config/site";
 import { useDimensions } from "@/hooks/use-dimensions";
 import { cn } from "@/lib/utils";
 import { MainNavItem } from "@/types";
+import { useUser } from "@auth0/nextjs-auth0";
 import { motion, useCycle } from "framer-motion";
-import { ArrowRightIcon } from "lucide-react";
+import { ArrowRightIcon, LayoutDashboard, LogOut } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { RefObject, useEffect, useRef } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { RefObject, useEffect, useRef, useState } from "react";
 import { AnimatedThemeToggler } from "../magicui/animated-theme-toggler";
 import { ShimmerButton } from "../magicui/shimmer-button";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
 import NavItem from "../ui/nav-item";
 import { MenuToggle } from "./MenuToggle";
 import { Navigation } from "./Navigation";
@@ -46,24 +54,36 @@ const sidebar = {
 };
 
 const Header = () => {
-  const pathname = usePathname();
+  const [role, setRole] = useState<string>("user");
+  const { user } = useUser();
   const [isOpen, toggleOpen] = useCycle(false, true);
   const containerRef = useRef<HTMLElement>(null);
   const { height } = useDimensions(containerRef as RefObject<HTMLElement>);
+  const router = useRouter();
+  const pathname = usePathname();
 
+  useEffect(() => {
+    const roles = (user as any)?.["https://raga.space/roles"] as
+      | string[]
+      | undefined;
+    setRole(roles?.[0] ?? "user");
+  }, [user]);
 
+  const goToDashboard = () => {
+    if (role === "admin") {
+      router.push("/admin-dashboard");
+    } else {
+      router.push("/user-dashboard");
+    }
+  };
 
-  // Disable page scroll when navigation is open
   useEffect(() => {
     if (isOpen) {
-      // Disable scroll
       document.body.style.overflow = "hidden";
     } else {
-      // Re-enable scroll
       document.body.style.overflow = "unset";
     }
 
-    // Cleanup function to ensure scroll is always re-enabled
     return () => {
       document.body.style.overflow = "unset";
     };
@@ -83,37 +103,72 @@ const Header = () => {
                 disabled={item.disabled}
                 title={item.title}
                 active={active}
-                key={idx}
+                key={item.href || item.title || String(idx)}
               />
             );
           })}
         </nav>
 
-        {/* Desktop Apply Button */}
+        {/* Desktop Right Section */}
         <div className="justify-end items-center hidden md:flex">
-        <AnimatedThemeToggler className="cursor-pointer mx-3" />
-
-          {!pathname?.includes("apply") && (
-            <Link href="/apply">
-              <ShimmerButton
-                background="white"
-                shimmerColor="#000"
-                className="!p-3 !px-6 group text-foreground !border border-black/10 cursor-pointer hover:border-black/20 transition-all duration-300"
-              >
-                Apply Now
-                <ArrowRightIcon className="w-4 h-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300" />
-              </ShimmerButton>
-            </Link>
+          <AnimatedThemeToggler className="cursor-pointer mx-3" />
+          {!user ? (
+            !pathname?.includes("apply") && (
+              <Link href="/auth/login?returnTo=/apply">
+                <ShimmerButton
+                  background="white"
+                  shimmerColor="#000"
+                  className="!p-3 !px-6 group text-foreground !border border-black/10 cursor-pointer hover:border-black/20 transition-all duration-300"
+                >
+                  Apply Now
+                  <ArrowRightIcon className="w-4 h-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300" />
+                </ShimmerButton>
+              </Link>
+            )
+          ) : (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Avatar className="cursor-pointer">
+                  <AvatarImage
+                    className="rounded-full w-16"
+                    src={user.picture || ""}
+                    alt={user.name || ""}
+                  />
+                  <AvatarFallback className="rounded-full border p-4 ">
+                    {user.name ? user.name.charAt(0).toUpperCase() : "U"}
+                  </AvatarFallback>
+                </Avatar>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 py-4 mt-3">
+                <DropdownMenuItem
+                  onClick={goToDashboard}
+                  className="cursor-pointer px-4 py-2 flex items-center justify-between gap-2"
+                >
+                  <span>Dashboard</span>
+                  <LayoutDashboard className="w-4 h-4" />
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  asChild
+                  className="cursor-pointer px-4 py-2 mt-3 flex items-center gap-2 text-red-600 hover:bg-red-50"
+                >
+                  <Link
+                    href="/auth/logout"
+                    className="flex items-center justify-between gap-2"
+                  >
+                    <span>Sign out</span>
+                    <LogOut className="w-4 h-4" />
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
 
-        {/* Mobile Menu Toggle */}
         <div className="md:hidden">
           <MenuToggle toggle={() => toggleOpen()} isOpen={isOpen} />
         </div>
       </header>
 
-      {/* Mobile Side Menu */}
       <motion.nav
         initial={false}
         animate={isOpen ? "open" : "closed"}
@@ -128,7 +183,6 @@ const Header = () => {
         <Navigation onItemClick={() => toggleOpen()} />
       </motion.nav>
 
-      {/* Overlay */}
       {isOpen && (
         <motion.div
           initial={{ opacity: 0 }}

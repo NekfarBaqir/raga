@@ -8,9 +8,8 @@ import { DashboardSections } from "@/components/dash-component/DashboardSections
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendChart } from "@/components/dash-component/TrendChart";
-import { AccordionItem } from "@radix-ui/react-accordion";
-import { AccordionContent, AccordionTrigger } from "@/components/ui/accordion";
+import { ChartAreaInteractive } from "@/components/dash-component/chart-area-interactive";
+import { RefreshCcw } from "lucide-react";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -64,8 +63,12 @@ export default function DashboardPage() {
     <div className="container mx-auto pt-20 md:pt-4 lg:px-6 space-y-8 min-h-screen">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Dashboard Overview</h1>
-        <Button onClick={() => window.location.reload()} variant="outline">
-          Refresh
+        <Button
+          onClick={() => window.location.reload()}
+          className="cursor-pointer"
+          variant="outline"
+        >
+          <RefreshCcw />
         </Button>
       </div>
 
@@ -78,17 +81,14 @@ export default function DashboardPage() {
         <MetricCard
           title="Pending Review"
           value={overview.needs_action.pending_review}
-          color="text-yellow-500"
         />
         <MetricCard
           title="Unresolved Contacts"
           value={overview.needs_action.unresolved_contacts}
-          color="text-orange-500"
         />
         <MetricCard
           title="Submissions Today"
           value={overview.submissions.received_today}
-          color="text-green-500"
         />
       </section>
       <Card>
@@ -97,13 +97,13 @@ export default function DashboardPage() {
         </CardHeader>
         <CardContent className="w-full overflow-x-auto">
           <div className="h-[400px]">
-            <TrendChart data={overview?.daily_activity} />
+            <ChartAreaInteractive data={overview?.daily_activity} />
           </div>
         </CardContent>
       </Card>
 
-      {/* <h1 className="text-2xl font-bold">Detailed Analytics</h1> */}
-      {/* <DashboardSections data={overview} /> */}
+      <h1 className="text-2xl font-bold">Detailed Analytics</h1>
+      <DashboardSections data={overview} />
     </div>
   );
 }

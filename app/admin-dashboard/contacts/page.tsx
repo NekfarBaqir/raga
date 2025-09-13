@@ -2,7 +2,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import axios from "axios";
 import { getAccessToken } from "@auth0/nextjs-auth0";
-
+import { toast, Toaster } from "sonner";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -27,6 +27,9 @@ import {
   ChevronRightIcon,
   ListFilterIcon,
   Columns3Icon,
+  Loader,
+  AlertCircle,
+  Inbox,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -67,7 +70,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Contacts = {
   id: number;
@@ -110,7 +113,6 @@ export default function Component() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editContact, setEditContact] = useState<Contacts | null>(null);
   const [status, setStatus] = useState<Contacts["status"]>("new");
-  const [expandedRows, setExpandedRows] = useState<Record<number, boolean>>({});
 
   useEffect(() => {
     async function fetchContacts() {
@@ -137,19 +139,22 @@ export default function Component() {
   }, [API_BASE_URL]);
 
   useEffect(() => {
-    if (editContact) {
-      setStatus(editContact.status);
-    }
+    if (editContact) setStatus(editContact.status);
   }, [editContact]);
-
-  type StatusType = "new" | "in_progress" | "resolved";
 
   const handleSave = async () => {
     if (!editContact) return;
 
-    const validStatuses: StatusType[] = ["new", "in_progress", "resolved"];
+    const validStatuses: Contacts["status"][] = [
+      "new",
+      "in_progress",
+      "resolved",
+    ];
     if (!validStatuses.includes(status)) return;
-
+    const toastId = toast("Updating the status...", {
+      icon: <Loader className="animate-spin h-5 w-5" />,
+      duration: Infinity,
+    });
     try {
       const token = await getAccessToken();
       const response = await axios.patch<Contacts>(
@@ -164,30 +169,72 @@ export default function Component() {
       );
 
       setData((prev) =>
-        prev.map((contact) =>
-          contact.id === editContact.id
-            ? { ...contact, status: response.data.status }
-            : contact
+        prev.map((c) =>
+          c.id === editContact.id ? { ...c, status: response.data.status } : c
         )
       );
 
       setEditContact(null);
       setStatus("new");
       setIsDialogOpen(false);
+
+      toast.success("🎉 Your status has been updated successfully!", {
+        id: toastId,
+        duration: 4000,
+        style: {
+          borderRadius: "10px",
+          background: "#006400",
+          color: "#fff",
+          fontWeight: "bold",
+        },
+      });
     } catch (err: any) {
       console.error("Error updating contact:", err);
+      toast.error("Whoops! Something went wrong while updating status.", {
+        id: toastId,
+        duration: 4000,
+        icon: <AlertCircle className="h-5 w-5" />,
+        style: {
+          borderRadius: "10px",
+          background: "#8B0000",
+          color: "#fff",
+          fontWeight: "bold",
+        },
+      });
     }
   };
 
   const columns: ColumnDef<Contacts>[] = [
-    { header: "Name", accessorKey: "name", size: 100 },
-    { header: "Email", accessorKey: "email", size: 100 },
-    { header: "Status", accessorKey: "status", size: 50 },
-    { header: "Message", accessorKey: "message", size: 150 },
+    { header: "Name", accessorKey: "name", size: 150 },
+    { header: "Email", accessorKey: "email", size: 200 },
+    {
+      header: "Status",
+      accessorKey: "status",
+      cell: ({ row }) => {
+        const status = row.getValue("status") as string;
+
+        let statusColor = "bg-gray-200 text-gray-800";
+        if (status === "resolved") statusColor = "bg-green-100 text-green-800";
+        else if (status === "in_progress")
+          statusColor = "bg-yellow-400/20 text-yellow-600";
+        else if (status === "new")
+          statusColor = "bg-indigo-100 text-indigo-800";
+
+        return (
+          <span
+            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${statusColor}`}
+          >
+            {status}
+          </span>
+        );
+      },
+      size: 100,
+    },
+    { header: "Message", accessorKey: "message", size: 250 },
     {
       header: "Date",
       accessorKey: "created_at",
-      size: 100,
+      size: 150,
       cell: ({ row }) => new Date(row.getValue("created_at")).toLocaleString(),
     },
     {
@@ -205,7 +252,7 @@ export default function Component() {
           Edit
         </Button>
       ),
-      size: 50,
+      size: 80,
     },
   ];
 
@@ -223,15 +270,28 @@ export default function Component() {
     onColumnVisibilityChange: setColumnVisibility,
     state: { sorting, pagination, columnFilters, columnVisibility },
   });
+  if (loading)
+    return <TableSkeleton columnWidths={[250, 100, 100, 120, 60]} rows={8} />;
 
-  if (loading) return <p className="text-center">Loading Contacts...</p>;
-  if (error) return <p className="text-center">{error}</p>;
+  if (error)
+    return (
+      <div className="flex flex-col items-center justify-center text-center text-red-600 space-y-2 mt-10">
+        <AlertCircle className="h-8 w-8" />
+        <p>{error}</p>
+      </div>
+    );
+
   if (data.length === 0)
-    return <p className="text-center">No Contacts found.</p>;
+    return (
+      <div className="flex flex-col items-center justify-center text-center text-indigo-700 space-y-2 mt-10">
+        <Inbox className="h-8 w-8" />
+        <p>No contacts found.</p>
+      </div>
+    );
 
   return (
-    <div className="space-y-4 xl:px-20">
-      {/* Filters */}
+    <div className="space-y-4 xl:px-5">
+      <Toaster position="top-center" />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="relative">
@@ -263,16 +323,14 @@ export default function Component() {
               <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
               {table
                 .getAllColumns()
-                .filter((column) => column.getCanHide())
-                .map((column) => (
+                .filter((col) => col.getCanHide())
+                .map((col) => (
                   <DropdownMenuCheckboxItem
-                    key={column.id}
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
-                      column.toggleVisibility(!!value)
-                    }
+                    key={col.id}
+                    checked={col.getIsVisible()}
+                    onCheckedChange={(val) => col.toggleVisibility(!!val)}
                   >
-                    {column.id}
+                    {col.id}
                   </DropdownMenuCheckboxItem>
                 ))}
             </DropdownMenuContent>
@@ -280,16 +338,16 @@ export default function Component() {
         </div>
       </div>
 
-      <div className="hidden md:flex overflow-x-auto border rounded-lg">
-        <Table className="table-fixed min-w-[600px] border">
+      <div className="overflow-x-auto border rounded-lg">
+        <Table className="table-fixed min-w-[600px] text-sm">
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <TableHead
                     key={header.id}
-                    style={{ width: `${header.getSize()}px` }}
-                    className="border-b"
+                    style={{ width: `${header.getSize()}px`, minWidth: "80px" }}
+                    className="border-b px-2 py-1 md:px-4 md:py-2"
                   >
                     {flexRender(
                       header.column.columnDef.header,
@@ -301,107 +359,25 @@ export default function Component() {
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows.map((row) => {
-              const isExpanded = !!expandedRows[row.original.id];
-              const message = row.getValue("message") as string;
-              const displayMessage = isExpanded
-                ? message
-                : message.slice(0, 50);
-
-              return (
-                <TableRow key={row.id} className="border-b">
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell
-                      key={cell.id}
-                      className="text-sm lg:text-xs break-words max-w-xs"
-                    >
-                      {cell.column.id === "message" ? (
-                        <div>
-                          <p className="break-words">{displayMessage}</p>
-                          {message.length > 50 && (
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="p-0 mt-1 bg-transparent hover:bg-transparent focus:ring-0"
-                              onClick={() =>
-                                setExpandedRows((prev) => ({
-                                  ...prev,
-                                  [row.original.id]: !prev[row.original.id],
-                                }))
-                              }
-                            >
-                              {isExpanded ? "Show Less" : "Read More"}
-                            </Button>
-                          )}
-                        </div>
-                      ) : (
-                        flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              );
-            })}
+            {table.getRowModel().rows.map((row) => (
+              <TableRow key={row.id} className="border-b">
+                {row.getVisibleCells().map((cell) => (
+                  <TableCell
+                    key={cell.id}
+                    className="px-2 py-1 md:px-4 md:py-2 break-words text-xs sm:text-sm"
+                  >
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </div>
 
-      <div className="md:hidden space-y-4">
-        {data.map((row) => (
-          <div
-            key={row.id}
-            className="border rounded-lg p-4 shadow-sm bg-background space-y-3"
-          >
-            <div>
-              <Label>Name</Label>
-              <Input value={row.name} readOnly className="bg-muted/10" />
-            </div>
-
-            <div>
-              <Label>Email</Label>
-              <Input value={row.email} readOnly className="bg-muted/10" />
-            </div>
-
-            <div>
-              <Label>Status</Label>
-              <Input value={row.status} readOnly className="bg-muted/10" />
-            </div>
-
-            <div>
-              <Label>Message</Label>
-              <Textarea value={row.message} readOnly className="bg-muted/10" />
-            </div>
-
-            <div>
-              <Label>Date</Label>
-              <Input
-                value={new Date(row.created_at).toLocaleString()}
-                readOnly
-                className="bg-muted/10"
-              />
-            </div>
-
-            <Button
-              size="sm"
-              variant="outline"
-              className="w-full"
-              onClick={() => {
-                setEditContact(row);
-                setIsDialogOpen(true);
-              }}
-            >
-              Edit
-            </Button>
-          </div>
-        ))}
-      </div>
-
       <div className="flex items-center justify-between gap-8">
         <div className="flex items-center gap-3">
-          <Label htmlFor={id} className="max-sm:sr-only">
+          <Label htmlFor={id} className="sr-only">
             Rows per page
           </Label>
           <Select
@@ -422,10 +398,7 @@ export default function Component() {
         </div>
 
         <div className="text-muted-foreground flex grow justify-end text-sm whitespace-nowrap">
-          <p
-            className="text-muted-foreground text-sm whitespace-nowrap"
-            aria-live="polite"
-          >
+          <p aria-live="polite">
             <span className="text-foreground">
               {table.getState().pagination.pageIndex *
                 table.getState().pagination.pageSize +
@@ -490,7 +463,6 @@ export default function Component() {
         </div>
       </div>
 
-      {/* Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -500,7 +472,7 @@ export default function Component() {
             <Label>Status</Label>
             <Select
               value={status}
-              onValueChange={(value) => setStatus(value as Contacts["status"])}
+              onValueChange={(val) => setStatus(val as Contacts["status"])}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -513,10 +485,63 @@ export default function Component() {
             </Select>
           </div>
           <DialogFooter>
-            <Button onClick={handleSave}>Save</Button>
+            <Button onClick={handleSave} className="cursor-pointer">
+              Save
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
+  );
+}
+function TableSkeleton({
+  rows = 8,
+  columnWidths = [250, 100, 100, 120, 60],
+}: {
+  rows?: number;
+  columnWidths?: number[];
+}) {
+  return (
+    <div className="bg-background overflow-x-auto border rounded-xl w-full animate-pulse">
+      <div className="min-w-[600px]">
+        <Table className="min-w-full w-full">
+          <TableHeader>
+            <TableRow>
+              {columnWidths.map((width, i) => (
+                <TableHead
+                  key={i}
+                  style={{ minWidth: width }}
+                  className="px-4 py-3"
+                >
+                  <Skeleton className="h-4 w-3/4 rounded-md" />
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {Array.from({ length: rows }).map((_, rowIndex) => (
+              <TableRow
+                key={rowIndex}
+                className="hover:bg-muted/20 transition-colors duration-200"
+              >
+                {columnWidths.map((width, colIndex) => (
+                  <TableCell
+                    key={colIndex}
+                    style={{ minWidth: width }}
+                    className="px-4 py-3"
+                  >
+                    <Skeleton
+                      className={`h-4 rounded-md w-${
+                        3 + Math.floor(Math.random() * 4)
+                      }/4`}
+                    />
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
     </div>
   );
 }
