@@ -167,10 +167,10 @@ export default function SubmissionDetailPage() {
       <Toaster position="top-center" />
       <div className="container mx-auto">
         <div className="flex flex-col items-center gap-4 text-center mb-10">
-          <Badge variant="outline" className="px-4 py-1 text-sm">
+          <Badge variant="outline" className="px-8 py-3 text-lg rounded-md">
             Team: {submission.team_name}
           </Badge>
-          <h1 className="max-w-2xl text-3xl font-bold md:text-4xl">
+          <h1 className="max-w-2xl text-xl font-bold md:text-2xl">
             Submission Details & AI Evaluation
           </h1>
           <p className="text-muted-foreground max-w-lg">

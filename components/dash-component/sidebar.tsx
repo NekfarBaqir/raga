@@ -8,6 +8,7 @@ import {
   MessageCircle,
   ChartColumn,
   CircleQuestionMark,
+  Inbox,
 } from "lucide-react";
 
 import {
@@ -43,6 +44,16 @@ const navMain = [
     title: "Contact",
     url: "/admin-dashboard/contacts",
     icon: MessageCircle,
+  },
+  {
+    title: "Inbox",
+    url: "/admin-dashboard/inbox",
+    icon: Inbox,
+  },
+  {
+    title: "Test",
+    url: "/admin-dashboard/test",
+    icon: Inbox,
   },
 ];
 

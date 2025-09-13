@@ -134,7 +134,7 @@ const Header = () => {
                     src={user.picture || ""}
                     alt={user.name || ""}
                   />
-                  <AvatarFallback className="rounded-full border p-4 ">
+                  <AvatarFallback className="rounded-full border px-4 py-3 text-lg bg-indigo-600 text-neutral-50 ">
                     {user.name ? user.name.charAt(0).toUpperCase() : "U"}
                   </AvatarFallback>
                 </Avatar>

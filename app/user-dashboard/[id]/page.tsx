@@ -1,7 +1,7 @@
 "use client";
 
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { getAccessToken } from "@auth0/nextjs-auth0";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs";
@@ -32,27 +32,63 @@ interface SubmissionDetail {
   }[];
 }
 
+interface APIMessage {
+  id: number;
+  sender: string;
+  receiver?: string;
+  message: string;
+  is_read?: boolean;
+  created_at?: string;
+}
+
+type LocalMessage = {
+  id: number;
+  sender: "user" | "admin";
+  message: string;
+  is_read?: boolean;
+  created_at?: string;
+  temporary?: boolean;
+};
+
 export default function SubmissionDetailPage() {
   const [submission, setSubmission] = useState<SubmissionDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [messages, setMessages] = useState<
-    { sender: "user" | "admin"; text: string }[]
-  >([
-    { sender: "admin", text: "Welcome! You can ask your questions here." },
-    { sender: "user", text: "Thanks, I will." },
-  ]);
+  const [messages, setMessages] = useState<LocalMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
+  const [sending, setSending] = useState(false);
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
 
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+
+  const mapApiToLocal = (
+    m: APIMessage,
+    submissionEmail?: string
+  ): LocalMessage => {
+    const isUser = submissionEmail ? m.sender === submissionEmail : false;
+    return {
+      id: m.id,
+      sender: isUser ? "user" : "admin",
+      message: m.message,
+      is_read: !!m.is_read,
+      created_at: m.created_at,
+    };
+  };
+
+  const scrollToBottom = () => {
+    setTimeout(() => {
+      const el = messagesContainerRef.current;
+      if (el) el.scrollTop = el.scrollHeight;
+    }, 50);
+  };
 
   useEffect(() => {
-    const fetchSubmission = async () => {
+    const fetchSubmissionAndMessages = async () => {
       try {
         const token = await getAccessToken();
-
-        const response = await axios.get<SubmissionDetail>(
+        const submissionResp = await axios.get<SubmissionDetail>(
           `${API_BASE_URL}/api/v1/submissions/user`,
           {
             headers: {
@@ -60,8 +96,11 @@ export default function SubmissionDetailPage() {
             },
           }
         );
-        9;
-        setSubmission(response.data);
+
+        const sub = submissionResp.data;
+        setSubmission(sub);
+
+        await fetchMessages(sub, token);
       } catch (err: any) {
         console.error(err);
         setError("Failed to load submission details.");
@@ -70,14 +109,112 @@ export default function SubmissionDetailPage() {
       }
     };
 
-    fetchSubmission();
+    fetchSubmissionAndMessages();
   }, [API_BASE_URL]);
 
-  const handleSendMessage = () => {
-    if (!newMessage.trim()) return;
-    setMessages((prev) => [...prev, { sender: "user", text: newMessage }]);
+  const fetchMessages = async (sub: SubmissionDetail, preToken?: string) => {
+    try {
+      const token = preToken ?? (await getAccessToken());
+      const res = await axios.get<APIMessage[]>(
+        `${API_BASE_URL}/api/v1/submissions/${sub.id}/messages`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      const mapped = res.data.map((m) => mapApiToLocal(m, sub.email));
+      setMessages(mapped);
+      scrollToBottom();
+
+      await markAdminMessagesRead(mapped);
+    } catch (err) {
+      console.error("Failed to fetch messages:", err);
+    }
+  };
+
+  const markAdminMessagesRead = async (msgs: LocalMessage[]) => {
+    if (!msgs || msgs.length === 0) return;
+    const unreadAdmin = msgs.filter((m) => m.sender === "admin" && !m.is_read);
+    if (unreadAdmin.length === 0) return;
+    try {
+      const token = await getAccessToken();
+      await Promise.all(
+        unreadAdmin.map((m) =>
+          axios.patch(
+            `${API_BASE_URL}/api/v1/submissions/messages/${m.id}/read`,
+            {},
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          )
+        )
+      );
+
+      setMessages((prev) =>
+        prev.map((pm) =>
+          unreadAdmin.some((u) => u.id === pm.id)
+            ? { ...pm, is_read: true }
+            : pm
+        )
+      );
+    } catch (err) {
+      console.error("Failed to mark messages as read:", err);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !submission) return;
+
+    const messageText = newMessage.trim();
     setNewMessage("");
-    toast.success("Message sent!");
+
+    const tempId = Date.now();
+    const tempMsg: LocalMessage = {
+      id: tempId,
+      sender: "user",
+      message: messageText,
+      temporary: true,
+      created_at: new Date().toISOString(),
+      is_read: true,
+    };
+    setMessages((prev) => [...prev, tempMsg]);
+    scrollToBottom();
+
+    setSending(true);
+    try {
+      const token = await getAccessToken();
+      const receiver = ADMIN_EMAIL || "admin@example.com";
+
+      const body = {
+        submission_id: submission.id,
+        sender: submission.email,
+        receiver,
+        message: messageText,
+        is_read: false,
+        created_at: new Date().toISOString(),
+      };
+
+      const res = await axios.post<APIMessage>(
+        `${API_BASE_URL}/api/v1/submissions/${submission.id}/messages`,
+        body,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      const created = res.data;
+      const mapped = mapApiToLocal(created, submission.email);
+      setMessages((prev) => prev.map((m) => (m.id === tempId ? mapped : m)));
+
+      toast.success("Message sent!");
+      scrollToBottom();
+    } catch (err) {
+      console.error("Send message failed:", err);
+      setMessages((prev) => prev.filter((m) => m.id !== tempId));
+      toast.error("Failed to send message.");
+    } finally {
+      setSending(false);
+    }
   };
 
   if (loading)
@@ -110,13 +247,10 @@ export default function SubmissionDetailPage() {
       <Toaster position="top-center" />
       <div className="container mx-auto">
         <div className="flex flex-col items-center gap-4 text-center mb-10">
-          <Badge variant="outline" className="px-6 rounded-md py-3 text-lg">
-            Team : {submission.team_name}
-          </Badge>
           <h1 className="max-w-2xl text-xl font-bold md:text-2xl">
             Submission Details & AI Evaluation
           </h1>
-          <p className="text-muted-foreground max-w-lg">
+          <p className="text-muted-foreground max-w-lg text-xs  ">
             Review the applicant information and AI-powered evaluation
           </p>
         </div>
@@ -147,6 +281,7 @@ export default function SubmissionDetailPage() {
             </TabsTrigger>
           </TabsList>
 
+          {/* Details tab (unchanged) */}
           <TabsContent
             value="details"
             className="mt-10 grid place-items-center"
@@ -155,7 +290,7 @@ export default function SubmissionDetailPage() {
               <CardContent className="p-8 space-y-8">
                 <div className="flex justify-between items-center">
                   <h2 className="text-2xl font-bold tracking-tight text-foreground">
-                    Applicant Information
+                    Your Applicantion
                   </h2>
                 </div>
 
@@ -227,6 +362,7 @@ export default function SubmissionDetailPage() {
             </Card>
           </TabsContent>
 
+          {/* Evaluation tab unchanged */}
           <TabsContent
             value="evaluation"
             className="mt-10 grid place-items-center px-4"
@@ -275,6 +411,7 @@ export default function SubmissionDetailPage() {
             </Card>
           </TabsContent>
 
+          {/* Questions tab (messages) */}
           <TabsContent
             value="questions"
             className="mt-10 grid place-items-center px-4"
@@ -287,18 +424,26 @@ export default function SubmissionDetailPage() {
                       Message History
                     </h3>
                   </div>
-                  <div className="flex-1 space-y-3 overflow-y-auto px-6 py-4 bg-muted/20">
+                  <div
+                    ref={messagesContainerRef}
+                    className="flex-1 space-y-3 overflow-y-auto px-6 py-4 bg-muted/20"
+                  >
                     {messages.length > 0 ? (
                       messages.map((m, i) => (
                         <div
-                          key={i}
+                          key={m.id + "-" + i}
                           className={`max-w-[80%] px-4 py-2 rounded-2xl text-sm ${
                             m.sender === "user"
                               ? "ml-auto bg-neutral-200 text-foreground rounded-br-none"
-                              : "mr-auto bg-muted text-foreground rounded-bl-none"
+                              : "mr-auto bg-neutral-300 text-foreground rounded-bl-none"
                           }`}
                         >
-                          {m.text}
+                          {m.message}
+                          <div className="text-xs text-muted-foreground mt-1">
+                            {m.created_at
+                              ? new Date(m.created_at).toLocaleString()
+                              : ""}
+                          </div>
                         </div>
                       ))
                     ) : (
@@ -330,8 +475,16 @@ export default function SubmissionDetailPage() {
                       onClick={handleSendMessage}
                       className="w-full cursor-pointer py-6"
                       variant={"outline"}
+                      disabled={sending}
                     >
-                      Send Message
+                      {sending ? (
+                        <span className="flex items-center gap-2">
+                          <Loader2 className="animate-spin h-4 w-4" />
+                          Sending...
+                        </span>
+                      ) : (
+                        "Send Message"
+                      )}
                     </Button>
                   </div>
                 </CardContent>
