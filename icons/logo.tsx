@@ -1,23 +1,18 @@
 "use client";
 
-import { useTheme } from "next-themes";
+import { useTheme } from "@/hooks/useTheme";
 import { useEffect, useState } from "react";
 
 const Logo = ({ className }: { className?: string }) => {
   const [fill, setFill] = useState("#262626");
-  const { theme, systemTheme } = useTheme();
+  const theme = useTheme();
+
+  console.log(theme, "theme")
 
   useEffect(() => {
-    if(theme === "system") {
-      setFill(systemTheme === "light" ? "#262626" : "#fff")
-      return;
-    }
-    if (theme === "light") {
-      setFill("#262626");
-    } else {
-      setFill("#fff");
-    }
-  }, [theme, systemTheme]);
+
+    setFill(theme === "light" ? "#262626" : "#fff");
+  }, [theme]);
 
   return (
     <svg

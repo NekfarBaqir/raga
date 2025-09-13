@@ -1,9 +1,10 @@
 import { ChevronDown } from "lucide-react";
 import Image from "next/image";
+import Header from "../layouts/header";
 
 const HeroSectionV2 = () => {
   return (
-    <section className="w-full min-h-screen h-auto relative pointer-events-none overflow-visible">
+    <section className="w-full min-h-screen h-auto relative pointer-events-none overflow-visible flex flex-col justify-start items-start">
       <Image
         src="/images/hero-section-bg.png"
         alt="Hero Section bg"
@@ -11,6 +12,7 @@ const HeroSectionV2 = () => {
         className="object-cover"
       />
       <div className="w-full h-full inset-0 absolute bg-gradient-to-b from-background/20 via-background/50 to-background/100"></div>
+      <div className="absolute top-0 left-0 w-full z-[1000] pointer-events-auto"><Header/></div>
    
       <div className="w-full absolute z-[500] pb-3 bottom-0 flex justify-center items-center">
         <button className="cursor-pointer pointer-events-auto"><ChevronDown className="w-7 h-7 animate-bounce" /></button>

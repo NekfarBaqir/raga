@@ -1,3 +1,4 @@
+"use client";
 import { motion } from "motion/react";
 import Video from "next-video";
 import CornerCroppedButton from "../ui/corner-cropped-button";

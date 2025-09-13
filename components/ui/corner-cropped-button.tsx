@@ -1,5 +1,6 @@
 "use client";
 
+import { useTheme } from "@/hooks/useTheme";
 import { cn } from "@/lib/utils";
 import { ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -19,6 +20,7 @@ const CornerCroppedButton = ({
   link: string;
   onClick?: () => void;
 } & React.ButtonHTMLAttributes<HTMLButtonElement>) => {
+  const theme = useTheme();
   const router = useRouter();
   const [isHovered, setIsHovered] = useState(false);
 
@@ -48,7 +50,7 @@ const CornerCroppedButton = ({
         <path
           opacity="0.3"
           d="M178.37 48.5008L165.87 61.001H13.5002L1 48.5008V13.5002L13.5002 1H165.87L178.37 13.5002V48.5008Z"
-          stroke={isHovered ? "#B71C1C" : "black"}
+          stroke={isHovered ? "#B71C1C" : theme === "light" ? "black" : "white"}
           strokeWidth={isHovered ? "1.50020" : "1.00002"}
         />
       </svg>

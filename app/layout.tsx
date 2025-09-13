@@ -1,6 +1,7 @@
-import { ThemeProvider } from "@/components/layouts/theme-provider";
 import type { Metadata } from "next";
 import { Inter, Poppins } from "next/font/google";
+import NextTopLoader from "nextjs-toploader";
+
 import "./globals.css";
 
 const geistSans = Inter({
@@ -29,15 +30,19 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem
-          forcedTheme="light"
-          disableTransitionOnChange
-        >
-          {children}
-        </ThemeProvider>
+        <NextTopLoader
+          color="#B71C1C"
+          initialPosition={0.08}
+          crawlSpeed={200}
+          height={3}
+          crawl={true}
+          showSpinner={true}
+          easing="easeinout"
+          speed={200}
+          shadow="0 0 10px #B71C1C,0 0 5px #B71C1C"
+        />
+
+        {children}
       </body>
     </html>
   );

@@ -18,7 +18,7 @@ const FAQSection = () => {
           <Accordion type="single" collapsible className="w-full">
             <AccordionItem value="item-1">
                 {ragaFaq?.map((faq) => (
-                    <AccordionItem value={faq.question}>
+                    <AccordionItem key={faq?.question} value={faq.question}>
                         <AccordionTrigger>{faq.question}</AccordionTrigger>
                         <AccordionContent>{faq.answer}</AccordionContent>
                     </AccordionItem>
