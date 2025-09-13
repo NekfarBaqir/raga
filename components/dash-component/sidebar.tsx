@@ -50,11 +50,6 @@ const navMain = [
     url: "/admin-dashboard/inbox",
     icon: Inbox,
   },
-  {
-    title: "Test",
-    url: "/admin-dashboard/test",
-    icon: Inbox,
-  },
 ];
 
 export default function AppSidebar({

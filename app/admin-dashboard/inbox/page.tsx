@@ -86,7 +86,9 @@ export default function InboxPage() {
                       </td>
                       <td className="px-4 py-2">{msg.date}</td>
                       <td className="px-4 py-2 text-right">
-                        <Link href={`/admin-dashboard/inbox/${msg.id}`}>
+                        <Link
+                          href={`/admin-dashboard/inbox/contacts/${msg.id}`}
+                        >
                           <button className="text-sm font-semibold text-primary hover:underline">
                             View
                           </button>
@@ -122,7 +124,9 @@ export default function InboxPage() {
                       </td>
                       <td className="px-4 py-2">{msg.date}</td>
                       <td className="px-4 py-2 text-right">
-                        <Link href={`/admin-dashboard/inbox/submissions/[id]`}>
+                        <Link
+                          href={`/admin-dashboard/inbox/submissions/${msg.id}`}
+                        >
                           <button className="text-sm font-semibold text-primary hover:underline">
                             View
                           </button>

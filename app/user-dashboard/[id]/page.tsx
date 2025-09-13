@@ -63,6 +63,7 @@ export default function SubmissionDetailPage() {
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
   const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
+  // Map API response to local message format
   const mapApiToLocal = (
     m: APIMessage,
     submissionEmail?: string
@@ -115,6 +116,7 @@ export default function SubmissionDetailPage() {
   const fetchMessages = async (sub: SubmissionDetail, preToken?: string) => {
     try {
       const token = preToken ?? (await getAccessToken());
+
       const res = await axios.get<APIMessage[]>(
         `${API_BASE_URL}/api/v1/submissions/${sub.id}/messages`,
         {
@@ -186,12 +188,9 @@ export default function SubmissionDetailPage() {
       const receiver = ADMIN_EMAIL || "admin@example.com";
 
       const body = {
-        submission_id: submission.id,
-        sender: submission.email,
-        receiver,
         message: messageText,
-        is_read: false,
-        created_at: new Date().toISOString(),
+        receiver,
+        submission_id: submission.id,
       };
 
       const res = await axios.post<APIMessage>(
@@ -201,8 +200,10 @@ export default function SubmissionDetailPage() {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
+      console.log("🚀 ~ handleSendMessage ~ res:", res);
 
       const created = res.data;
+      console.log("🚀 ~ handleSendMessage ~ created:", created);
       const mapped = mapApiToLocal(created, submission.email);
       setMessages((prev) => prev.map((m) => (m.id === tempId ? mapped : m)));
 
@@ -281,7 +282,7 @@ export default function SubmissionDetailPage() {
             </TabsTrigger>
           </TabsList>
 
-          {/* Details tab (unchanged) */}
+          {/* Details tab */}
           <TabsContent
             value="details"
             className="mt-10 grid place-items-center"
@@ -362,7 +363,7 @@ export default function SubmissionDetailPage() {
             </Card>
           </TabsContent>
 
-          {/* Evaluation tab unchanged */}
+          {/* Evaluation tab */}
           <TabsContent
             value="evaluation"
             className="mt-10 grid place-items-center px-4"
@@ -411,7 +412,7 @@ export default function SubmissionDetailPage() {
             </Card>
           </TabsContent>
 
-          {/* Questions tab (messages) */}
+          {/* Questions tab */}
           <TabsContent
             value="questions"
             className="mt-10 grid place-items-center px-4"
