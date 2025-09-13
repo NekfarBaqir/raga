@@ -1,14 +1,12 @@
 import { MetricCard } from "@/components/dash-component/MetricCard";
 import { RecentTable } from "@/components/dash-component/RecentTable";
-import { RiskPieChart } from "@/components/dash-component/RiskPieChart";
-import { TrendChart } from "@/components/dash-component/TrendChart";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Accordion,
+  AccordionContent,
   AccordionItem,
   AccordionTrigger,
-  AccordionContent,
 } from "@/components/ui/accordion";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface DashboardSectionsProps {
   data: any;
@@ -25,22 +23,22 @@ export function DashboardSections({ data }: DashboardSectionsProps) {
             <MetricCard
               title="New Contacts"
               value={data.contacts.new}
-              color="text-blue-500"
+              // color="text-blue-500"
             />
             <MetricCard
               title="In Progress"
               value={data.contacts.in_progress}
-              color="text-yellow-500"
+              // color="text-yellow-500"
             />
             <MetricCard
               title="Resolved"
               value={data.contacts.resolved}
-              color="text-green-500"
+              // color="text-green-500"
             />
             <MetricCard
               title="Today"
               value={data.contacts.received_today}
-              color="text-teal-500"
+              // color="text-teal-500"
             />
           </div>
         </AccordionContent>
@@ -53,17 +51,17 @@ export function DashboardSections({ data }: DashboardSectionsProps) {
             <MetricCard
               title="Pending Review"
               value={data.needs_action.pending_review}
-              color="text-yellow-500"
+              // color="text-yellow-500"
             />
             <MetricCard
               title="Unresolved Contacts"
               value={data.needs_action.unresolved_contacts}
-              color="text-orange-500"
+              // color="text-orange-500"
             />
             <MetricCard
               title="Low Score Approved"
               value={data.needs_action.low_score_approved}
-              color="text-red-500"
+              // color="text-red-500"
             />
           </div>
         </AccordionContent>
@@ -76,12 +74,12 @@ export function DashboardSections({ data }: DashboardSectionsProps) {
             <MetricCard
               title="Recent Avg Score"
               value={data.quality.recent_average_score}
-              color="text-blue-500"
+              // color="text-blue-500"
             />
             <MetricCard
               title="Rejection Rate"
               value={`${data.quality.rejection_rate}%`}
-              color="text-red-500"
+              // color="text-red-500"
             />
           </div>
         </AccordionContent>
