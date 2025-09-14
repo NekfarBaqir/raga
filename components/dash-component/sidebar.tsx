@@ -8,6 +8,7 @@ import {
   MessageCircle,
   ChartColumn,
   CircleQuestionMark,
+  Inbox,
 } from "lucide-react";
 
 import {

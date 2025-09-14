@@ -151,8 +151,8 @@ export default function SubmissionsPage() {
 
   const [sorting, setSorting] = useState<SortingState>([
     {
-      id: "team_name",
-      desc: false,
+      id: "id",
+      desc: true,
     },
   ]);
 
@@ -520,7 +520,7 @@ function RowActions({ row }: { row: Row<Submissions> }) {
           <Button
             size="icon"
             variant="ghost"
-            className="shadow-none"
+            className="shadow-none cursor-pointer"
             aria-label="Edit item"
             onClick={handleViewClick}
           >

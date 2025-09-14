@@ -71,7 +71,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-
+import { useRouter } from "next/navigation";
 type Contacts = {
   id: number;
   name: string;
@@ -92,6 +92,7 @@ const multiColumnFilterFn: FilterFn<Contacts> = (
 };
 
 export default function Component() {
+  const router = useRouter();
   const id = useId();
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -360,7 +361,13 @@ export default function Component() {
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id} className="border-b">
+              <TableRow
+                key={row.id}
+                className="border-b cursor-pointer"
+                onClick={() =>
+                  router.push(`/admin-dashboard/contacts/${row.original.id}`)
+                }
+              >
                 {row.getVisibleCells().map((cell) => (
                   <TableCell
                     key={cell.id}

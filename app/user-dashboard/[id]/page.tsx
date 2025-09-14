@@ -1,13 +1,13 @@
 "use client";
 
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { getAccessToken } from "@auth0/nextjs-auth0";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, User, Brain, MessageSquare } from "lucide-react";
+import { Loader2, User, Brain, MessageSquare, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast, Toaster } from "sonner";
@@ -32,27 +32,63 @@ interface SubmissionDetail {
   }[];
 }
 
+interface APIMessage {
+  id: number;
+  sender: string;
+  receiver?: string;
+  message: string;
+  is_read?: boolean;
+  created_at?: string;
+}
+
+type LocalMessage = {
+  id: number;
+  sender: "user" | "admin";
+  message: string;
+  is_read?: boolean;
+  created_at?: string;
+  temporary?: boolean;
+};
+
 export default function SubmissionDetailPage() {
   const [submission, setSubmission] = useState<SubmissionDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [messages, setMessages] = useState<
-    { sender: "user" | "admin"; text: string }[]
-  >([
-    { sender: "admin", text: "Welcome! You can ask your questions here." },
-    { sender: "user", text: "Thanks, I will." },
-  ]);
+  const [messages, setMessages] = useState<LocalMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
+  const [sending, setSending] = useState(false);
+  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
 
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
+
+  const mapApiToLocal = (
+    m: APIMessage,
+    submissionEmail?: string
+  ): LocalMessage => {
+    const isUser = submissionEmail ? m.sender === submissionEmail : false;
+    return {
+      id: m.id,
+      sender: isUser ? "user" : "admin",
+      message: m.message,
+      is_read: !!m.is_read,
+      created_at: m.created_at,
+    };
+  };
+
+  const scrollToBottom = () => {
+    setTimeout(() => {
+      const el = messagesContainerRef.current;
+      if (el) el.scrollTop = el.scrollHeight;
+    }, 50);
+  };
 
   useEffect(() => {
-    const fetchSubmission = async () => {
+    const fetchSubmissionAndMessages = async () => {
       try {
         const token = await getAccessToken();
-
-        const response = await axios.get<SubmissionDetail>(
+        const submissionResp = await axios.get<SubmissionDetail>(
           `${API_BASE_URL}/api/v1/submissions/user`,
           {
             headers: {
@@ -60,8 +96,11 @@ export default function SubmissionDetailPage() {
             },
           }
         );
-        9;
-        setSubmission(response.data);
+
+        const sub = submissionResp.data;
+        setSubmission(sub);
+
+        await fetchMessages(sub, token);
       } catch (err: any) {
         console.error(err);
         setError("Failed to load submission details.");
@@ -70,14 +109,110 @@ export default function SubmissionDetailPage() {
       }
     };
 
-    fetchSubmission();
+    fetchSubmissionAndMessages();
   }, [API_BASE_URL]);
 
-  const handleSendMessage = () => {
-    if (!newMessage.trim()) return;
-    setMessages((prev) => [...prev, { sender: "user", text: newMessage }]);
+  const fetchMessages = async (sub: SubmissionDetail, preToken?: string) => {
+    try {
+      const token = preToken ?? (await getAccessToken());
+
+      const res = await axios.get<APIMessage[]>(
+        `${API_BASE_URL}/api/v1/submissions/${sub.id}/messages`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      const mapped = res.data.map((m) => mapApiToLocal(m, sub.email));
+      setMessages(mapped);
+      scrollToBottom();
+
+      await markAdminMessagesRead(mapped);
+    } catch (err) {
+      console.error("Failed to fetch messages:", err);
+    }
+  };
+
+  const markAdminMessagesRead = async (msgs: LocalMessage[]) => {
+    if (!msgs || msgs.length === 0) return;
+    const unreadAdmin = msgs.filter((m) => m.sender === "admin" && !m.is_read);
+    if (unreadAdmin.length === 0) return;
+    try {
+      const token = await getAccessToken();
+      await Promise.all(
+        unreadAdmin.map((m) =>
+          axios.patch(
+            `${API_BASE_URL}/api/v1/submissions/messages/${m.id}/read`,
+            {},
+            {
+              headers: { Authorization: `Bearer ${token}` },
+            }
+          )
+        )
+      );
+
+      setMessages((prev) =>
+        prev.map((pm) =>
+          unreadAdmin.some((u) => u.id === pm.id)
+            ? { ...pm, is_read: true }
+            : pm
+        )
+      );
+    } catch (err) {
+      console.error("Failed to mark messages as read:", err);
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!newMessage.trim() || !submission) return;
+
+    const messageText = newMessage.trim();
     setNewMessage("");
-    toast.success("Message sent!");
+
+    const tempId = Date.now();
+    const tempMsg: LocalMessage = {
+      id: tempId,
+      sender: "user",
+      message: messageText,
+      temporary: true,
+      created_at: new Date().toISOString(),
+      is_read: true,
+    };
+    setMessages((prev) => [...prev, tempMsg]);
+    scrollToBottom();
+
+    setSending(true);
+    try {
+      const token = await getAccessToken();
+      const receiver = ADMIN_EMAIL || "admin@example.com";
+
+      const body = {
+        message: messageText,
+        receiver,
+        submission_id: submission.id,
+      };
+
+      const res = await axios.post<APIMessage>(
+        `${API_BASE_URL}/api/v1/submissions/${submission.id}/messages`,
+        body,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      const created = res.data;
+      const mapped = mapApiToLocal(created, submission.email);
+      setMessages((prev) => prev.map((m) => (m.id === tempId ? mapped : m)));
+
+      toast.success("Message sent!");
+      scrollToBottom();
+    } catch (err) {
+      console.error("Send message failed:", err);
+      setMessages((prev) => prev.filter((m) => m.id !== tempId));
+      toast.error("Failed to send message.");
+    } finally {
+      setSending(false);
+    }
   };
 
   if (loading)
@@ -110,13 +245,10 @@ export default function SubmissionDetailPage() {
       <Toaster position="top-center" />
       <div className="container mx-auto">
         <div className="flex flex-col items-center gap-4 text-center mb-10">
-          <Badge variant="outline" className="px-6 rounded-md py-3 text-lg">
-            Team : {submission.team_name}
-          </Badge>
           <h1 className="max-w-2xl text-xl font-bold md:text-2xl">
             Submission Details & AI Evaluation
           </h1>
-          <p className="text-muted-foreground max-w-lg">
+          <p className="text-muted-foreground max-w-lg text-xs  ">
             Review the applicant information and AI-powered evaluation
           </p>
         </div>
@@ -146,7 +278,6 @@ export default function SubmissionDetailPage() {
               Ask Question
             </TabsTrigger>
           </TabsList>
-
           <TabsContent
             value="details"
             className="mt-10 grid place-items-center"
@@ -155,7 +286,7 @@ export default function SubmissionDetailPage() {
               <CardContent className="p-8 space-y-8">
                 <div className="flex justify-between items-center">
                   <h2 className="text-2xl font-bold tracking-tight text-foreground">
-                    Applicant Information
+                    Your Applicantion
                   </h2>
                 </div>
 
@@ -226,47 +357,46 @@ export default function SubmissionDetailPage() {
               </CardContent>
             </Card>
           </TabsContent>
-
           <TabsContent
             value="evaluation"
             className="mt-10 grid place-items-center px-4"
           >
-            <Card className="w-full max-w-6xl  border border-gray-200 rounded-2xl bg-white">
+            <Card className="w-full max-w-6xl  border  rounded-2xl">
               <CardContent className="p-6 md:p-8 space-y-6">
-                <h2 className="text-3xl font-bold text-gray-800 text-center">
+                <h2 className="text-3xl font-bold text-foreground text-center">
                   AI Evaluation Report
                 </h2>
                 <div className="space-y-1">
-                  <h3 className="text-lg font-semibold text-gray-700">
+                  <h3 className="text-lg font-semibold text-foreground">
                     Score :
                   </h3>
-                  <p className="text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                  <p className="text-muted-foreground bg-popover p-3 rounded-lg border ">
                     {submission.score ?? "-"}
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-xl font-semibold text-gray-700">
+                  <h3 className="text-xl font-semibold text-foreground">
                     Feedback :
                   </h3>
-                  <p className="text-gray-600 bg-gray-50 p-4 rounded-lg border border-gray-100">
+                  <p className="text-muted-foreground bg-popover p-4 rounded-lg border">
                     {submission.feedback || "No feedback provided."}
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <h3 className="text-lg font-semibold text-gray-700">
+                    <h3 className="text-lg font-semibold text-foreground">
                       Strengths :
                     </h3>
-                    <p className="text-gray-600 bg-green-50 p-3 rounded-lg border border-green-100">
+                    <p className="text-muted-foreground bg-popover p-3 rounded-lg border ">
                       {submission.strengths || "-"}
                     </p>
                   </div>
                   <div className="space-y-1">
-                    <h3 className="text-lg font-semibold text-gray-700">
+                    <h3 className="text-lg font-semibold text-foreground">
                       Weaknesses :
                     </h3>
-                    <p className="text-gray-600 bg-red-50 p-3 rounded-lg border border-red-100">
+                    <p className="text-muted-foreground bg-popover p-3 rounded-lg border ">
                       {submission.weaknesses || "-"}
                     </p>
                   </div>
@@ -274,67 +404,75 @@ export default function SubmissionDetailPage() {
               </CardContent>
             </Card>
           </TabsContent>
-
           <TabsContent
             value="questions"
             className="mt-10 grid place-items-center px-4"
           >
-            <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="rounded-2xl shadow-md">
-                <CardContent className="p-0 h-[480px] flex flex-col">
-                  <div className="px-6 py-4 border-b">
-                    <h3 className="text-lg font-semibold text-foreground">
-                      Message History
-                    </h3>
-                  </div>
-                  <div className="flex-1 space-y-3 overflow-y-auto px-6 py-4 bg-muted/20">
-                    {messages.length > 0 ? (
-                      messages.map((m, i) => (
+            <div className="w-full max-w-6xl">
+              <Card className="rounded-xl h-[600px] flex flex-col">
+                <div className="px-6 py-4">
+                  <h3 className="text-lg font-semibold text-foreground">
+                    Chat
+                  </h3>
+                </div>
+
+                <div
+                  ref={messagesContainerRef}
+                  className="flex-1 overflow-y-auto px-6 py-4 bg-muted/20 space-y-3 scrollbar-thin scrollbar-thumb-neutral-400 scrollbar-track-neutral-200"
+                >
+                  {messages.length > 0 ? (
+                    messages.map((m, i) => (
+                      <div
+                        key={m.id + "-" + i}
+                        className={`flex items-end ${
+                          m.sender === "user" ? "justify-end" : "justify-start"
+                        }`}
+                      >
                         <div
-                          key={i}
-                          className={`max-w-[80%] px-4 py-2 rounded-2xl text-sm ${
+                          className={`px-4 py-2 text-sm max-w-[70%] break-words ${
                             m.sender === "user"
-                              ? "ml-auto bg-neutral-200 text-foreground rounded-br-none"
-                              : "mr-auto bg-muted text-foreground rounded-bl-none"
+                              ? "bg-muted text-foreground rounded-tl-2xl rounded-tr-2xl rounded-bl-2xl rounded-br-none"
+                              : "bg-accent text-foreground rounded-tl-2xl rounded-tr-2xl rounded-br-2xl rounded-bl-none"
                           }`}
                         >
-                          {m.text}
+                          {m.message}
+                          <div className="text-xs text-muted-foreground mt-1 text-right">
+                            {m.created_at
+                              ? new Date(m.created_at).toLocaleTimeString([], {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })
+                              : ""}
+                          </div>
                         </div>
-                      ))
-                    ) : (
-                      <p className="text-muted-foreground italic text-sm">
-                        No messages yet.
-                      </p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-muted-foreground italic text-sm text-center mt-10">
+                      No messages yet.
+                    </p>
+                  )}
+                </div>
 
-              <Card className="rounded-2xl shadow-md">
-                <CardContent className="p-0 h-[480px] flex flex-col">
-                  <div className="px-6 py-4 border-b">
-                    <h3 className="text-lg font-semibold text-foreground">
-                      Send a Message
-                    </h3>
-                  </div>
-                  <div className="flex-1 flex flex-col px-6 py-4">
-                    <Textarea
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      placeholder="Type your message..."
-                      className="flex-1 resize-none"
-                    />
-                  </div>
-                  <div className="px-6 py-4 border-t">
-                    <Button
-                      onClick={handleSendMessage}
-                      className="w-full cursor-pointer py-6"
-                      variant={"outline"}
-                    >
-                      Send Message
-                    </Button>
-                  </div>
-                </CardContent>
+                <div className="px-4 py-3 flex gap-3 items-center">
+                  <Textarea
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    placeholder="Type a message..."
+                    className="flex-1 resize-none rounded-2xl border px-4 py-1"
+                  />
+                  <button
+                    onClick={handleSendMessage}
+                    disabled={sending}
+                    className="p-3  rounded-full disabled:opacity-50"
+                  >
+                    {sending ? (
+                      <Loader2 className="animate-spin h-5 w-5" />
+                    ) : (
+                      <Send className="h-5 w-5 text-foreground" />
+                    )}
+                  </button>
+                </div>
               </Card>
             </div>
           </TabsContent>

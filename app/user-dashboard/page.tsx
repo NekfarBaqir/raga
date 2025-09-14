@@ -30,6 +30,7 @@ const UserDashboard = () => {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
+        console.log("🚀 ~ fetchSubmission ~ response:", response);
         setSubmission(response.data);
       } catch (err: any) {
         console.error(err);
@@ -45,7 +46,7 @@ const UserDashboard = () => {
   if (loading)
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
-        <Loader2 className="animate-spin w-10 h-10 text-blue-500" />
+        <Loader2 className="animate-spin w-10 h-10 text-chart-2" />
         <p className="text-lg text-muted-foreground">
           Loading submission status...
         </p>
@@ -81,7 +82,7 @@ const UserDashboard = () => {
         Welcome to the Dashboard
       </h1>
 
-      <Card className="shadow-lg border border-gray-200">
+      <Card className="shadow-lg border ">
         <CardContent className="space-y-4">
           <div className="flex items-center gap-2">
             <span className="font-semibold">Status:</span>
