@@ -1,15 +1,14 @@
 "use client";
 
-import axios from "axios";
-import { useEffect, useState, useRef } from "react";
 import { getAccessToken } from "@auth0/nextjs-auth0";
+import axios from "axios";
+import { useEffect, useRef, useState } from "react";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, User, Brain, MessageSquare, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs";
+import { Brain, Loader2, MessageSquare, RefreshCwIcon, Send, User } from "lucide-react";
 import { toast, Toaster } from "sonner";
 
 interface SubmissionDetail {
@@ -84,30 +83,32 @@ export default function SubmissionDetailPage() {
     }, 50);
   };
 
+  const fetchSubmissionAndMessages = async () => {
+    try {
+      const token = await getAccessToken();
+      const submissionResp = await axios.get<SubmissionDetail>(
+        `${API_BASE_URL}/api/v1/submissions/user`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const sub = submissionResp.data;
+      setSubmission(sub);
+
+      await fetchMessages(sub, token);
+    } catch (err: any) {
+      console.error(err);
+      setError("You did not have any submissions.");
+    } finally {
+      setLoading(false);
+    }
+  };
+  
   useEffect(() => {
-    const fetchSubmissionAndMessages = async () => {
-      try {
-        const token = await getAccessToken();
-        const submissionResp = await axios.get<SubmissionDetail>(
-          `${API_BASE_URL}/api/v1/submissions/user`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        const sub = submissionResp.data;
-        setSubmission(sub);
-
-        await fetchMessages(sub, token);
-      } catch (err: any) {
-        console.error(err);
-        setError("You did not have any submissions.");
-      } finally {
-        setLoading(false);
-      }
-    };
+ 
 
     fetchSubmissionAndMessages();
   }, [API_BASE_URL]);
@@ -283,6 +284,7 @@ export default function SubmissionDetailPage() {
             className="mt-10 grid place-items-center"
           >
             <Card className="max-w-6xl w-full border rounded-2xl  bg-background">
+        
               <CardContent className="p-8 space-y-8">
                 <div className="flex justify-between items-center">
                   <h2 className="text-2xl font-bold tracking-tight text-foreground">
@@ -398,7 +400,10 @@ export default function SubmissionDetailPage() {
             className="mt-10 grid place-items-center px-4"
           >
             <div className="w-full max-w-6xl">
-              <Card className="rounded-xl h-[600px] flex flex-col">
+              <Card className="rounded-xl h-[600px] flex flex-col relative">
+              <button onClick={fetchSubmissionAndMessages} className="absolute cursor-pointer top-2 right-2">
+                <RefreshCwIcon className="w-5 h-5" />
+              </button>
                 <div className="px-6 py-4">
                   <h3 className="text-lg font-semibold text-foreground">
                     Chat

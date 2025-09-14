@@ -22,6 +22,7 @@ import {
   CheckCircle,
   Loader2,
   MessageSquare,
+  RefreshCwIcon,
   Send,
   User,
 } from "lucide-react";
@@ -103,40 +104,40 @@ export default function SubmissionDetailPage() {
     };
   };
 
+  const fetchSubmission = async () => {
+    try {
+      const token = await getAccessToken();
+      const response = await axios.get<SubmissionDetail>(
+        `${API_BASE_URL}/api/v1/submissions/${id}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      const sub = response.data;
+      setSubmission(sub);
+      setEditingStatus(sub.status);
+
+      // Fetch messages
+      const messagesRes = await axios.get<APIMessage[]>(
+        `${API_BASE_URL}/api/v1/submissions/${sub.id}/messages`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const mapped = messagesRes.data.map((m) => mapApiToLocal(m, sub.email));
+      setMessages(mapped);
+      scrollToBottom();
+    } catch (err: any) {
+      console.error(err);
+      setError("Failed to load submission details.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchSubmission = async () => {
-      try {
-        const token = await getAccessToken();
-        const response = await axios.get<SubmissionDetail>(
-          `${API_BASE_URL}/api/v1/submissions/${id}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
-        );
-        const sub = response.data;
-        setSubmission(sub);
-        setEditingStatus(sub.status);
-
-        // Fetch messages
-        const messagesRes = await axios.get<APIMessage[]>(
-          `${API_BASE_URL}/api/v1/submissions/${sub.id}/messages`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        const mapped = messagesRes.data.map((m) => mapApiToLocal(m, sub.email));
-        setMessages(mapped);
-        scrollToBottom();
-      } catch (err: any) {
-        console.error(err);
-        setError("Failed to load submission details.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (id) fetchSubmission();
+        if (id) fetchSubmission();
   }, [API_BASE_URL, id]);
 
   const handleSave = async () => {
@@ -299,7 +300,7 @@ export default function SubmissionDetailPage() {
             value="details"
             className="mt-10 grid place-items-center"
           >
-            <Card className="max-w-5xl w-full border rounded-2xl shadow-sm bg-background">
+            <Card className="max-w-5xl w-full border rounded-2xl shadow-sm bg-background relative">
               <CardContent className="p-8 space-y-8">
                 <div className="flex justify-between items-center">
                   <h2 className="text-2xl font-bold tracking-tight text-foreground">
@@ -468,7 +469,10 @@ export default function SubmissionDetailPage() {
             className="mt-10 grid place-items-center px-4"
           >
             <div className="w-full max-w-6xl">
-              <Card className="rounded-xl h-[600px] flex flex-col">
+              <Card className="rounded-xl h-[600px] flex flex-col relative">
+                <button onClick={fetchSubmission} className="absolute cursor-pointer top-2 right-2">
+                  <RefreshCwIcon className="w-5 h-5" />
+                </button>
                 <div className="px-6 py-4">
                   <h3 className="text-lg font-semibold text-foreground">
                     Chat

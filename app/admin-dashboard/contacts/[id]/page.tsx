@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { getAccessToken } from "@auth0/nextjs-auth0";
 import axios from "axios";
-import { Loader2, SendIcon } from "lucide-react";
+import { Loader2, RefreshCwIcon, SendIcon } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
@@ -133,7 +133,10 @@ export default function Page() {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 mt-5 overflow-hidden h-[90vh]">
-      <Card className="rounded-xl h-full flex flex-col overflow-hidden">
+      <Card className="rounded-xl h-full flex flex-col overflow-hidden relative">
+        <button onClick={fetchMessages} className="absolute cursor-pointer top-2 right-2">
+          <RefreshCwIcon className="w-5 h-5" />
+        </button>
         <div className="px-6 py-4">
           <h3 className="text-lg font-semibold text-foreground">Chat</h3>
         </div>
