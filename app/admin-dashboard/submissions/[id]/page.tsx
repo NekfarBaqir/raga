@@ -33,7 +33,6 @@ interface SubmissionDetail {
   team_name: string;
   name: string;
   email: string;
-  notes: string;
   status: "approved" | "pending" | "rejected";
   score: number;
   feedback: string;
@@ -74,7 +73,6 @@ export default function SubmissionDetailPage() {
   const [editing, setEditing] = useState(false);
   const [editingStatus, setEditingStatus] =
     useState<SubmissionDetail["status"]>("pending");
-  const [editingNotes, setEditingNotes] = useState("");
   const [saving, setSaving] = useState(false);
 
   // Chat state
@@ -122,7 +120,6 @@ export default function SubmissionDetailPage() {
         const sub = response.data;
         setSubmission(sub);
         setEditingStatus(sub.status);
-        setEditingNotes(sub.notes);
 
         // Fetch messages
         const messagesRes = await axios.get<APIMessage[]>(
@@ -158,7 +155,6 @@ export default function SubmissionDetailPage() {
       const token = await getAccessToken();
       const body = {
         status: statusMap[editingStatus] || editingStatus,
-        notes: editingNotes,
         submission_id: submission.id,
       };
       const response = await axios.patch<SubmissionDetail>(
@@ -266,13 +262,10 @@ export default function SubmissionDetailPage() {
   if (!submission) return <p>No submission found.</p>;
 
   return (
-    <section className="py-16">
+    <section className="">
       <Toaster position="top-center" />
       <div className="container mx-auto">
         <div className="flex flex-col items-center gap-4 text-center mb-10">
-          <Badge variant="outline" className="px-8 py-3 text-lg rounded-md">
-            Team: {submission.team_name}
-          </Badge>
           <h1 className="max-w-2xl text-xl font-bold md:text-2xl">
             Submission Details & AI Evaluation
           </h1>
@@ -303,7 +296,6 @@ export default function SubmissionDetailPage() {
             </TabsTrigger>
           </TabsList>
 
-          {/* DETAILS TAB */}
           <TabsContent
             value="details"
             className="mt-10 grid place-items-center"
@@ -376,25 +368,6 @@ export default function SubmissionDetailPage() {
                       )}
                     </dd>
                   </div>
-
-                  <div className="sm:col-span-2">
-                    <dt className="text-sm font-medium text-muted-foreground">
-                      Notes
-                    </dt>
-                    <dd className="mt-2">
-                      {editing ? (
-                        <Textarea
-                          value={editingNotes}
-                          onChange={(e) => setEditingNotes(e.target.value)}
-                          placeholder="Enter notes..."
-                        />
-                      ) : (
-                        <div className="rounded-lg border bg-muted/30 px-3 py-2 text-base text-foreground">
-                          {editingNotes || "No notes added."}
-                        </div>
-                      )}
-                    </dd>
-                  </div>
                 </dl>
 
                 {editing && (
@@ -443,47 +416,46 @@ export default function SubmissionDetailPage() {
             </Card>
           </TabsContent>
 
-          {/* EVALUATION TAB */}
           <TabsContent
             value="evaluation"
             className="mt-10 grid place-items-center px-4"
           >
-            <Card className="w-full max-w-5xl shadow-xl border border-gray-200 rounded-2xl bg-white">
+            <Card className="w-full max-w-5xl shadow-xl border  rounded-2xl bg-backround">
               <CardContent className="p-6 md:p-8 space-y-6">
-                <h2 className="text-3xl font-bold text-gray-800 text-center">
+                <h2 className="text-3xl font-bold text-foreground text-center">
                   AI Evaluation Report
                 </h2>
                 <div className="space-y-1">
-                  <h3 className="text-lg font-semibold text-gray-700">
+                  <h3 className="text-lg font-semibold text-foreground">
                     Score :
                   </h3>
-                  <p className="text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                  <p className="text-muted-foreground bg-popover p-3 rounded-lg border ">
                     {submission.score ?? "-"}
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-xl font-semibold text-gray-700">
+                  <h3 className="text-xl font-semibold text-foreground">
                     Feedback :
                   </h3>
-                  <p className="text-gray-600 bg-gray-50 p-4 rounded-lg border border-gray-100">
+                  <p className="text-muted-foreground bg-popover p-4 rounded-lg border ">
                     {submission.feedback || "No feedback provided."}
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <h3 className="text-lg font-semibold text-gray-700">
+                    <h3 className="text-lg font-semibold text-foreground">
                       Strengths :
                     </h3>
-                    <p className="text-gray-600 bg-green-50 p-3 rounded-lg border border-green-100">
+                    <p className="text-muted-foreground bg-popover p-3 rounded-lg border">
                       {submission.strengths || "-"}
                     </p>
                   </div>
                   <div className="space-y-1">
-                    <h3 className="text-lg font-semibold text-gray-700">
+                    <h3 className="text-lg font-semibold text-foreground">
                       Weaknesses :
                     </h3>
-                    <p className="text-gray-600 bg-red-50 p-3 rounded-lg border border-red-100">
+                    <p className="text-muted-foreground bg-popover p-3 rounded-lg border">
                       {submission.weaknesses || "-"}
                     </p>
                   </div>

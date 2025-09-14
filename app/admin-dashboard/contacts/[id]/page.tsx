@@ -78,9 +78,22 @@ export default function Page() {
     setSending(true);
     try {
       const accessToken = await getAccessToken();
+
+      const senderEmail =
+        messages.find((m) => m.senderId !== "admin@example.com")?.senderId ||
+        "user@example.com";
+
+      const receiverEmail = "admin@example.com";
+
       const res = await axios.post<BackendMessage>(
         `${API_BASE_URL}/api/v1/contacts/${contactId}/messages`,
-        { message: newMessage },
+        {
+          contact_id: contactId,
+          sender: senderEmail,
+          receiver: receiverEmail,
+          message: newMessage,
+          is_read: false,
+        },
         { headers: { Authorization: `Bearer ${accessToken}` } }
       );
 
@@ -97,6 +110,7 @@ export default function Page() {
       setNewMessage("");
     } catch (err) {
       console.error("Failed to send message:", err);
+      alert("Message failed to send. Please try again.");
     } finally {
       setSending(false);
     }
@@ -112,16 +126,20 @@ export default function Page() {
     scrollToBottom();
   }, [messages]);
 
-  if (loading) return <p className="text-center mt-10">Loading chat...</p>;
+  if (loading)
+    return (
+      <p className="text-center mt-10 text-muted-foreground">Loading chat...</p>
+    );
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 mt-5">
-      <h1 className="text-2xl font-bold">Chat with User {contactId}</h1>
+      <h1 className="text-2xl font-bold"></h1>
 
       <Card className="rounded-xl h-[600px] flex flex-col">
         <div className="px-6 py-4">
           <h3 className="text-lg font-semibold text-foreground">Chat</h3>
         </div>
+
         <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 bg-muted/20 scrollbar-thin scrollbar-thumb-neutral-400 scrollbar-track-neutral-200">
           {messages.length === 0 ? (
             <p className="text-center text-sm text-muted-foreground mt-10">
@@ -137,7 +155,7 @@ export default function Page() {
               >
                 <div
                   className={`px-4 py-2 max-w-[70%] text-sm break-words rounded-2xl ${
-                    m.senderId === "admin"
+                    m.senderId === "admin@example.com"
                       ? "bg-background text-foreground rounded-br-none"
                       : "bg-primary text-primary-foreground rounded-bl-none"
                   }`}
@@ -156,7 +174,7 @@ export default function Page() {
           <div ref={messagesEndRef} />
         </div>
 
-        <div className="flex items-center  px-4 py-3 gap-3 border-t">
+        <div className="flex items-center px-4 py-3 gap-3 border-t">
           <Textarea
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
@@ -165,9 +183,15 @@ export default function Page() {
           />
           <Button
             onClick={handleSendMessage}
-            variant={"outline"}
+            variant="outline"
             disabled={sending}
             className="p-3 cursor-pointer"
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSendMessage();
+              }
+            }}
           >
             {sending ? (
               <Loader2 className="animate-spin h-5 w-5" />

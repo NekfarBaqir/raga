@@ -10,17 +10,18 @@ import { getAccessToken } from "@auth0/nextjs-auth0";
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 interface Message {
-  id: string;
-  senderId: string;
-  receiverId: string;
-  content: string;
-  timestamp: string;
-  read: boolean;
+  id: number;
+  contact_id: number;
+  sender: string;
+  receiver: string;
+  message: string;
+  is_read: boolean;
+  created_at: string;
 }
 
-interface User {
-  id: string;
-  name: string;
+interface Contact {
+  id: number;
+  email: string;
 }
 
 export default function ContactAdmin() {
@@ -28,7 +29,7 @@ export default function ContactAdmin() {
   const [loading, setLoading] = useState(true);
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
-  const currentUser: User = { id: "1", name: "You" };
+  const [contact, setContact] = useState<Contact | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const scrollToBottom = () => {
@@ -38,16 +39,28 @@ export default function ContactAdmin() {
   const fetchMessages = async () => {
     try {
       const token = await getAccessToken();
+
       const res = await axios.get<Message[]>(
-        `${API_BASE_URL}/api/v1/contacts/${currentUser.id}/messages`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
+        `${API_BASE_URL}/api/v1/contacts/user`,
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-      setMessages(res.data);
+
+      setMessages(
+        res.data.sort(
+          (a, b) =>
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        )
+      );
+
+      if (!contact && res.data.length > 0) {
+        setContact({
+          id: res.data[0].contact_id,
+          email:
+            res.data[0].sender !== "admin@example.com"
+              ? res.data[0].sender
+              : res.data[0].receiver,
+        });
+      }
     } catch (err) {
       console.error("Failed to fetch messages:", err);
     } finally {
@@ -66,30 +79,30 @@ export default function ContactAdmin() {
   }, [messages]);
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || !contact) return;
     setSending(true);
 
     try {
       const token = await getAccessToken();
+
       const res = await axios.post<Message>(
-        `${API_BASE_URL}/api/v1/contacts/${currentUser.id}/messages`,
+        `${API_BASE_URL}/api/v1/contacts/${contact.id}/messages`,
         {
-          senderId: currentUser.id,
-          receiverId: "2",
-          content: newMessage,
+          contact_id: contact.id,
+          sender: contact.email,
+          receiver: "admin@example.com",
+          message: newMessage,
+          is_read: false,
         },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
+      console.log("🚀 ~ handleSendMessage ~ res:", res);
 
       setMessages((prev) => [...prev, res.data]);
       setNewMessage("");
     } catch (err) {
       console.error("Failed to send message:", err);
+      alert("Message failed to send. Please try again.");
     } finally {
       setSending(false);
     }
@@ -103,7 +116,7 @@ export default function ContactAdmin() {
   return (
     <div className="max-w-6xl mx-auto space-y-8">
       <div>
-        <h1 className="text-xl md:2xl font-bold tracking-tight">
+        <h1 className="text-xl md:text-2xl font-bold tracking-tight">
           Contact Admin
         </h1>
         <p className="text-muted-foreground">
@@ -116,35 +129,47 @@ export default function ContactAdmin() {
           <div className="px-6 py-4">
             <h3 className="text-lg font-semibold text-foreground">Chat</h3>
           </div>
+
           <div className="flex-1 overflow-y-auto px-6 py-4 bg-muted/20 space-y-3 scrollbar-thin scrollbar-thumb-neutral-400 scrollbar-track-neutral-200">
-            {messages.length > 0 ? (
+            {loading ? (
+              <div className="flex justify-center items-center h-full">
+                <Loader2 className="animate-spin h-6 w-6 text-primary" />
+              </div>
+            ) : messages.length === 0 ? (
+              <p className="text-muted-foreground italic text-sm text-center mt-10">
+                No messages yet.
+              </p>
+            ) : (
               messages.map((m) => (
                 <div
                   key={m.id}
                   className={`flex items-end ${
-                    m.senderId === currentUser.id
+                    m.sender === contact?.email
                       ? "justify-end"
                       : "justify-start"
                   }`}
                 >
-                  <div
-                    className={`px-4 py-2 text-sm max-w-[70%] break-words ${
-                      m.senderId === currentUser.id
-                        ? "bg-background text-foreground rounded-tl-2xl rounded-tr-2xl rounded-bl-2xl rounded-br-none"
-                        : "bg-primary text-primary-foreground rounded-tl-2xl rounded-tr-2xl rounded-br-2xl rounded-bl-none"
-                    }`}
-                  >
-                    {m.content}
-                    <div className="text-xs text-muted-foreground mt-1 text-right">
-                      {formatTimestamp(m.timestamp)}
+                  <div className="flex flex-col">
+                    {m.sender !== contact?.email && (
+                      <span className="text-xs text-muted-foreground mb-1">
+                        Admin
+                      </span>
+                    )}
+                    <div
+                      className={`px-4 py-2 text-sm max-w-[70%] break-words ${
+                        m.sender === contact?.email
+                          ? "bg-background text-foreground rounded-tl-2xl rounded-tr-2xl rounded-bl-2xl rounded-br-none"
+                          : "bg-primary text-primary-foreground rounded-tl-2xl rounded-tr-2xl rounded-br-2xl rounded-bl-none"
+                      }`}
+                    >
+                      {m.message}
+                      <div className="text-xs text-muted-foreground mt-1 text-right">
+                        {formatTimestamp(m.created_at)}
+                      </div>
                     </div>
                   </div>
                 </div>
               ))
-            ) : (
-              <p className="text-muted-foreground italic text-sm text-center mt-10">
-                No messages yet.
-              </p>
             )}
             <div ref={messagesEndRef} />
           </div>
@@ -158,7 +183,7 @@ export default function ContactAdmin() {
             />
             <button
               onClick={handleSendMessage}
-              disabled={sending}
+              disabled={sending || !contact}
               className="p-3 rounded-full disabled:opacity-50"
             >
               {sending ? (
