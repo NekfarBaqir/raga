@@ -1,7 +1,7 @@
 "use client";
 import { motion } from "motion/react";
-import Video from "next-video";
 import CornerCroppedButton from "../ui/corner-cropped-button";
+import Player from "../ui/player/player";
 
 const WhatWeDoSection = () => {
   return (
@@ -53,16 +53,7 @@ const WhatWeDoSection = () => {
 
       <div className="w-full md:w-[60%] flex justify-end items-center">
         <div className="w-full md:w-[90%] self-stretch flex justify-center items-center">
-          <motion.div
-            initial={{ opacity: 0, y: 10, filter: "blur(10px)" }}
-            whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-            exit={{ opacity: 0, filter: "blur(10px)" }}
-            viewport={{ amount: 0.3 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="relative  aspect-[621/418] w-full"
-          >
-               <Video src="/videos/guide-video.mp4"  className="w-full h-full"/>
-          </motion.div>
+        <Player />
         </div>
       </div>
 

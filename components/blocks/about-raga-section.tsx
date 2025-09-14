@@ -1,7 +1,7 @@
 "use client";
 import { RagaTunnelLeft, RagaTunnelRight } from "@/icons/raga-tunnel";
 import { motion } from "motion/react";
-import Video from "next-video";
+import Player from "../ui/player/player";
 import ScrollReveal from "../ui/text-scroll-reveal/text-scroll-reveal";
 
 const AboutRagaSection = ({ showTheSVG = true }: { showTheSVG?: boolean }) => {
@@ -60,7 +60,7 @@ const AboutRagaSection = ({ showTheSVG = true }: { showTheSVG?: boolean }) => {
           </ScrollReveal>
 
           <div className="w-[95%] md:w-[80%] aspect-video h-auto rounded-3xl overflow-hidden mx-auto">
-            <Video src="/videos/guide-video.mp4" />
+            <Player/>
           </div>
         </div>
       </div>
