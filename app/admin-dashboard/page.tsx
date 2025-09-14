@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { getAccessToken } from "@auth0/nextjs-auth0";
-import axios from "axios";
-import { MetricCard } from "@/components/dash-component/MetricCard";
+import { ChartAreaInteractive } from "@/components/dash-component/chart-area-interactive";
 import { DashboardSections } from "@/components/dash-component/DashboardSections";
-import { Skeleton } from "@/components/ui/skeleton";
+import { MetricCard } from "@/components/dash-component/MetricCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ChartAreaInteractive } from "@/components/dash-component/chart-area-interactive";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getAccessToken } from "@auth0/nextjs-auth0";
+import axios from "axios";
 import { RefreshCcw } from "lucide-react";
+import { useEffect, useState } from "react";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 

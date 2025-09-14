@@ -5,13 +5,14 @@ import { useDimensions } from "@/hooks/use-dimensions";
 import { useTheme } from "@/hooks/useTheme";
 import { cn } from "@/lib/utils";
 import { MainNavItem } from "@/types";
-import { useUser } from "@auth0/nextjs-auth0";
+import { getAccessToken, useUser } from "@auth0/nextjs-auth0";
 import {
   motion,
   useCycle,
   useMotionValueEvent,
   useScroll,
 } from "framer-motion";
+import { jwtDecode } from "jwt-decode";
 import {
   ArrowRightIcon,
   FileText,
@@ -21,7 +22,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { RefObject, useEffect, useMemo, useRef, useState } from "react";
+import { RefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatedThemeToggler } from "../magicui/animated-theme-toggler";
 import { ShimmerButton } from "../magicui/shimmer-button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -47,6 +48,7 @@ const Header = () => {
   const pathname = usePathname();
   const { scrollY } = useScroll();
   const lastYRef = useRef(0);
+
   const [haveBackground, setHaveBackground] = useState(false);
   useMotionValueEvent(scrollY, "change", (y) => {
     const difference = y - lastYRef?.current;
@@ -98,12 +100,19 @@ const Header = () => {
     };
   }, [theme]);
 
-  useEffect(() => {
-    const roles = (user as any)?.["https://raga.space/roles"] as
-      | string[]
-      | undefined;
+  const getUserRole = useCallback(async()=>{
+    const accessToken = await getAccessToken();
+    const accessTokenDecoded: any = jwtDecode(accessToken);
+    const roles: string[] =
+      accessTokenDecoded["https://raga.space/roles"] || [];
     setRole(roles?.[0] ?? "user");
-  }, [user]);
+  }, [])
+
+  useEffect(() => {
+    if (user) {
+      getUserRole();
+    }
+  }, [getUserRole, user]);
 
   const goToDashboard = () => {
     if (role === "admin") {

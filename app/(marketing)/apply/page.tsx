@@ -1,14 +1,8 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { zodResolver } from "@hookform/resolvers/zod";
-import axios from "axios";
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { toast, Toaster } from "sonner";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
@@ -17,11 +11,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CheckCircle2, XCircle, Loader } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
-import { usePathname } from "next/navigation";
+import { Textarea } from "@/components/ui/textarea";
 import { getAccessToken } from "@auth0/nextjs-auth0";
+import { zodResolver } from "@hookform/resolvers/zod";
+import axios from "axios";
+import { CheckCircle2, Loader, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast, Toaster } from "sonner";
+import * as z from "zod";
 
 type QuestionType = "text" | "yes_no" | "dropdown";
 interface Question {
