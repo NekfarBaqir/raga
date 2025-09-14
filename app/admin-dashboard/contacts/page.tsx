@@ -1,8 +1,5 @@
 "use client";
-import { useEffect, useId, useRef, useState } from "react";
-import axios from "axios";
 import { getAccessToken } from "@auth0/nextjs-auth0";
-import { toast, Toaster } from "sonner";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -18,22 +15,30 @@ import {
   useReactTable,
   VisibilityState,
 } from "@tanstack/react-table";
+import axios from "axios";
+import { useEffect, useId, useRef, useState } from "react";
+import { toast, Toaster } from "sonner";
 
 import {
-  ChevronDownIcon,
+  AlertCircle,
   ChevronFirstIcon,
   ChevronLastIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  ListFilterIcon,
   Columns3Icon,
-  Loader,
-  AlertCircle,
   Inbox,
+  ListFilterIcon,
+  Loader
 } from "lucide-react";
 
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -55,6 +60,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -63,14 +69,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 type Contacts = {
   id: number;
@@ -79,6 +78,7 @@ type Contacts = {
   message: string;
   status: "new" | "in_progress" | "resolved";
   created_at: string;
+  has_new_message: boolean;
 };
 
 const multiColumnFilterFn: FilterFn<Contacts> = (
@@ -291,7 +291,7 @@ export default function Component() {
     );
 
   return (
-    <div className="space-y-4 xl:px-5">
+    <div className="space-y-4 xl:px-5 overflow-y-auto">
       <Toaster position="top-center" />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
@@ -360,24 +360,27 @@ export default function Component() {
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows.map((row) => (
-              <TableRow
-                key={row.id}
-                className="border-b cursor-pointer"
-                onClick={() =>
-                  router.push(`/admin-dashboard/contacts/${row.original.id}`)
-                }
-              >
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell
-                    key={cell.id}
-                    className="px-2 py-1 md:px-4 md:py-2 break-words text-xs sm:text-sm"
-                  >
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
+            {table.getRowModel().rows.map((row) => {
+     const isNewMessage = row.original.has_new_message;
+return (
+  <TableRow
+    key={row.id}
+    className={`border-b cursor-pointer ${isNewMessage ? "font-semibold" : ""}`}
+    onClick={() =>
+      router.push(`/admin-dashboard/contacts/${row.original.id}`)
+    }
+  >
+    {row.getVisibleCells().map((cell) => (
+      <TableCell
+        key={cell.id}
+        className="px-2 py-1 md:px-4 md:py-2 break-words text-xs sm:text-sm"
+      >
+        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+      </TableCell>
+    ))}
+  </TableRow>
+)
+            })}
           </TableBody>
         </Table>
       </div>

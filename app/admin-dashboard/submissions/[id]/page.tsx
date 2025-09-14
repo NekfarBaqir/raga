@@ -1,22 +1,12 @@
 "use client";
 
-import axios from "axios";
-import { useEffect, useState, useRef } from "react";
-import { useParams } from "next/navigation";
 import { getAccessToken } from "@auth0/nextjs-auth0";
+import axios from "axios";
+import { useParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs";
-import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Loader2,
-  User,
-  Brain,
-  CheckCircle,
-  AlertCircle,
-  MessageSquare,
-  Send,
-} from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -24,9 +14,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { toast, Toaster } from "sonner";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs";
+import {
+  AlertCircle,
+  Brain,
+  CheckCircle,
+  Loader2,
+  MessageSquare,
+  Send,
+  User,
+} from "lucide-react";
+import { toast, Toaster } from "sonner";
 
 interface SubmissionDetail {
   id: number;

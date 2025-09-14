@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { SendIcon, Loader2 } from "lucide-react";
-import axios from "axios";
 import { getAccessToken } from "@auth0/nextjs-auth0";
+import axios from "axios";
+import { Loader2, SendIcon } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -90,7 +90,7 @@ export default function ContactAdmin() {
         {
           contact_id: contact.id,
           sender: contact.email,
-          receiver: "admin@example.com",
+          receiver: "ragaentop@gmail.com",
           message: newMessage,
           is_read: false,
         },

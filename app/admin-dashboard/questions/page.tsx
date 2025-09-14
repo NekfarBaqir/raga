@@ -1,9 +1,50 @@
 "use client";
 
-import { SetStateAction, useEffect, useId, useRef, useState } from "react";
-import { getAccessToken } from "@auth0/nextjs-auth0";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+} from "@/components/ui/pagination";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { toast, Toaster } from "sonner";
+import { cn } from "@/lib/utils";
+import { getAccessToken } from "@auth0/nextjs-auth0";
 import {
   ColumnDef,
   ColumnFiltersState,
@@ -20,65 +61,24 @@ import {
   useReactTable,
   VisibilityState,
 } from "@tanstack/react-table";
+import axios from "axios";
 import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-} from "@/components/ui/pagination";
-import {
+  AlertCircle,
+  CheckCircle,
   ChevronFirstIcon,
   ChevronLastIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
-  ListFilterIcon,
-  PlusIcon,
-  EllipsisIcon,
   CircleXIcon,
   Columns3Icon,
-  Loader,
-  CheckCircle,
-  AlertCircle,
+  EllipsisIcon,
   Inbox,
+  ListFilterIcon,
+  Loader,
+  PlusIcon,
 } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { cn } from "@/lib/utils";
-import axios from "axios";
-import { Skeleton } from "@/components/ui/skeleton";
+import { SetStateAction, useEffect, useId, useRef, useState } from "react";
+import { toast, Toaster } from "sonner";
 
 type Question = {
   id: number;
@@ -371,7 +371,7 @@ export default function QuestionsTable() {
     );
 
   return (
-    <div className="space-y-4 w-full overflow-x-hidden px-2 sm:px-4 lg:px-6">
+    <div className="space-y-4 w-full overflow-x-hidden px-2 sm:px-4 lg:px-6 overflow-y-auto">
       <Toaster position="top-center" />
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">

@@ -1,8 +1,8 @@
 "use client";
-import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { getAccessToken } from "@auth0/nextjs-auth0";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import { withPageAuthRequired, getAccessToken } from "@auth0/nextjs-auth0";
+import { useEffect, useId, useRef, useState } from "react";
 
 import {
   ColumnDef,
@@ -35,7 +35,6 @@ import {
   ListFilterIcon,
 } from "lucide-react";
 
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -58,6 +57,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -66,7 +66,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 type Submissions = {
   id: number;
@@ -74,6 +74,7 @@ type Submissions = {
   email: string;
   status: string;
   score: number;
+  has_new_message: boolean;
 };
 
 const multiColumnFilterFn: FilterFn<Submissions> = (row, filterValue) => {
@@ -227,7 +228,7 @@ export default function SubmissionsPage() {
       </div>
     );
   return (
-    <div className="space-y-4 xl:px-5">
+    <div className="space-y-4 xl:px-5 overflow-y-auto">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="relative">
@@ -369,21 +370,27 @@ export default function SubmissionsPage() {
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="last:py-0">
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
+              table.getRowModel().rows.map((row) => {
+
+                const isNewMessage = row.original.has_new_message;
+
+                return (
+                  <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && "selected"}
+                    className={`${isNewMessage ? " *:!font-semibold" : ""}`}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id} className="last:py-0">
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                )
+              })
             ) : (
               <TableRow>
                 <TableCell
