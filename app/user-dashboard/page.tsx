@@ -30,7 +30,6 @@ const UserDashboard = () => {
             headers: { Authorization: `Bearer ${token}` },
           }
         );
-        console.log("🚀 ~ fetchSubmission ~ response:", response);
         setSubmission(response.data);
       } catch (err: any) {
         console.error(err);

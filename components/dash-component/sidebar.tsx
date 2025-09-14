@@ -79,9 +79,7 @@ export default function AppSidebar({
                   <Link
                     href={item.url}
                     className={`flex items-center py-6 mt-2 gap-3 p-3 rounded-md text-base transition-colors ${
-                      isActive
-                        ? "bg-blue-100 text-blue-700"
-                        : "hover:bg-blue-900 hover:text-blue-800"
+                      isActive ? "bg-popover text-foreground" : ""
                     }`}
                   >
                     <item.icon className="!size-5" />

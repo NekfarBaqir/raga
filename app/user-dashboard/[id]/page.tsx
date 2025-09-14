@@ -103,7 +103,7 @@ export default function SubmissionDetailPage() {
         await fetchMessages(sub, token);
       } catch (err: any) {
         console.error(err);
-        setError("Failed to load submission details.");
+        setError("You did not have any submissions.");
       } finally {
         setLoading(false);
       }
@@ -312,17 +312,6 @@ export default function SubmissionDetailPage() {
                       </div>
                     </dd>
                   </div>
-
-                  <div className="sm:col-span-2">
-                    <dt className="text-sm font-medium text-muted-foreground">
-                      Notes
-                    </dt>
-                    <dd className="mt-2">
-                      <div className="rounded-lg border bg-muted/30 px-3 py-2 text-base text-foreground">
-                        {submission.notes || "No notes added."}
-                      </div>
-                    </dd>
-                  </div>
                 </dl>
 
                 <p className="text-xs text-muted-foreground">
@@ -460,6 +449,12 @@ export default function SubmissionDetailPage() {
                     onChange={(e) => setNewMessage(e.target.value)}
                     placeholder="Type a message..."
                     className="flex-1 resize-none rounded-2xl border px-4 py-1"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendMessage();
+                      }
+                    }}
                   />
                   <button
                     onClick={handleSendMessage}
