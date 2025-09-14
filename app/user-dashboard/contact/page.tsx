@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { SendIcon, Loader2 } from "lucide-react";
 import axios from "axios";
-import { getAccessToken, useUser } from "@auth0/nextjs-auth0";
+import { getAccessToken } from "@auth0/nextjs-auth0";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
@@ -18,69 +18,36 @@ interface Message {
   read: boolean;
 }
 
-interface BackendMessage {
-  id: number;
-  contact_id: number;
-  sender: string;
-  receiver: string;
-  message: string;
-  is_read: boolean;
-  created_at: string;
-}
-
-interface UserData {
-  id: number;
+interface User {
+  id: string;
   name: string;
-  email: string;
-  avatar?: string;
 }
 
 export default function ContactAdmin() {
-  const { user, isLoading: authLoading } = useUser();
-  const [userData, setUserData] = useState<UserData | null>(null);
-  const [contactId, setContactId] = useState<number | null>(null);
-
   const [messages, setMessages] = useState<Message[]>([]);
-  const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
+  const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
+  const currentUser: User = { id: "1", name: "You" };
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const fetchUserData = async () => {
+  const fetchMessages = async () => {
     try {
       const token = await getAccessToken();
-      const res = await axios.get<UserData>(`${API_BASE_URL}/api/v1/user`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      setUserData(res.data);
-      setContactId(res.data.id);
-    } catch (err) {
-      console.error("Failed to fetch user data:", err);
-    }
-  };
-
-  const fetchMessages = async (cid: number) => {
-    try {
-      const token = await getAccessToken();
-      const res = await axios.get<BackendMessage[]>(
-        `${API_BASE_URL}/api/v1/contacts/${cid}/messages`,
-        { headers: { Authorization: `Bearer ${token}` } }
+      const res = await axios.get<Message[]>(
+        `${API_BASE_URL}/api/v1/contacts/${currentUser.id}/messages`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
       );
-
-      const mapped: Message[] = res.data.map((m) => ({
-        id: String(m.id),
-        senderId: m.sender,
-        receiverId: m.receiver,
-        content: m.message,
-        timestamp: m.created_at,
-        read: m.is_read,
-      }));
-
-      setMessages(mapped);
+      setMessages(res.data);
     } catch (err) {
       console.error("Failed to fetch messages:", err);
     } finally {
@@ -88,28 +55,38 @@ export default function ContactAdmin() {
     }
   };
 
+  useEffect(() => {
+    fetchMessages();
+    const interval = setInterval(fetchMessages, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !contactId) return;
+    if (!newMessage.trim()) return;
     setSending(true);
 
     try {
       const token = await getAccessToken();
-      const res = await axios.post<BackendMessage>(
-        `${API_BASE_URL}/api/v1/contacts/${contactId}/messages`,
-        { message: newMessage },
-        { headers: { Authorization: `Bearer ${token}` } }
+      const res = await axios.post<Message>(
+        `${API_BASE_URL}/api/v1/contacts/${currentUser.id}/messages`,
+        {
+          senderId: currentUser.id,
+          receiverId: "2",
+          content: newMessage,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
       );
 
-      const newMsg: Message = {
-        id: String(res.data.id),
-        senderId: res.data.sender,
-        receiverId: res.data.receiver,
-        content: res.data.message,
-        timestamp: res.data.created_at,
-        read: res.data.is_read,
-      };
-
-      setMessages((prev) => [...prev, newMsg]);
+      setMessages((prev) => [...prev, res.data]);
       setNewMessage("");
     } catch (err) {
       console.error("Failed to send message:", err);
@@ -118,101 +95,81 @@ export default function ContactAdmin() {
     }
   };
 
-  useEffect(() => {
-    if (!authLoading) fetchUserData();
-  }, [authLoading]);
-
-  useEffect(() => {
-    if (contactId) {
-      fetchMessages(contactId);
-      const interval = setInterval(() => fetchMessages(contactId), 5000);
-      return () => clearInterval(interval);
-    }
-  }, [contactId]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
   const formatTimestamp = (ts: string) => {
     const date = new Date(ts);
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   };
 
-  if (authLoading || loading) {
-    return <p className="text-center mt-10">Loading chat...</p>;
-  }
-
   return (
-    <div className="max-w-4xl mx-auto space-y-6 mt-5">
-      {/* User Info */}
-      {userData && (
-        <div className="flex items-center gap-4 mb-4">
-          <img
-            src={userData.avatar || "/default-avatar.png"}
-            alt={userData.name}
-            className="w-12 h-12 rounded-full"
-          />
-          <div>
-            <h2 className="font-bold text-lg">{userData.name}</h2>
-            <p className="text-sm text-muted-foreground">{userData.email}</p>
-          </div>
-        </div>
-      )}
+    <div className="max-w-6xl mx-auto space-y-8">
+      <div>
+        <h1 className="text-xl md:2xl font-bold tracking-tight">
+          Contact Admin
+        </h1>
+        <p className="text-muted-foreground">
+          Get in touch with our support team.
+        </p>
+      </div>
 
-      {/* Chat Window */}
-      <Card className="rounded-xl h-[600px] flex flex-col">
-        <div className="flex-1 overflow-y-auto px-4 py-3 space-y-3 bg-muted/20 scrollbar-thin scrollbar-thumb-neutral-400 scrollbar-track-neutral-200">
-          {messages.length === 0 ? (
-            <p className="text-center text-sm text-muted-foreground mt-10">
-              No messages yet.
-            </p>
-          ) : (
-            messages.map((m) => (
-              <div
-                key={m.id}
-                className={`flex items-end ${
-                  m.senderId === "admin" ? "justify-end" : "justify-start"
-                }`}
-              >
+      <div className="w-full max-w-6xl">
+        <Card className="rounded-xl h-[600px] flex flex-col">
+          <div className="px-6 py-4">
+            <h3 className="text-lg font-semibold text-foreground">Chat</h3>
+          </div>
+          <div className="flex-1 overflow-y-auto px-6 py-4 bg-muted/20 space-y-3 scrollbar-thin scrollbar-thumb-neutral-400 scrollbar-track-neutral-200">
+            {messages.length > 0 ? (
+              messages.map((m) => (
                 <div
-                  className={`px-4 py-2 max-w-[70%] text-sm break-words rounded-2xl ${
-                    m.senderId === "admin"
-                      ? "bg-background text-foreground rounded-br-none"
-                      : "bg-primary text-primary-foreground rounded-bl-none"
+                  key={m.id}
+                  className={`flex items-end ${
+                    m.senderId === currentUser.id
+                      ? "justify-end"
+                      : "justify-start"
                   }`}
                 >
-                  {m.content}
-                  <div className="text-xs text-muted-foreground mt-1 text-right">
-                    {formatTimestamp(m.timestamp)}
+                  <div
+                    className={`px-4 py-2 text-sm max-w-[70%] break-words ${
+                      m.senderId === currentUser.id
+                        ? "bg-background text-foreground rounded-tl-2xl rounded-tr-2xl rounded-bl-2xl rounded-br-none"
+                        : "bg-primary text-primary-foreground rounded-tl-2xl rounded-tr-2xl rounded-br-2xl rounded-bl-none"
+                    }`}
+                  >
+                    {m.content}
+                    <div className="text-xs text-muted-foreground mt-1 text-right">
+                      {formatTimestamp(m.timestamp)}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
-          )}
-          <div ref={messagesEndRef} />
-        </div>
-
-        <div className="flex px-4 py-3 gap-3 border-t">
-          <Textarea
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Type a message..."
-            className="flex-1 resize-none rounded-2xl border px-4 py-2"
-          />
-          <button
-            onClick={handleSendMessage}
-            disabled={sending}
-            className="p-3 rounded-full disabled:opacity-50"
-          >
-            {sending ? (
-              <Loader2 className="animate-spin h-5 w-5" />
+              ))
             ) : (
-              <SendIcon className="h-5 w-5 text-foreground" />
+              <p className="text-muted-foreground italic text-sm text-center mt-10">
+                No messages yet.
+              </p>
             )}
-          </button>
-        </div>
-      </Card>
+            <div ref={messagesEndRef} />
+          </div>
+
+          <div className="px-4 py-3 flex gap-3 items-center border-t">
+            <Textarea
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+              placeholder="Type a message..."
+              className="flex-1 resize-none rounded-2xl border px-4 py-1"
+            />
+            <button
+              onClick={handleSendMessage}
+              disabled={sending}
+              className="p-3 rounded-full disabled:opacity-50"
+            >
+              {sending ? (
+                <Loader2 className="animate-spin h-5 w-5" />
+              ) : (
+                <SendIcon className="h-5 w-5 text-foreground" />
+              )}
+            </button>
+          </div>
+        </Card>
+      </div>
     </div>
   );
 }
