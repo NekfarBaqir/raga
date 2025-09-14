@@ -151,8 +151,8 @@ export default function SubmissionsPage() {
 
   const [sorting, setSorting] = useState<SortingState>([
     {
-      id: "team_name",
-      desc: false,
+      id: "id",
+      desc: true,
     },
   ]);
 

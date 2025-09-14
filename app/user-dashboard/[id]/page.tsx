@@ -7,7 +7,7 @@ import { getAccessToken } from "@auth0/nextjs-auth0";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, User, Brain, MessageSquare } from "lucide-react";
+import { Loader2, User, Brain, MessageSquare, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast, Toaster } from "sonner";
@@ -63,7 +63,6 @@ export default function SubmissionDetailPage() {
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
   const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL;
 
-  // Map API response to local message format
   const mapApiToLocal = (
     m: APIMessage,
     submissionEmail?: string
@@ -200,10 +199,8 @@ export default function SubmissionDetailPage() {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
-      console.log("🚀 ~ handleSendMessage ~ res:", res);
 
       const created = res.data;
-      console.log("🚀 ~ handleSendMessage ~ created:", created);
       const mapped = mapApiToLocal(created, submission.email);
       setMessages((prev) => prev.map((m) => (m.id === tempId ? mapped : m)));
 
@@ -281,8 +278,6 @@ export default function SubmissionDetailPage() {
               Ask Question
             </TabsTrigger>
           </TabsList>
-
-          {/* Details tab */}
           <TabsContent
             value="details"
             className="mt-10 grid place-items-center"
@@ -362,48 +357,46 @@ export default function SubmissionDetailPage() {
               </CardContent>
             </Card>
           </TabsContent>
-
-          {/* Evaluation tab */}
           <TabsContent
             value="evaluation"
             className="mt-10 grid place-items-center px-4"
           >
-            <Card className="w-full max-w-6xl  border border-gray-200 rounded-2xl bg-white">
+            <Card className="w-full max-w-6xl  border  rounded-2xl">
               <CardContent className="p-6 md:p-8 space-y-6">
-                <h2 className="text-3xl font-bold text-gray-800 text-center">
+                <h2 className="text-3xl font-bold text-foreground text-center">
                   AI Evaluation Report
                 </h2>
                 <div className="space-y-1">
-                  <h3 className="text-lg font-semibold text-gray-700">
+                  <h3 className="text-lg font-semibold text-foreground">
                     Score :
                   </h3>
-                  <p className="text-gray-600 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                  <p className="text-muted-foreground bg-popover p-3 rounded-lg border ">
                     {submission.score ?? "-"}
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-xl font-semibold text-gray-700">
+                  <h3 className="text-xl font-semibold text-foreground">
                     Feedback :
                   </h3>
-                  <p className="text-gray-600 bg-gray-50 p-4 rounded-lg border border-gray-100">
+                  <p className="text-muted-foreground bg-popover p-4 rounded-lg border">
                     {submission.feedback || "No feedback provided."}
                   </p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <h3 className="text-lg font-semibold text-gray-700">
+                    <h3 className="text-lg font-semibold text-foreground">
                       Strengths :
                     </h3>
-                    <p className="text-gray-600 bg-green-50 p-3 rounded-lg border border-green-100">
+                    <p className="text-muted-foreground bg-popover p-3 rounded-lg border ">
                       {submission.strengths || "-"}
                     </p>
                   </div>
                   <div className="space-y-1">
-                    <h3 className="text-lg font-semibold text-gray-700">
+                    <h3 className="text-lg font-semibold text-foreground">
                       Weaknesses :
                     </h3>
-                    <p className="text-gray-600 bg-red-50 p-3 rounded-lg border border-red-100">
+                    <p className="text-muted-foreground bg-popover p-3 rounded-lg border ">
                       {submission.weaknesses || "-"}
                     </p>
                   </div>
@@ -411,84 +404,75 @@ export default function SubmissionDetailPage() {
               </CardContent>
             </Card>
           </TabsContent>
-
-          {/* Questions tab */}
           <TabsContent
             value="questions"
             className="mt-10 grid place-items-center px-4"
           >
-            <div className="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="rounded-2xl shadow-md">
-                <CardContent className="p-0 h-[480px] flex flex-col">
-                  <div className="px-6 py-4 border-b">
-                    <h3 className="text-lg font-semibold text-foreground">
-                      Message History
-                    </h3>
-                  </div>
-                  <div
-                    ref={messagesContainerRef}
-                    className="flex-1 space-y-3 overflow-y-auto px-6 py-4 bg-muted/20"
-                  >
-                    {messages.length > 0 ? (
-                      messages.map((m, i) => (
+            <div className="w-full max-w-6xl">
+              <Card className="rounded-xl h-[600px] flex flex-col">
+                <div className="px-6 py-4">
+                  <h3 className="text-lg font-semibold text-foreground">
+                    Chat
+                  </h3>
+                </div>
+
+                <div
+                  ref={messagesContainerRef}
+                  className="flex-1 overflow-y-auto px-6 py-4 bg-muted/20 space-y-3 scrollbar-thin scrollbar-thumb-neutral-400 scrollbar-track-neutral-200"
+                >
+                  {messages.length > 0 ? (
+                    messages.map((m, i) => (
+                      <div
+                        key={m.id + "-" + i}
+                        className={`flex items-end ${
+                          m.sender === "user" ? "justify-end" : "justify-start"
+                        }`}
+                      >
                         <div
-                          key={m.id + "-" + i}
-                          className={`max-w-[80%] px-4 py-2 rounded-2xl text-sm ${
+                          className={`px-4 py-2 text-sm max-w-[70%] break-words ${
                             m.sender === "user"
-                              ? "ml-auto bg-neutral-200 text-foreground rounded-br-none"
-                              : "mr-auto bg-neutral-300 text-foreground rounded-bl-none"
+                              ? "bg-muted text-foreground rounded-tl-2xl rounded-tr-2xl rounded-bl-2xl rounded-br-none"
+                              : "bg-accent text-foreground rounded-tl-2xl rounded-tr-2xl rounded-br-2xl rounded-bl-none"
                           }`}
                         >
                           {m.message}
-                          <div className="text-xs text-muted-foreground mt-1">
+                          <div className="text-xs text-muted-foreground mt-1 text-right">
                             {m.created_at
-                              ? new Date(m.created_at).toLocaleString()
+                              ? new Date(m.created_at).toLocaleTimeString([], {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })
                               : ""}
                           </div>
                         </div>
-                      ))
-                    ) : (
-                      <p className="text-muted-foreground italic text-sm">
-                        No messages yet.
-                      </p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-muted-foreground italic text-sm text-center mt-10">
+                      No messages yet.
+                    </p>
+                  )}
+                </div>
 
-              <Card className="rounded-2xl shadow-md">
-                <CardContent className="p-0 h-[480px] flex flex-col">
-                  <div className="px-6 py-4 border-b">
-                    <h3 className="text-lg font-semibold text-foreground">
-                      Send a Message
-                    </h3>
-                  </div>
-                  <div className="flex-1 flex flex-col px-6 py-4">
-                    <Textarea
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                      placeholder="Type your message..."
-                      className="flex-1 resize-none"
-                    />
-                  </div>
-                  <div className="px-6 py-4 border-t">
-                    <Button
-                      onClick={handleSendMessage}
-                      className="w-full cursor-pointer py-6"
-                      variant={"outline"}
-                      disabled={sending}
-                    >
-                      {sending ? (
-                        <span className="flex items-center gap-2">
-                          <Loader2 className="animate-spin h-4 w-4" />
-                          Sending...
-                        </span>
-                      ) : (
-                        "Send Message"
-                      )}
-                    </Button>
-                  </div>
-                </CardContent>
+                <div className="px-4 py-3 flex gap-3 items-center">
+                  <Textarea
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    placeholder="Type a message..."
+                    className="flex-1 resize-none rounded-2xl border px-4 py-1"
+                  />
+                  <button
+                    onClick={handleSendMessage}
+                    disabled={sending}
+                    className="p-3  rounded-full disabled:opacity-50"
+                  >
+                    {sending ? (
+                      <Loader2 className="animate-spin h-5 w-5" />
+                    ) : (
+                      <Send className="h-5 w-5 text-foreground" />
+                    )}
+                  </button>
+                </div>
               </Card>
             </div>
           </TabsContent>

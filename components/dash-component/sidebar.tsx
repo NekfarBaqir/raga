@@ -45,11 +45,6 @@ const navMain = [
     url: "/admin-dashboard/contacts",
     icon: MessageCircle,
   },
-  {
-    title: "Inbox",
-    url: "/admin-dashboard/inbox",
-    icon: Inbox,
-  },
 ];
 
 export default function AppSidebar({

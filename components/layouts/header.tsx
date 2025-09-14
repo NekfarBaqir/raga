@@ -6,7 +6,12 @@ import { cn } from "@/lib/utils";
 import { MainNavItem } from "@/types";
 import { useUser } from "@auth0/nextjs-auth0";
 import { motion, useCycle } from "framer-motion";
-import { ArrowRightIcon, LayoutDashboard, LogOut } from "lucide-react";
+import {
+  ArrowRightIcon,
+  FileText,
+  LayoutDashboard,
+  LogOut,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { RefObject, useEffect, useRef, useState } from "react";
@@ -139,6 +144,7 @@ const Header = () => {
                   </AvatarFallback>
                 </Avatar>
               </DropdownMenuTrigger>
+
               <DropdownMenuContent align="end" className="w-56 py-4 mt-3">
                 <DropdownMenuItem
                   onClick={goToDashboard}
@@ -147,6 +153,20 @@ const Header = () => {
                   <span>Dashboard</span>
                   <LayoutDashboard className="w-4 h-4" />
                 </DropdownMenuItem>
+
+                <DropdownMenuItem
+                  asChild
+                  className="cursor-pointer px-4 py-2 flex items-center justify-between gap-2"
+                >
+                  <Link
+                    href="/apply"
+                    className="flex items-center justify-between gap-2"
+                  >
+                    <span>Apply</span>
+                    <FileText className="w-4 h-4" />
+                  </Link>
+                </DropdownMenuItem>
+
                 <DropdownMenuItem
                   asChild
                   className="cursor-pointer px-4 py-2 mt-3 flex items-center gap-2 text-red-600 hover:bg-red-50"
