@@ -6,7 +6,7 @@ import Link from "next/link";
 export default function Footer() {
   return (
     <footer className=" text-white py-10 px-6 md:px-12 mt-10">
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-[1800px] mx-auto">
         <div className="flex flex-col md:flex-row items-start justify-between gap-8">
           <div className=" block md:flex justify-center items-center text-background md:pl-10 md:text-left space-y-3 md:space-y-0 md:space-x-5">
             <span className="text-2xl font-semibold text-primary">RAGA</span>
@@ -45,39 +45,18 @@ export default function Footer() {
         </div>
 
         <div className="flex justify-center flex-col">
-          <Link href="/">
+          <Link href="/" className="py-3 px-2">
             <Logo
-              className="
-                h-24 w-auto      
-                md:h-52 md:w-auto
-                lg:h-[230px]  
-                xl:h-[300px] xl:w-auto 
-                opacity-100
-              "
+              className="w-full  object-cover h-auto"
             />
           </Link>
 
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-xs md:text-sm text-stone-700 dark:text-gray-400">
-              <div className="md:pl-8 w-full text-center ">© 2025. All rights reserved.</div>
-              {/* <div className="flex items-center justify-center gap-3 md:pr-10">
-                Youtube
-                <span className="hidden sm:block">|</span>
-                <a
-                  href="#"
-                  className="hover:text-stone-950 dark:hover:text-white"
-                >
-                  X
-                </a>
-                <span className="hidden sm:block">|</span>
-                <a
-                  href="#"
-                  className="hover:text-stone-950 dark:hover:text-white"
-                >
-                  Instagram
-                </a>
-              </div> */}
+            <div className="md:pl-8 w-full text-center ">
+              © 2025. All rights reserved.
             </div>
-        
+
+          </div>
         </div>
       </div>
     </footer>
