@@ -32,7 +32,7 @@ const WhoCanJoinUS = () => {
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="text-2xl md:text-5xl font-bold font-poppins"
         >
-          WHO CAN <span className="block">JON US?</span>
+          WHO CAN <span className="block">JOIN US?</span>
         </motion.h2>
         <motion.div
           initial={{ opacity: 0, y: 10, filter: "blur(10px)" }}

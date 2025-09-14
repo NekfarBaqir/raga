@@ -5,7 +5,7 @@ import { motion } from "motion/react";
 
 const SloganSection = () => {
   return (
-    <div className="w-full h-fit overflow-visible -mt-[75vh]  md:-mt-[65vh] ">
+    <div className="w-full h-fit overflow-visible -mt-[75vh]  md:-mt-[65vh] max-w-[1800px] mx-auto ">
       <section className="w-[94%] aspect-[1361/2800] md:aspect-[1361/984] h-fit relative mx-auto  flex">
         <ExtendedLogo className="absolute inset-0 w-full h-full object-contain z-0 pointer-events-none" />
         <div className="absolute inset-0 z-10 w-full  flex justify-start items-start mx-auto">
@@ -46,7 +46,7 @@ const SloganSection = () => {
           </div>
         </div>
       </section>
-      <div className="relative w-full flex justify-center items-center flex-col  py-3">
+      <div className="relative w-full flex justify-center items-center flex-col py-12 md:py-20">
         <motion.h2
           initial={{ opacity: 0, y: 10, filter: "blur(10px)" }}
           whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
@@ -65,7 +65,7 @@ const SloganSection = () => {
           transition={{ duration: 0.8, ease: "easeOut" }}
           className="text-xl md:text-3xl font-light font-poppins"
         >
-          We give it for free!
+          We provide it for you!
         </motion.p>
       </div>
     </div>

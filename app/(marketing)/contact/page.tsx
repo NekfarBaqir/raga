@@ -1,23 +1,23 @@
 "use client";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import axios from "axios";
-import { useState } from "react";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { zodResolver } from "@hookform/resolvers/zod";
+import axios from "axios";
 import { Lightbulb, Mail, Phone } from "lucide-react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 
 // ShadCN Dialog imports
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 
 const formSchema = z.object({
@@ -74,21 +74,21 @@ export default function Contact() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background text-foreground p-6">
+    <div className="flex items-center justify-center min-h-screen bg-background text-foreground p-6 xl:pt-20">
       <div className="flex flex-col md:flex-row gap-16 max-w-7xl w-full">
         {/* Left section */}
         <div className="flex-1">
           <button
-            className="flex items-center cursor-pointer mb-10 gap-2 px-4 py-2 rounded-full border
+            className="flex items-center cursor-pointer text-xs lg:text-sm mb-10 gap-2 px-4 py-2 rounded-full border
                              border-gray-400 bg-transparent text-backgroun hover:border-border transition"
           >
             <Lightbulb className="w-5 h-5" />
             Contact us
           </button>
-          <h2 className="text-6xl font-bold mb-12 font-poppins">
-            24<span className="text-[56px]">/</span> 7 Available
+          <h2 className=" text-2xl md:text-4xl lg:text-5xl xl:text-6xl font-bold mb-6 lg:mb-12 font-poppins">
+            24 <span className=" text-3xl md:text-5xl lg:text-6xl xl:text-7xl">/</span> 7 Available
           </h2>
-          <p className="mb-10 text-foreground text-xl leading-relaxed">
+          <p className="mb-10 text-foreground text-sm md:text-lg lg:text-xl leading-relaxed">
             You can contact us via email, phone, or by filling out the form on
             this page. We strive to respond promptly and look forward to
             connecting with you soon!
@@ -99,7 +99,7 @@ export default function Contact() {
               <div className="bg-gray-200 text-black p-2 rounded-full">
                 <Mail className="w-5 h-5" />
               </div>
-              <span>example@gmail.com</span>
+              <span>contact@raga.space</span>
             </div>
 
             <div className="flex items-center gap-3">
@@ -193,9 +193,10 @@ export default function Contact() {
             <Button
               type="submit"
               variant={"outline"}
+              disabled={isLoading}
               className="w-full bg-background text-foreground cursor-pointer px-6 py-7 text-lg rounded-full font-semibold"
             >
-              Submit
+              {isLoading ? "Submitting..." : "Submit"}
             </Button>
           </form>
         </div>

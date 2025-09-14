@@ -39,14 +39,14 @@ const AboutRagaSection = ({ showTheSVG = true }: { showTheSVG?: boolean }) => {
         </div>
       )}
 
-      <div className="bg-[#FAFAFA] dark:bg-white/5 w-full max-w-[1800px] mx-auto p-5 flex justify-start items-center gap-5 py-7 pb-20">
+      <div className=" w-full max-w-[1800px] mx-auto p-5 flex justify-start items-center gap-5 py-7 pb-20">
         <div className=" flex flex-col justify-start items-start gap-1.5 w-[90%] mx-auto">
           <ScrollReveal
             baseOpacity={0}
             enableBlur={true}
             baseRotation={2}
             blurStrength={10}
-            textClassName="justify-center text-center !text-base md:!text-lg lg:!text-xl xl:!text-2xl"
+            textClassName="justify-center text-center  !text-base md:!text-lg lg:!text-xl xl:!text-2xl"
           >
             Founded by visionary engineer Reza Ahmadi, creator of Entop and
             pioneer behind Afghanistan's first sports car, Raga represents a

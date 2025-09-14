@@ -6,8 +6,8 @@ const FAQSection = () => {
     <section className="flex-col md:flex-row relative w-full flex justify-start items-start h-fit overflow-hidden max-w-[1800px] mx-auto px-12 md:px-16 lg:px-20 gap-10 py-10">
       <div className="w-full md:w-[40%] self-stretch relative flex flex-col justify-start items-start gap-6 md:gap-5 pb-[4%] ">
         <h2 className="text-2xl md:text-5xl font-bold font-poppins uppercase">
-          Everything You
-          <span className="block"> Need to Know</span>
+          YOU NEED
+          <span className="block"> to Know</span>
         </h2>
       
    

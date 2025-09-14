@@ -58,8 +58,8 @@ export default function Footer() {
           </Link>
 
           <div className="flex flex-col md:flex-row items-center justify-between gap-4 text-xs md:text-sm text-stone-700 dark:text-gray-400">
-              <div className="md:pl-8 w-full text-center md:text-left ">© 2025. All rights reserved.</div>
-              <div className="flex items-center justify-center gap-3 pr-10">
+              <div className="md:pl-8 w-full text-center ">© 2025. All rights reserved.</div>
+              {/* <div className="flex items-center justify-center gap-3 md:pr-10">
                 Youtube
                 <span className="hidden sm:block">|</span>
                 <a
@@ -75,7 +75,7 @@ export default function Footer() {
                 >
                   Instagram
                 </a>
-              </div>
+              </div> */}
             </div>
         
         </div>
