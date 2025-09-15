@@ -233,12 +233,12 @@ export default function ApplyPage() {
 
   return (
     <>
-      <section className="w-full py-16">
+      <section className="w-full md:mt-30 mt-20">
         <Toaster position="top-center" />
-        <h1 className="text-4xl text-center mb-10 font-bold">
+        <h1 className="md:text-4xl text-2xl text-center mb-10 font-bold">
           Application Form
         </h1>
-        <div className="flex justify-center items-center min-h-screen px-2 md:px-4">
+        <div className="flex justify-center items-center min-h-screen px-3 md:px-10 xl:4">
           <form
             onSubmit={handleSubmit(onSubmit)}
             className="w-full max-w-3xl px-2 sm:px-0 space-y-10"
@@ -246,15 +246,15 @@ export default function ApplyPage() {
             <div>
               <div className="flex flex-col gap-6">
                 <div className="flex flex-col gap-2">
-                  <label htmlFor="team_name" className="font-medium text-base">
+                  <label htmlFor="team_name" className="font-medium text-sm md:text-base">
                     What is your team or project name?
                   </label>
                   <Input
                     id="team_name"
                     {...register("team_name")}
                     placeholder="Enter team name..."
-                    className={`p-3 py-7 ${
-                      errors.team_name ? "border-red-500" : "border-gray-300"
+                    className={`p-3 py-7 text-xs ${
+                      errors.team_name ? "border-red-500" : "border"
                     }`}
                   />
                   {errors.team_name && (
@@ -271,8 +271,8 @@ export default function ApplyPage() {
               <div className="grid grid-cols-1 gap-8">
                 {questions.map((q, idx) => (
                   <div key={q.id} className="flex flex-col gap-2">
-                    <label className="font-medium text-base">
-                      <span className="text-gray-500 mr-1">{idx + 1}.</span>{" "}
+                    <label className="font-medium text-xs md:base  text-foreground">
+                      <span className="text-foreground mr-1">{idx + 1}.</span>{" "}
                       {q.text}
                     </label>
 
@@ -280,10 +280,10 @@ export default function ApplyPage() {
                       <Textarea
                         {...register(q.id.toString())}
                         placeholder="Enter your answer..."
-                        className={`border p-2 rounded resize-y h-36 ${
+                        className={`border p-2 rounded resize-y md:h-36 h-24 text-xs md:text-sm ${
                           (errors as any)[q.id.toString()]
                             ? "border-red-500"
-                            : "border-gray-300"
+                            : "border"
                         }`}
                       />
                     )}
@@ -355,14 +355,14 @@ export default function ApplyPage() {
                 ))}
               </div>
             </div>
-            <div className="flex items-start space-x-4 p-4 border rounded-md  transition-shadow cursor-pointer bg-white">
+            <div className="flex items-start space-x-4 p-4 border rounded-md  transition-shadow cursor-pointer bg-popover">
               <Checkbox
                 id="terms"
                 checked={acceptedTerms}
                 onCheckedChange={(checked) => setAcceptedTerms(!!checked)}
                 className="cursor-pointe"
               />
-              <label htmlFor="terms" className="text-sm text-gray-700">
+              <label htmlFor="terms" className="text-xs md:text-sm text-foreground">
                 I confirm that the information I’ve provided is accurate, and I
                 agree to the{" "}
                 <a

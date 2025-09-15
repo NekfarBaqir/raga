@@ -61,6 +61,7 @@ import {
   useReactTable,
   VisibilityState,
 } from "@tanstack/react-table";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import {
   AlertCircle,
@@ -89,6 +90,60 @@ type Question = {
   display_order: number;
 };
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+const fetchQuestions = async (): Promise<Question[]> => {
+  const response = await axios.get<Question[]>(
+    `${API_BASE_URL}/api/v1/questions`
+  );
+  return response.data;
+};
+
+const createQuestion = async (
+  question: Omit<Question, "id">,
+  token: string
+) => {
+  const response = await axios.post<Question>(
+    `${API_BASE_URL}/api/v1/questions`,
+    question,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+  return response.data;
+};
+
+const updateQuestion = async (question: Question, token: string) => {
+  const response = await axios.patch<Question>(
+    `${API_BASE_URL}/api/v1/questions`,
+    question,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+  return response.data;
+};
+
+const deleteQuestion = async (id: number, token: string) => {
+  await axios.delete(`${API_BASE_URL}/api/v1/questions/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+    data: { question_id: id },
+  });
+  return id;
+};
+
+const useQuestions = () => {
+  return useQuery<Question[], Error>({
+    queryKey: ["questions"],
+    queryFn: fetchQuestions,
+  });
+};
+
 const multiColumnFilterFn: FilterFn<Question> = (
   row,
   columnId,
@@ -99,10 +154,8 @@ const multiColumnFilterFn: FilterFn<Question> = (
 };
 
 export default function QuestionsTable() {
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-  const [data, setData] = useState<Question[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const { data: questions, isLoading, error } = useQuestions();
 
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
@@ -118,8 +171,7 @@ export default function QuestionsTable() {
   const id = useId();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newQuestion, setNewQuestion] = useState<Question>({
-    id: 0,
+  const [newQuestion, setNewQuestion] = useState<Omit<Question, "id">>({
     text: "",
     type: "text",
     importance: 1,
@@ -132,15 +184,68 @@ export default function QuestionsTable() {
     options: "",
     display_order: "",
   });
+
+  const createMutation = useMutation({
+    mutationFn: async (questionData: Omit<Question, "id">) => {
+      const token = await getAccessToken();
+      return createQuestion(questionData, token);
+    },
+    onSuccess: (newQuestion) => {
+      queryClient.setQueryData<Question[]>(["questions"], (old = []) => [
+        newQuestion,
+        ...old,
+      ]);
+      setNewQuestion({
+        text: "",
+        type: "text",
+        importance: 1,
+        options: null,
+        display_order: (questions?.length || 0) + 1,
+      });
+      setIsDialogOpen(false);
+      toast.success("Question added successfully!", {
+        duration: 4000,
+        icon: <CheckCircle className="h-5 w-5" />,
+        style: {
+          borderRadius: "10px",
+          background: "#006400",
+          color: "#fff",
+          fontWeight: "bold",
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+        },
+      });
+    },
+    onError: (err: any) => {
+      toast.error(
+        `Failed to save question: ${err.response?.data?.detail || ""}`,
+        {
+          duration: 4000,
+          icon: <AlertCircle className="h-5 w-5" />,
+          style: {
+            borderRadius: "10px",
+            background: "#8B0000",
+            color: "#fff",
+            fontWeight: "bold",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+          },
+        }
+      );
+    },
+  });
+
   useEffect(() => {
-    if (data.length > 0) {
-      const lastOrder = Math.max(...data.map((q) => q.display_order ?? 0));
+    if (questions && questions.length > 0) {
+      const lastOrder = Math.max(...questions.map((q) => q.display_order ?? 0));
       setNewQuestion((prev) => ({
         ...prev,
         display_order: lastOrder + 1,
       }));
     }
-  }, [data]);
+  }, [questions]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -163,22 +268,6 @@ export default function QuestionsTable() {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-
-  useEffect(() => {
-    async function fetchQuestions() {
-      try {
-        const response = await axios.get<Question[]>(
-          `${API_BASE_URL}/api/v1/questions`
-        );
-        setData(response.data);
-      } catch (err: any) {
-        setError("Failed to load questions.");
-      } finally {
-        setLoading(false);
-      }
-    }
-    fetchQuestions();
-  }, [API_BASE_URL]);
 
   const columns: ColumnDef<Question>[] = [
     {
@@ -204,7 +293,7 @@ export default function QuestionsTable() {
     {
       id: "actions",
       header: () => <span className="sr-only">Actions</span>,
-      cell: ({ row }) => <RowActions row={row} setData={setData} />,
+      cell: ({ row }) => <RowActions row={row} />,
       size: 60,
       minSize: 60,
       enableHiding: false,
@@ -212,7 +301,7 @@ export default function QuestionsTable() {
   ];
 
   const table = useReactTable({
-    data,
+    data: questions || [],
     columns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -228,8 +317,6 @@ export default function QuestionsTable() {
   });
 
   const handleOnsubmit = async () => {
-    const token = await getAccessToken();
-
     const newErrors = {
       text: "",
       importance: "",
@@ -267,102 +354,20 @@ export default function QuestionsTable() {
     setErrors(newErrors);
     if (hasError) return;
 
-    const toastId = toast("Adding question...", {
-      icon: <Loader className="animate-spin h-5 w-5" />,
-      duration: Infinity,
-      style: {
-        borderRadius: "12px",
-        background: "#1F2937",
-        color: "#fff",
-        fontWeight: "bold",
-        padding: "12px 16px",
-        display: "flex",
-        alignItems: "center",
-        gap: "8px",
-      },
-    });
-
-    try {
-      const payload: any = {
-        text: newQuestion.text,
-        type: newQuestion.type,
-        importance: newQuestion.importance ?? 1,
-        display_order: newQuestion.display_order ?? data.length + 1,
-      };
-
-      if (newQuestion.type === "dropdown") {
-        payload.options = newQuestion.options ?? [];
-      }
-
-      const response = await axios.post<Question>(
-        `${API_BASE_URL}/api/v1/questions`,
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      setData((prev) => [response.data, ...prev]);
-      setNewQuestion({
-        id: 0,
-        text: "",
-        type: "text",
-        importance: 1,
-        options: null,
-        display_order: data.length + 1,
-      });
-      setIsDialogOpen(false);
-
-      toast.success("Question added successfully!", {
-        id: toastId,
-        duration: 4000,
-        icon: <CheckCircle className="h-5 w-5" />,
-        style: {
-          borderRadius: "10px",
-          background: "#006400",
-          color: "#fff",
-          fontWeight: "bold",
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-        },
-      });
-    } catch (err: any) {
-      console.error(err);
-
-      toast.error(
-        `Failed to save question: ${err.response?.data?.detail || ""}`,
-        {
-          id: toastId,
-          duration: 4000,
-          icon: <AlertCircle className="h-5 w-5" />,
-          style: {
-            borderRadius: "10px",
-            background: "#8B0000",
-            color: "#fff",
-            fontWeight: "bold",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-          },
-        }
-      );
-    }
+    createMutation.mutate(newQuestion);
   };
-  if (loading)
+
+  if (isLoading)
     return <TableSkeleton columnWidths={[250, 100, 100, 120, 60]} rows={8} />;
   if (error)
     return (
       <div className="flex flex-col items-center justify-center text-center text-red-600 space-y-2 py-8">
         <AlertCircle className="h-8 w-8" />
-        <p className="font-semibold">{error}</p>
+        <p className="font-semibold">{error.message}</p>
       </div>
     );
 
-  if (data.length === 0)
+  if (questions && questions.length === 0)
     return (
       <div className="flex flex-col items-center justify-center text-center text-gray-500 space-y-2 py-8">
         <Inbox className="h-8 w-8" />
@@ -545,8 +550,19 @@ export default function QuestionsTable() {
             </div>
 
             <DialogFooter className="flex flex-col sm:flex-row sm:justify-end gap-2">
-              <Button onClick={handleOnsubmit} variant="outline">
-                Add Question
+              <Button
+                onClick={handleOnsubmit}
+                variant="outline"
+                disabled={createMutation.isPending}
+              >
+                {createMutation.isPending ? (
+                  <>
+                    <Loader className="animate-spin h-4 w-4 mr-2" />
+                    Adding...
+                  </>
+                ) : (
+                  "Add Question"
+                )}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -719,6 +735,7 @@ export default function QuestionsTable() {
     </div>
   );
 }
+
 function TableSkeleton({
   rows = 8,
   columnWidths = [250, 100, 100, 120, 60],
@@ -771,18 +788,99 @@ function TableSkeleton({
   );
 }
 
-function RowActions({
-  row,
-  setData,
-}: {
-  row: Row<Question>;
-  setData: React.Dispatch<SetStateAction<Question[]>>;
-}) {
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+function RowActions({ row }: { row: Row<Question> }) {
+  const queryClient = useQueryClient();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editQuestion, setEditQuestion] = useState<Question>(row.original);
-  const [loading, setLoading] = useState({ edit: false, delete: false });
+
+  const updateMutation = useMutation({
+    mutationFn: async (questionData: Question) => {
+      const token = await getAccessToken();
+      return updateQuestion(questionData, token);
+    },
+    onSuccess: (updatedQuestion) => {
+      queryClient.setQueryData<Question[]>(["questions"], (old = []) =>
+        old.map((q) => (q.id === updatedQuestion.id ? updatedQuestion : q))
+      );
+      setIsEditDialogOpen(false);
+      toast.success("Question updated successfully!", {
+        duration: 4000,
+        icon: <CheckCircle className="h-5 w-5" />,
+        style: {
+          borderRadius: "10px",
+          background: "#006400",
+          color: "#fff",
+          fontWeight: "bold",
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+        },
+      });
+    },
+    onError: (err: any) => {
+      toast.error(
+        `Failed to save: ${err?.response?.data?.detail || err.message}`,
+        {
+          duration: 4000,
+          icon: <AlertCircle className="h-5 w-5" />,
+          style: {
+            borderRadius: "10px",
+            background: "#8B0000",
+            color: "#fff",
+            fontWeight: "bold",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+          },
+        }
+      );
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const token = await getAccessToken();
+      return deleteQuestion(id, token);
+    },
+    onSuccess: (deletedId) => {
+      queryClient.setQueryData<Question[]>(["questions"], (old = []) =>
+        old.filter((q) => q.id !== deletedId)
+      );
+      setIsDeleteDialogOpen(false);
+      toast.success("Question deleted successfully!", {
+        duration: 4000,
+        icon: <CheckCircle className="h-5 w-5" />,
+        style: {
+          borderRadius: "10px",
+          background: "#006400",
+          color: "#fff",
+          fontWeight: "bold",
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+        },
+      });
+    },
+    onError: (err: any) => {
+      toast.error(
+        `Failed to delete: ${err?.response?.data?.detail || err.message}`,
+        {
+          duration: 4000,
+          icon: <AlertCircle className="h-5 w-5" />,
+          style: {
+            borderRadius: "10px",
+            background: "#8B0000",
+            color: "#fff",
+            fontWeight: "bold",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
+          },
+        }
+      );
+    },
+  });
 
   const validateQuestion = (question: Question) => {
     if (!question.text || question.text.length > 500) {
@@ -843,73 +941,7 @@ function RowActions({
   };
 
   const handleDelete = async () => {
-    setLoading((prev) => ({ ...prev, delete: true }));
-    const toastId = toast("Deleting question...", {
-      icon: <Loader className="animate-spin h-5 w-5" />,
-      duration: Infinity,
-      style: {
-        borderRadius: "12px",
-        background: "#1F2937",
-        color: "#fff",
-        fontWeight: "bold",
-        display: "flex",
-        alignItems: "center",
-        gap: "8px",
-        padding: "12px 16px",
-      },
-    });
-
-    try {
-      const questionId = row?.original?.id;
-      if (!questionId) throw new Error("Missing question ID.");
-
-      const token = await getAccessToken();
-      await axios.delete(`${API_BASE_URL}/api/v1/questions/${questionId}`, {
-        headers: { Authorization: `Bearer ${token}` },
-        data: { question_id: questionId },
-      });
-
-      setData((prev) => prev.filter((q) => q.id !== questionId));
-      setIsDeleteDialogOpen(false);
-
-      toast.success("Question deleted successfully!", {
-        id: toastId,
-        duration: 4000,
-        icon: <CheckCircle className="h-5 w-5" />,
-        style: {
-          borderRadius: "10px",
-          background: "#006400",
-          color: "#fff",
-          fontWeight: "bold",
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-          padding: "12px 16px",
-        },
-      });
-    } catch (err: any) {
-      console.error(err);
-      toast.error(
-        `Failed to delete: ${err?.response?.data?.detail || err.message}`,
-        {
-          id: toastId,
-          duration: 4000,
-          icon: <AlertCircle className="h-5 w-5" />,
-          style: {
-            borderRadius: "10px",
-            background: "#8B0000",
-            color: "#fff",
-            fontWeight: "bold",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            padding: "12px 16px",
-          },
-        }
-      );
-    } finally {
-      setLoading((prev) => ({ ...prev, delete: false }));
-    }
+    deleteMutation.mutate(row.original.id);
   };
 
   const handleEditSave = async () => {
@@ -921,83 +953,11 @@ function RowActions({
       options = editQuestion.options ?? [];
 
     const payload = {
-      id: row.original.id,
-      text: editQuestion.text,
-      type: editQuestion.type,
-      importance: editQuestion.importance ?? null,
-      display_order: editQuestion.display_order ?? null,
+      ...editQuestion,
       options,
     };
 
-    setLoading((prev) => ({ ...prev, edit: true }));
-    const toastId = toast.loading("Saving changes...", {
-      icon: <Loader className="animate-spin h-5 w-5" />,
-      duration: Infinity,
-      style: {
-        borderRadius: "12px",
-        background: "#1F2937",
-        color: "#fff",
-        fontWeight: "bold",
-        display: "flex",
-        alignItems: "center",
-        gap: "8px",
-        padding: "12px 16px",
-      },
-    });
-
-    try {
-      const token = await getAccessToken();
-      const response = await axios.patch(
-        `${API_BASE_URL}/api/v1/questions`,
-        payload,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      setData((prev) =>
-        prev.map((q) => (q.id === row.original.id ? response.data : q))
-      );
-      setIsEditDialogOpen(false);
-
-      toast.success("Question updated successfully!", {
-        id: toastId,
-        duration: 4000,
-        icon: <CheckCircle className="h-5 w-5" />,
-        style: {
-          borderRadius: "10px",
-          background: "#006400",
-          color: "#fff",
-          fontWeight: "bold",
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-          padding: "12px 16px",
-        },
-      });
-    } catch (err: any) {
-      console.error(err);
-      toast.error(
-        `Failed to save: ${err?.response?.data?.detail || err.message}`,
-        {
-          id: toastId,
-          duration: 4000,
-          icon: <AlertCircle className="h-5 w-5" />,
-          style: {
-            borderRadius: "10px",
-            background: "#8B0000",
-            color: "#fff",
-            fontWeight: "bold",
-            display: "flex",
-            alignItems: "center",
-            gap: "8px",
-            padding: "12px 16px",
-          },
-        }
-      );
-    } finally {
-      setLoading((prev) => ({ ...prev, edit: false }));
-    }
+    updateMutation.mutate(payload);
   };
 
   return (
@@ -1037,16 +997,16 @@ function RowActions({
               variant="outline"
               onClick={() => setIsDeleteDialogOpen(false)}
               className="cursor-pointer"
-              disabled={loading.delete}
+              disabled={deleteMutation.isPending}
             >
               Cancel
             </Button>
             <Button
               className="bg-foreground text-white cursor-pointer"
               onClick={handleDelete}
-              disabled={loading.delete}
+              disabled={deleteMutation.isPending}
             >
-              {loading.delete ? "Deleting..." : "Delete"}
+              {deleteMutation.isPending ? "Deleting..." : "Delete"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1141,7 +1101,7 @@ function RowActions({
               variant="outline"
               className="cursor-pointer"
               onClick={() => setIsEditDialogOpen(false)}
-              disabled={loading.edit}
+              disabled={updateMutation.isPending}
             >
               Cancel
             </Button>
@@ -1149,9 +1109,16 @@ function RowActions({
               onClick={handleEditSave}
               variant="outline"
               className="cursor-pointer"
-              disabled={loading.edit}
+              disabled={updateMutation.isPending}
             >
-              {loading.edit ? "Saving..." : "Save"}
+              {updateMutation.isPending ? (
+                <>
+                  <Loader className="animate-spin h-4 w-4 mr-2" />
+                  Saving...
+                </>
+              ) : (
+                "Save"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

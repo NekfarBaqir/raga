@@ -28,7 +28,7 @@ import {
   Columns3Icon,
   Inbox,
   ListFilterIcon,
-  Loader
+  Loader,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -71,6 +71,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+
 type Contacts = {
   id: number;
   name: string;
@@ -79,6 +80,7 @@ type Contacts = {
   status: "new" | "in_progress" | "resolved";
   created_at: string;
   has_new_message: boolean;
+  id_message: number;
 };
 
 const multiColumnFilterFn: FilterFn<Contacts> = (
@@ -86,9 +88,14 @@ const multiColumnFilterFn: FilterFn<Contacts> = (
   columnId,
   filterValue
 ) => {
-  const searchableRowContent = `${row.original.name}`.toLowerCase();
-  const searchTerm = (filterValue ?? "").toLowerCase();
-  return searchableRowContent.includes(searchTerm);
+  const searchableRowContent = `
+    ${row.original.name}
+    ${row.original.email}
+    ${row.original.message}
+    ${new Date(row.original.created_at).toLocaleString()}
+  `.toLowerCase();
+
+  return searchableRowContent.includes(filterValue.toLowerCase());
 };
 
 export default function Component() {
@@ -96,15 +103,16 @@ export default function Component() {
   const id = useId();
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
+  });
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
   });
   const [sorting, setSorting] = useState<SortingState>([
-    { id: "status", desc: false },
+    { id: "created_at", desc: true },
   ]);
+  const [globalFilter, setGlobalFilter] = useState("");
 
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
   const [data, setData] = useState<Contacts[]>([]);
@@ -142,6 +150,44 @@ export default function Component() {
   useEffect(() => {
     if (editContact) setStatus(editContact.status);
   }, [editContact]);
+
+  const markAsRead = async (messageId: number) => {
+    if (!messageId || messageId <= 0) {
+      console.warn("Invalid messageId:", messageId, "- Skipping mark as read");
+      toast.error("Invalid message ID - cannot mark as read.");
+      return;
+    }
+
+    const fullUrl = `${API_BASE_URL}/api/v1/messages/${messageId}/read`;
+    console.log("Attempting to mark as read:", { messageId, fullUrl });
+
+    try {
+      const token = await getAccessToken();
+      await axios.patch(
+        fullUrl,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setData((prev) =>
+        prev.map((contact) =>
+          contact.id_message === messageId
+            ? { ...contact, has_new_message: false }
+            : contact
+        )
+      );
+
+    } catch (error: any) {
+      console.error("Error marking as read:", error);
+      toast.error(
+        `Failed to mark as read: ${error.response?.status} ${error.response?.statusText || error.message}`
+      );
+    }
+  };
 
   const handleSave = async () => {
     if (!editContact) return;
@@ -181,7 +227,7 @@ export default function Component() {
 
       toast.success("🎉 Your status has been updated successfully!", {
         id: toastId,
-        duration: 4000,
+        duration: 1000,
         style: {
           borderRadius: "10px",
           background: "#006400",
@@ -193,7 +239,7 @@ export default function Component() {
       console.error("Error updating contact:", err);
       toast.error("Whoops! Something went wrong while updating status.", {
         id: toastId,
-        duration: 4000,
+        duration: 2000,
         icon: <AlertCircle className="h-5 w-5" />,
         style: {
           borderRadius: "10px",
@@ -206,8 +252,36 @@ export default function Component() {
   };
 
   const columns: ColumnDef<Contacts>[] = [
-    { header: "Name", accessorKey: "name", size: 150 },
-    { header: "Email", accessorKey: "email", size: 200 },
+    {
+      header: "Name",
+      accessorKey: "name",
+      cell: ({ row }) => (
+        <button
+          onClick={() =>
+            router.push(`/admin-dashboard/contacts/${row.original.id}`)
+          }
+          className="text-left hover:underline cursor-pointer"
+        >
+          {row.getValue("name")}
+        </button>
+      ),
+      size: 150,
+    },
+    {
+      header: "Email",
+      accessorKey: "email",
+      cell: ({ row }) => (
+        <button
+          onClick={() =>
+            router.push(`/admin-dashboard/contacts/${row.original.id}`)
+          }
+          className="text-left hover:underline cursor-pointer"
+        >
+          {row.getValue("email")}
+        </button>
+      ),
+      size: 200,
+    },
     {
       header: "Status",
       accessorKey: "status",
@@ -215,11 +289,11 @@ export default function Component() {
         const status = row.getValue("status") as string;
 
         let statusColor = "bg-gray-200 text-gray-800";
-        if (status === "resolved") statusColor = "bg-green-100 text-green-800";
+        if (status === "resolved") statusColor = "bg-green-100 text-green-800 dark:bg-green-900 dark:text-white";
         else if (status === "in_progress")
-          statusColor = "bg-yellow-400/20 text-yellow-600";
+          statusColor = "dark:bg-yellow-600 dark:text-white bg-yellow-400/20 text-yellow-600";
         else if (status === "new")
-          statusColor = "bg-indigo-100 text-indigo-800";
+          statusColor = "bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-white";
 
         return (
           <span
@@ -231,12 +305,47 @@ export default function Component() {
       },
       size: 100,
     },
-    { header: "Message", accessorKey: "message", size: 250 },
+    {
+      header: "Message",
+      accessorKey: "message",
+      size: 250,
+      cell: ({ row }) => {
+        const [expanded, setExpanded] = useState(false);
+        const message = row.original.message;
+        const isLong = message.length > 100;
+
+        return (
+          <div className="text-sm">
+            <p className="whitespace-pre-wrap break-words">
+              {expanded ? message : message.slice(0, 40)}
+              {!expanded && isLong ? "..." : ""}
+            </p>
+            {isLong && (
+              <button
+                onClick={() => setExpanded((prev) => !prev)}
+                className="text-primary hover:underline text-xs"
+              >
+                {expanded ? "Show less" : "Show more"}
+              </button>
+            )}
+          </div>
+        );
+      },
+    },
     {
       header: "Date",
       accessorKey: "created_at",
       size: 150,
       cell: ({ row }) => new Date(row.getValue("created_at")).toLocaleString(),
+    },
+    {
+      id: "has_new_message",
+      accessorKey: "has_new_message",
+      header: "",
+      size: 0,
+      enableSorting: true,
+      enableHiding: true,
+      cell: () => null,
     },
     {
       id: "edit",
@@ -245,6 +354,7 @@ export default function Component() {
         <Button
           size="sm"
           variant="outline"
+          className="cursor-pointer"
           onClick={() => {
             setEditContact(row.original);
             setIsDialogOpen(true);
@@ -267,10 +377,17 @@ export default function Component() {
     getFacetedUniqueValues: getFacetedUniqueValues(),
     onSortingChange: setSorting,
     onPaginationChange: setPagination,
-    onColumnFiltersChange: setColumnFilters,
+    onGlobalFilterChange: setGlobalFilter,
     onColumnVisibilityChange: setColumnVisibility,
-    state: { sorting, pagination, columnFilters, columnVisibility },
+    state: {
+      sorting,
+      pagination,
+      globalFilter,
+      columnVisibility,
+    },
+    globalFilterFn: multiColumnFilterFn,
   });
+
   if (loading)
     return <TableSkeleton columnWidths={[250, 100, 100, 120, 60]} rows={8} />;
 
@@ -300,13 +417,9 @@ export default function Component() {
               id={`${id}-input`}
               ref={inputRef}
               className={cn("peer min-w-60 ps-9")}
-              value={
-                (table.getColumn("name")?.getFilterValue() ?? "") as string
-              }
-              onChange={(e) =>
-                table.getColumn("name")?.setFilterValue(e.target.value)
-              }
-              placeholder="Filter by name..."
+              value={globalFilter}
+              onChange={(e) => setGlobalFilter(e.target.value)}
+              placeholder="Search by name, email, message, or date..."
             />
             <div className="text-muted-foreground/80 pointer-events-none absolute inset-y-0 start-0 flex items-center justify-center ps-3">
               <ListFilterIcon size={16} />
@@ -324,7 +437,7 @@ export default function Component() {
               <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
               {table
                 .getAllColumns()
-                .filter((col) => col.getCanHide())
+                .filter((col) => col.getCanHide() && col.id !== "has_new_message")
                 .map((col) => (
                   <DropdownMenuCheckboxItem
                     key={col.id}
@@ -361,25 +474,33 @@ export default function Component() {
           </TableHeader>
           <TableBody>
             {table.getRowModel().rows.map((row) => {
-     const isNewMessage = row.original.has_new_message;
-return (
-  <TableRow
-    key={row.id}
-    className={`border-b cursor-pointer ${isNewMessage ? "font-semibold" : ""}`}
-    onClick={() =>
-      router.push(`/admin-dashboard/contacts/${row.original.id}`)
-    }
-  >
-    {row.getVisibleCells().map((cell) => (
-      <TableCell
-        key={cell.id}
-        className="px-2 py-1 md:px-4 md:py-2 break-words text-xs sm:text-sm"
-      >
-        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-      </TableCell>
-    ))}
-  </TableRow>
-)
+              const isNewMessage = row.original.has_new_message;
+              const messageId = row.original.id_message;
+              return (
+                <TableRow
+                  key={row.id}
+                  className={`border-b cursor-pointer ${isNewMessage ? "font-semibold" : ""
+                    }`}
+                  onClick={async () => {
+                    if (isNewMessage && messageId) {
+                      await markAsRead(messageId);
+                    }
+                    router.push(`/admin-dashboard/contacts/${row.original.id}`);
+                  }}
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell
+                      key={cell.id}
+                      className="px-2 py-1 md:px-4 md:py-2 break-words text-xs sm:text-sm"
+                    >
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              );
             })}
           </TableBody>
         </Table>
@@ -416,8 +537,8 @@ return (
               -
               {Math.min(
                 table.getState().pagination.pageIndex *
-                  table.getState().pagination.pageSize +
-                  table.getState().pagination.pageSize,
+                table.getState().pagination.pageSize +
+                table.getState().pagination.pageSize,
                 table.getRowCount()
               )}
             </span>{" "}
@@ -504,6 +625,7 @@ return (
     </div>
   );
 }
+
 function TableSkeleton({
   rows = 8,
   columnWidths = [250, 100, 100, 120, 60],
@@ -541,9 +663,8 @@ function TableSkeleton({
                     className="px-4 py-3"
                   >
                     <Skeleton
-                      className={`h-4 rounded-md w-${
-                        3 + Math.floor(Math.random() * 4)
-                      }/4`}
+                      className={`h-4 rounded-md w-${3 + Math.floor(Math.random() * 4)
+                        }/4`}
                     />
                   </TableCell>
                 ))}

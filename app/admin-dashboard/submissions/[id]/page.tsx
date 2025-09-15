@@ -4,6 +4,7 @@ import { getAccessToken } from "@auth0/nextjs-auth0";
 import axios from "axios";
 import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -67,15 +68,10 @@ type LocalMessage = {
 
 export default function SubmissionDetailPage() {
   const { id } = useParams();
-  const [submission, setSubmission] = useState<SubmissionDetail | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [editingStatus, setEditingStatus] =
     useState<SubmissionDetail["status"]>("pending");
-  const [saving, setSaving] = useState(false);
-
-  // Chat state
   const [messages, setMessages] = useState<LocalMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [sending, setSending] = useState(false);
@@ -104,8 +100,14 @@ export default function SubmissionDetailPage() {
     };
   };
 
-  const fetchSubmission = async () => {
-    try {
+  // Fetch submission data
+  const {
+    data: submission,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["submission", id],
+    queryFn: async () => {
       const token = await getAccessToken();
       const response = await axios.get<SubmissionDetail>(
         `${API_BASE_URL}/api/v1/submissions/${id}`,
@@ -116,45 +118,42 @@ export default function SubmissionDetailPage() {
           },
         }
       );
-      const sub = response.data;
-      setSubmission(sub);
-      setEditingStatus(sub.status);
+      return response.data;
+    },
+    enabled: !!id,
+  });
 
-      // Fetch messages
-      const messagesRes = await axios.get<APIMessage[]>(
-        `${API_BASE_URL}/api/v1/submissions/${sub.id}/messages`,
+  // Fetch messages
+  const { data: apiMessages } = useQuery({
+    queryKey: ["messages", submission?.id],
+    queryFn: async () => {
+      if (!submission) return [];
+      const token = await getAccessToken();
+      const response = await axios.get<APIMessage[]>(
+        `${API_BASE_URL}/api/v1/submissions/${submission.id}/messages`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-      const mapped = messagesRes.data.map((m) => mapApiToLocal(m, sub.email));
+      return response.data;
+    },
+    enabled: !!submission?.id,
+  });
+
+  // Update local messages when API messages change
+  useEffect(() => {
+    if (apiMessages && submission) {
+      const mapped = apiMessages.map((m) => mapApiToLocal(m, submission.email));
       setMessages(mapped);
       scrollToBottom();
-    } catch (err: any) {
-      console.error(err);
-      setError("Failed to load submission details.");
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [apiMessages, submission]);
 
-  useEffect(() => {
-        if (id) fetchSubmission();
-  }, [API_BASE_URL, id]);
-
-  const handleSave = async () => {
-    if (!submission) return;
-
-    setSaving(true);
-    const statusMap: Record<string, SubmissionDetail["status"]> = {
-      Approved: "approved",
-      Pending: "pending",
-      Rejected: "rejected",
-    };
-    const toastId = toast.loading("⏳ Updating the status...");
-
-    try {
+  // Update status mutation
+  const updateStatusMutation = useMutation({
+    mutationFn: async (status: SubmissionDetail["status"]) => {
+      if (!submission) throw new Error("No submission data");
       const token = await getAccessToken();
       const body = {
-        status: statusMap[editingStatus] || editingStatus,
+        status: status,
         submission_id: submission.id,
       };
       const response = await axios.patch<SubmissionDetail>(
@@ -167,10 +166,12 @@ export default function SubmissionDetailPage() {
           },
         }
       );
-      setSubmission((prev) => prev && { ...prev, ...response.data });
+      return response.data;
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData(["submission", id], data);
       setEditing(false);
       toast.success("Your status has been updated successfully!", {
-        id: toastId,
         duration: 4000,
         icon: <CheckCircle className="h-5 w-5" />,
         style: {
@@ -184,10 +185,10 @@ export default function SubmissionDetailPage() {
           padding: "12px 16px",
         },
       });
-    } catch (err: any) {
-      console.error("Failed to update submission:", err);
+    },
+    onError: (error) => {
+      console.error("Failed to update submission:", error);
       toast.error("Whoops! Something went wrong while updating status.", {
-        id: toastId,
         duration: 4000,
         icon: <AlertCircle className="h-5 w-5" />,
         style: {
@@ -201,14 +202,46 @@ export default function SubmissionDetailPage() {
           padding: "12px 16px",
         },
       });
-    } finally {
-      setSaving(false);
-    }
+    },
+  });
+
+  const sendMessageMutation = useMutation({
+    mutationFn: async (messageText: string) => {
+      if (!submission) throw new Error("No submission data");
+      const token = await getAccessToken();
+      const body = {
+        message: messageText,
+        receiver: submission.email,
+        submission_id: submission.id,
+      };
+      const response = await axios.post<APIMessage>(
+        `${API_BASE_URL}/api/v1/submissions/${submission.id}/messages`,
+        body,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      return response.data;
+    },
+    onSuccess: (data) => {
+      if (!submission) return;
+      const mapped = mapApiToLocal(data, submission.email);
+      setMessages((prev) => prev.map((m) => (m.temporary ? mapped : m)));
+      scrollToBottom();
+      toast.success("Message sent!");
+    },
+    onError: (error) => {
+      console.error("Send message failed:", error);
+      setMessages((prev) => prev.filter((m) => !m.temporary));
+      toast.error("Failed to send message.");
+    },
+  });
+
+  const handleSave = async () => {
+    if (!submission) return;
+    updateStatusMutation.mutate(editingStatus);
   };
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !submission) return;
-
     const messageText = newMessage.trim();
     setNewMessage("");
 
@@ -224,33 +257,10 @@ export default function SubmissionDetailPage() {
     setMessages((prev) => [...prev, tempMsg]);
     scrollToBottom();
 
-    setSending(true);
-    try {
-      const token = await getAccessToken();
-      const body = {
-        message: messageText,
-        receiver: submission.email,
-        submission_id: submission.id,
-      };
-      const res = await axios.post<APIMessage>(
-        `${API_BASE_URL}/api/v1/submissions/${submission.id}/messages`,
-        body,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      const mapped = mapApiToLocal(res.data, submission.email);
-      setMessages((prev) => prev.map((m) => (m.id === tempId ? mapped : m)));
-      scrollToBottom();
-      toast.success("Message sent!");
-    } catch (err) {
-      console.error("Send message failed:", err);
-      setMessages((prev) => prev.filter((m) => m.id !== tempId));
-      toast.error("Failed to send message.");
-    } finally {
-      setSending(false);
-    }
+    sendMessageMutation.mutate(messageText);
   };
 
-  if (loading)
+  if (isLoading)
     return (
       <div className="flex justify-center items-center h-64">
         <Loader2 className="animate-spin h-6 w-6 text-muted-foreground" />
@@ -258,7 +268,7 @@ export default function SubmissionDetailPage() {
       </div>
     );
 
-  if (error) return <p>{error}</p>;
+  if (error) return <p>Error loading submission: {error.message}</p>;
   if (!submission) return <p>No submission found.</p>;
 
   return (
@@ -375,10 +385,12 @@ export default function SubmissionDetailPage() {
                     <Button
                       onClick={handleSave}
                       className="cursor-pointer"
-                      disabled={saving}
+                      disabled={updateStatusMutation.isPending}
                       variant={"outline"}
                     >
-                      {saving ? "Saving..." : "Save Changes"}
+                      {updateStatusMutation.isPending
+                        ? "Saving..."
+                        : "Save Changes"}
                     </Button>
                   </div>
                 )}
@@ -470,7 +482,14 @@ export default function SubmissionDetailPage() {
           >
             <div className="w-full max-w-6xl">
               <Card className="rounded-xl h-[600px] flex flex-col relative">
-                <button onClick={fetchSubmission} className="absolute cursor-pointer top-2 right-2">
+                <button
+                  onClick={() =>
+                    queryClient.invalidateQueries({
+                      queryKey: ["messages", submission.id],
+                    })
+                  }
+                  className="absolute cursor-pointer top-2 right-2"
+                >
                   <RefreshCwIcon className="w-5 h-5" />
                 </button>
                 <div className="px-6 py-4">
@@ -531,7 +550,9 @@ export default function SubmissionDetailPage() {
                   <Button
                     onClick={handleSendMessage}
                     variant={"outline"}
-                    disabled={sending || !newMessage.trim()}
+                    disabled={
+                      sendMessageMutation.isPending || !newMessage.trim()
+                    }
                     className="p-5 cursor-pointer"
                   >
                     <Send className="h-7 w-7" />
