@@ -16,8 +16,41 @@ const geistMono = Poppins({
 });
 
 export const metadata: Metadata = {
-  title: "Raga",
-  description: "The Pathway for Afghanistan’s Tech Builders",
+  metadataBase: new URL("https://raga.space"),
+  title: "Raga – Building Afghanistan’s Tech Future",
+  description:
+    "Raga is a hub for ambitious minds in Afghanistan to create technology, collaborate, and innovate.",
+  keywords: [
+    "Afghanistan tech",
+    "startup hub",
+    "Raga",
+    "innovation",
+    "entrepreneurs",
+    "software",
+    "design",
+    "startups",
+  ],
+  authors: [{ name: "Raga Team" }],
+  openGraph: {
+    title: "Raga – Building Afghanistan’s Tech Future",
+    description:
+      "Raga is a hub for ambitious minds in Afghanistan to create technology, collaborate, and innovate.",
+    type: "website",
+    url: "https://raga.space",
+    images: [
+      {
+        url: "/images/og-image.jpg",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Raga – Building Afghanistan’s Tech Future",
+    description:
+      "Raga is a hub for ambitious minds in Afghanistan to create technology, collaborate, and innovate.",
+    images: ["/images/og-image.jpg"],
+    site: "@raga_space",
+  },
 };
 
 export default function RootLayout({
