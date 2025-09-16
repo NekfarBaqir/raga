@@ -48,8 +48,8 @@ const UserDashboard = () => {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
         <AlertCircle className="w-10 h-10 text-red-500" />
-        <p className="text-lg text-red-600">
-          {isError ? "Failed to load submission." : "No submission found."}
+        <p className="text-lg text-gray-600">
+          {isError ? "No  submissions found." : "No submission found."}
         </p>
       </div>
     );
@@ -58,8 +58,8 @@ const UserDashboard = () => {
     submission.status === "approved"
       ? "green"
       : submission.status === "rejected"
-      ? "red"
-      : "orange";
+        ? "red"
+        : "orange";
 
   return (
     <div className="max-w-3xl mx-auto mt-10">

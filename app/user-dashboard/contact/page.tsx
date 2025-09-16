@@ -2,9 +2,9 @@
 
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { getAccessToken } from "@auth0/nextjs-auth0";
+import { getAccessToken, useUser } from "@auth0/nextjs-auth0";
 import axios from "axios";
-import { Loader2, SendHorizontal, ArrowLeft, X } from "lucide-react";
+import { Loader2, SendHorizontal, ArrowLeft, X, CheckCircle, Sparkles } from "lucide-react";
 import { useRef, useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Message, Contact } from "@/types";
@@ -14,9 +14,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  DialogClose,
 } from "@/components/ui/dialog";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
@@ -24,24 +21,46 @@ const ADMIN_EMAIL = "jafarimahdi850@gmail.com";
 
 function AdminResponseDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] rounded-xl">
+    <Dialog open={open}>
+      <DialogContent className="sm:max-w-[500px] rounded-2xl p-8" showCloseButton={false}>
         <DialogHeader>
-          <DialogTitle className="text-2xl font-bold flex items-center justify-between">
-            Message Sent
-          </DialogTitle>
-          <DialogDescription className="text-base text-foreground">
-          Your message has been sent successfully! Kindly wait for an admin's response before sending another message.
-          </DialogDescription>
+          <DialogTitle className="sr-only">Message Sent Successfully</DialogTitle>
         </DialogHeader>
-        <DialogFooter className="mt-4">
-          <Button
-            onClick={() => (window.location.href = "/user-dashboard")}
-            className="w-full py-2 cursor-pointer"
-          >
-            Go to Dashboard
-          </Button>
-        </DialogFooter>
+        <div className="flex flex-col items-center text-center space-y-6">
+          <div className="relative">
+            <div className="relative bg-primary rounded-full p-4">
+              <CheckCircle className="h-12 w-12 text-white dark:text-black" />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <h2 className="text-3xl text-foreground font-bold animate-fade-in">
+              Congratulations!
+            </h2>
+            <div className="w-16 h-1 bg-primary mx-auto rounded-full"></div>
+          </div>
+
+          <div className="space-y-3">
+            <p className="text-lg font-semibold text-foreground">
+              Message Sent Successfully!
+            </p>
+            <p className="text-muted-foreground leading-relaxed">
+              Your message has been delivered to our admin team.
+              <br />
+              Please wait for their response before sending another message.
+            </p>
+          </div>
+
+          <div className="pt-4">
+            <Button
+              onClick={() => (window.location.href = "/user-dashboard")}
+              className="cursor-pointer py"
+              size="lg"
+            >
+              Go to Dashboard
+            </Button>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
@@ -52,6 +71,7 @@ export default function ContactAdmin() {
   const [newMessage, setNewMessage] = useState("");
   const [hasAdminReplied, setHasAdminReplied] = useState(true);
   const queryClient = useQueryClient();
+  const { user } = useUser();
 
   const { data: contacts = [], isLoading: contactsLoading } = useQuery<
     Contact[],
@@ -93,35 +113,57 @@ export default function ContactAdmin() {
   });
 
   useEffect(() => {
-    if (messages.length > 0) {
+    if (messages.length === 0) {
+      setHasAdminReplied(true);
+    } else {
       const reversedMessages = [...messages].reverse();
       const lastUserMessageIndex = reversedMessages.findIndex(
         (m) => m.sender !== ADMIN_EMAIL && !m.sender.includes("admin")
       );
 
       const hasAdminRepliedToLatest =
-        lastUserMessageIndex !== -1
-          ? reversedMessages
-              .slice(0, lastUserMessageIndex)
-              .some(
-                (m) => m.sender === ADMIN_EMAIL || m.sender.includes("admin")
-              )
-          : true;
+        lastUserMessageIndex === -1
+          ? true
+          : reversedMessages
+            .slice(0, lastUserMessageIndex)
+            .some(
+              (m) => m.sender === ADMIN_EMAIL || m.sender.includes("admin")
+            );
 
       setHasAdminReplied(hasAdminRepliedToLatest);
-    } else {
-      setHasAdminReplied(true);
     }
   }, [messages]);
 
   const sendMessageMutation = useMutation<Message, Error, string>({
     mutationFn: async (messageText: string) => {
-      if (!contact) throw new Error("No contact selected");
+      let currentContact = contact;
       const token = await getAccessToken();
+
+      if (!currentContact) {
+        const contactRes = await axios.post<Contact>(
+          `${API_BASE_URL}/api/v1/contacts`,
+          {
+            email: user?.email,
+            message: messageText,
+            name: user?.name || user?.email?.split('@')[0] || 'User'
+          },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        currentContact = contactRes.data;
+        queryClient.setQueryData(["contacts"], [currentContact]);
+
+        return {
+          contact_id: currentContact.id,
+          receiver: ADMIN_EMAIL,
+          message: messageText,
+          is_read: false,
+        } as Message;
+      }
+
       const res = await axios.post<Message>(
-        `${API_BASE_URL}/api/v1/contacts/${contact.id}/messages`,
+        `${API_BASE_URL}/api/v1/contacts/${currentContact.id}/messages`,
         {
-          contact_id: contact.id,
+          contact_id: currentContact.id,
           receiver: ADMIN_EMAIL,
           message: messageText,
           is_read: false,
@@ -143,7 +185,7 @@ export default function ContactAdmin() {
   const isSending = sendMessageMutation.status === "pending";
 
   const handleSendMessage = () => {
-    if (!newMessage.trim() || !contact) return;
+    if (!newMessage.trim()) return;
     sendMessageMutation.mutate(newMessage);
   };
 
@@ -157,7 +199,7 @@ export default function ContactAdmin() {
   };
 
   return (
-    <div className="flex flex-col h-[90vh] w-full px-6">
+    <div className="flex flex-col h-[90vh] w-full md:px-6 px-2" >
       <div className="flex items-center mb-4">
         <Button
           variant="ghost"
@@ -202,19 +244,17 @@ export default function ContactAdmin() {
                       </span>
                     )}
                     <div
-                      className={`px-4 py-2 text-sm break-words rounded-2xl ${
-                        isAdmin
-                          ? "bg-muted-foreground/10 text-foreground rounded-bl-none text-left"
-                          : "bg-primary/10 text-foreground rounded-br-none text-right"
-                      }`}
+                      className={`px-4 py-2 text-xs md:text-sm break-words rounded-2xl ${isAdmin
+                        ? "bg-muted-foreground/10 text-foreground rounded-bl-none text-left"
+                        : "bg-primary/10 text-foreground rounded-br-none text-right"
+                        }`}
                     >
                       <div className={isAdmin ? "text-left" : "text-right"}>
                         {m.message}
                       </div>
                       <div
-                        className={`text-xs text-muted-foreground mt-1 ${
-                          isAdmin ? "text-left" : "text-right"
-                        }`}
+                        className={`text-xs text-muted-foreground mt-1 ${isAdmin ? "text-left" : "text-right"
+                          }`}
                       >
                         {formatTimestamp(m.created_at)}
                       </div>
@@ -239,12 +279,14 @@ export default function ContactAdmin() {
                 handleSendMessage();
               }
             }}
-            disabled={!hasAdminReplied}
+            disabled={!hasAdminReplied && messages.length > 0}
           />
           <button
             onClick={handleSendMessage}
             disabled={
-              isSending || !contact || !newMessage.trim() || !hasAdminReplied
+              isSending ||
+              !newMessage.trim() ||
+              (!hasAdminReplied && messages.length > 0)
             }
             className="p-3 rounded-full disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer absolute right-8 bg-primary hover:bg-primary/90 transition-colors"
           >
@@ -258,7 +300,7 @@ export default function ContactAdmin() {
       </Card>
 
       <AdminResponseDialog
-        open={!hasAdminReplied}
+        open={!hasAdminReplied && messages.length > 0}
         onOpenChange={setHasAdminReplied}
       />
     </div>

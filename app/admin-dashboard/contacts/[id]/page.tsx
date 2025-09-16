@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { getAccessToken } from "@auth0/nextjs-auth0";
 import axios from "axios";
-import { Loader2, SendHorizonalIcon } from "lucide-react";
+import { ArrowLeft, Loader2, SendHorizonalIcon } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -84,6 +84,41 @@ export default function Page() {
   }, [messagesData]);
 
   useEffect(() => {
+    async function markUnreadAsRead() {
+      if (!messages || messages.length === 0) return;
+      const unreadMessageIds = messages
+        .filter((m) => !m.read)
+        .map((m) => Number(m.id))
+        .filter((id) => Number.isFinite(id) && id > 0);
+
+      if (unreadMessageIds.length === 0) return;
+
+      try {
+        const accessToken = await getAccessToken();
+        await Promise.all(
+          unreadMessageIds.map((messageId) =>
+            axios.patch(
+              `${API_BASE_URL}/api/v1/contacts/messages/${messageId}/read`,
+              {},
+              { headers: { Authorization: `Bearer ${accessToken}` } }
+            )
+          )
+        );
+
+        setMessages((prev) =>
+          prev.map((m) =>
+            unreadMessageIds.includes(Number(m.id)) ? { ...m, read: true } : m
+          )
+        );
+      } catch (err) {
+        console.error("Failed to mark messages as read:", err);
+      }
+    }
+
+    markUnreadAsRead();
+  }, [messages, contactId]);
+
+  useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
@@ -134,7 +169,19 @@ export default function Page() {
     );
 
   return (
-    <div className="flex flex-col w-full px-4">
+    <div className="flex flex-col w-full mt-3 md:mt-8 px-4">
+      <div className="flex items-center ">
+        <Button
+          variant="ghost"
+          onClick={() => (window.location.href = "/admin-dashboard/contacts")}
+          className="mr-4 py-4 cursor-pointer"
+        >
+          <ArrowLeft className="h-8 w-8" />
+        </Button>
+        <div>
+          <h2 className="font-bold text-xl">Chat</h2>
+        </div>
+      </div>
       <div className="mx-auto space-y-6 mt-5 w-full overflow-hidden h-[90vh]">
         <Card className="rounded-xl h-full w-full flex flex-col overflow-hidden relative">
           <div className="px-6 py-4">
@@ -165,7 +212,7 @@ export default function Page() {
                       }`}
                   >
                     <div
-                      className={`px-4 py-2 max-w-[70%] text-sm break-words rounded-2xl ${m.senderId?.includes("jafari")
+                      className={`px-4 py-2 max-w-[70%] text-xs md:text-sm break-words rounded-2xl ${m.senderId?.includes("jafari")
                         ? "bg-muted text-foreground rounded-br-none"
                         : "bg-secondary/10 text-foreground rounded-bl-none"
                         }`}
@@ -185,7 +232,7 @@ export default function Page() {
             </div>
           </div>
 
-          <div className="flex items-center px-4 py-3 gap-3 rounded-2xl m-3">
+          <div className="flex items-center px-4 py-3 gap-3 rounded-2xl border m-3">
             <Textarea
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}

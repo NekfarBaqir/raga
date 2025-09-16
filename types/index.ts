@@ -60,3 +60,37 @@ export interface BackendMessageAdmin {
   is_read: boolean;
   created_at: string;
 }
+export interface SubmissionDetail {
+  id: number;
+  team_name: string;
+  name: string;
+  email: string;
+  status: "approved" | "pending" | "rejected";
+  score: number;
+  feedback: string;
+  strengths: string;
+  weaknesses: string;
+  keywords: string;
+  risk_level: string;
+  created_at: string;
+  answers: {
+    question_text: string;
+    answer: string;
+  }[];
+}
+export interface Message {
+  sender: string;       
+  receiver: string;     
+  message: string;      
+  is_read: boolean;     
+  created_at: string;   
+  updated_at: string;   
+}
+
+export interface Contact {
+  email: string;
+  name: string;
+  phone?: string;
+  created_at: string;
+  updated_at: string;
+}

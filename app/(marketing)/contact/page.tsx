@@ -10,7 +10,6 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
-// ShadCN Dialog imports
 import {
   Dialog,
   DialogContent,
@@ -74,13 +73,12 @@ export default function Contact() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background text-foreground p-6 xl:pt-20">
+    <div className="flex items-center justify-center min-h-screen bg-background text-foreground pt-32 p-6 xl:pt-20">
       <div className="flex flex-col md:flex-row gap-16 max-w-7xl w-full">
-        {/* Left section */}
         <div className="flex-1">
           <button
             className="flex items-center cursor-pointer text-xs lg:text-sm mb-10 gap-2 px-4 py-2 rounded-full border
-                             border-gray-400 bg-transparent text-backgroun hover:border-border transition"
+                              bg-transparent text-backgroun hover:border-border transition"
           >
             <Lightbulb className="w-5 h-5" />
             Contact us
@@ -111,7 +109,6 @@ export default function Contact() {
           </div>
         </div>
 
-        {/* Right section - Form */}
         <div className="flex-1 p-8 bg-card rounded-4xl shadow-2xl max-w-xl ">
           <h2 className="text-3xl font-bold mb-4 font-poppins">Write us</h2>
           <p className="mb-6 text-muted-foreground text-base">
@@ -194,7 +191,7 @@ export default function Contact() {
               type="submit"
               variant={"outline"}
               disabled={isLoading}
-              className="w-full bg-background text-foreground cursor-pointer px-6 py-7 text-lg rounded-full font-semibold"
+              className="w-full bg-background text-foreground cursor-pointer px-6 py-7 text-base rounded-full font-semibold"
             >
               {isLoading ? "Submitting..." : "Submit"}
             </Button>
@@ -202,7 +199,6 @@ export default function Contact() {
         </div>
       </div>
 
-      {/* ShadCN Modal */}
       <Dialog open={isModalOpen} onOpenChange={() => setIsModalOpen(false)}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>

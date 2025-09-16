@@ -376,7 +376,7 @@ export default function QuestionsTable() {
     );
 
   return (
-    <div className="space-y-4 w-full overflow-x-hidden px-2 sm:px-4 lg:px-6 overflow-y-auto">
+    <div className="space-y-4 mt-4 w-full overflow-x-hidden px-2 sm:px-4 lg:px-6 overflow-y-auto">
       <Toaster position="top-center" />
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
@@ -586,9 +586,9 @@ export default function QuestionsTable() {
                       {header.isPlaceholder
                         ? null
                         : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                     </TableHead>
                   ))}
                 </TableRow>
@@ -663,8 +663,8 @@ export default function QuestionsTable() {
               {Math.min(
                 Math.max(
                   table.getState().pagination.pageIndex *
-                    table.getState().pagination.pageSize +
-                    table.getState().pagination.pageSize,
+                  table.getState().pagination.pageSize +
+                  table.getState().pagination.pageSize,
                   0
                 ),
                 table.getRowCount()
@@ -773,9 +773,8 @@ function TableSkeleton({
                     className="px-4 py-3"
                   >
                     <Skeleton
-                      className={`h-4 rounded-md w-${
-                        3 + Math.floor(Math.random() * 4)
-                      }/4`}
+                      className={`h-4 rounded-md w-${3 + Math.floor(Math.random() * 4)
+                        }/4`}
                     />
                   </TableCell>
                 ))}
@@ -822,7 +821,7 @@ function RowActions({ row }: { row: Row<Question> }) {
       toast.error(
         `Failed to save: ${err?.response?.data?.detail || err.message}`,
         {
-          duration: 4000,
+          duration: 2000,
           icon: <AlertCircle className="h-5 w-5" />,
           style: {
             borderRadius: "10px",
@@ -849,7 +848,7 @@ function RowActions({ row }: { row: Row<Question> }) {
       );
       setIsDeleteDialogOpen(false);
       toast.success("Question deleted successfully!", {
-        duration: 4000,
+        duration: 2000,
         icon: <CheckCircle className="h-5 w-5" />,
         style: {
           borderRadius: "10px",
@@ -866,7 +865,7 @@ function RowActions({ row }: { row: Row<Question> }) {
       toast.error(
         `Failed to delete: ${err?.response?.data?.detail || err.message}`,
         {
-          duration: 4000,
+          duration: 2000,
           icon: <AlertCircle className="h-5 w-5" />,
           style: {
             borderRadius: "10px",
@@ -886,7 +885,7 @@ function RowActions({ row }: { row: Row<Question> }) {
     if (!question.text || question.text.length > 500) {
       toast.error("Question text is required and must be 1-500 characters.", {
         icon: <AlertCircle className="h-5 w-5" />,
-        duration: 4000,
+        duration: 2000,
         style: {
           borderRadius: "10px",
           background: "#8B0000",
@@ -905,7 +904,7 @@ function RowActions({ row }: { row: Row<Question> }) {
     ) {
       toast.error("Importance must be between 1 and 5.", {
         icon: <AlertCircle className="h-5 w-5" />,
-        duration: 4000,
+        duration: 2000,
         style: {
           borderRadius: "10px",
           background: "#8B0000",
@@ -924,7 +923,7 @@ function RowActions({ row }: { row: Row<Question> }) {
     ) {
       toast.error("Options are required for dropdown or yes/no questions.", {
         icon: <AlertCircle className="h-5 w-5" />,
-        duration: 4000,
+        duration: 2000,
         style: {
           borderRadius: "10px",
           background: "#8B0000",
@@ -1082,19 +1081,19 @@ function RowActions({ row }: { row: Row<Question> }) {
             </div>
             {(editQuestion.type === "dropdown" ||
               editQuestion.type === "yes_no") && (
-              <div className="grid gap-2">
-                <Label>Options</Label>
-                <Input
-                  value={editQuestion.options?.join(", ") ?? ""}
-                  onChange={(e) =>
-                    setEditQuestion({
-                      ...editQuestion,
-                      options: e.target.value.split(",").map((o) => o.trim()),
-                    })
-                  }
-                />
-              </div>
-            )}
+                <div className="grid gap-2">
+                  <Label>Options</Label>
+                  <Input
+                    value={editQuestion.options?.join(", ") ?? ""}
+                    onChange={(e) =>
+                      setEditQuestion({
+                        ...editQuestion,
+                        options: e.target.value.split(",").map((o) => o.trim()),
+                      })
+                    }
+                  />
+                </div>
+              )}
           </div>
           <DialogFooter className="flex flex-col sm:flex-row sm:justify-end gap-2">
             <Button

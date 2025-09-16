@@ -150,45 +150,6 @@ export default function Component() {
   useEffect(() => {
     if (editContact) setStatus(editContact.status);
   }, [editContact]);
-
-  const markAsRead = async (messageId: number) => {
-    if (!messageId || messageId <= 0) {
-      console.warn("Invalid messageId:", messageId, "- Skipping mark as read");
-      toast.error("Invalid message ID - cannot mark as read.");
-      return;
-    }
-
-    const fullUrl = `${API_BASE_URL}/api/v1/messages/${messageId}/read`;
-    console.log("Attempting to mark as read:", { messageId, fullUrl });
-
-    try {
-      const token = await getAccessToken();
-      await axios.patch(
-        fullUrl,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      setData((prev) =>
-        prev.map((contact) =>
-          contact.id_message === messageId
-            ? { ...contact, has_new_message: false }
-            : contact
-        )
-      );
-
-    } catch (error: any) {
-      console.error("Error marking as read:", error);
-      toast.error(
-        `Failed to mark as read: ${error.response?.status} ${error.response?.statusText || error.message}`
-      );
-    }
-  };
-
   const handleSave = async () => {
     if (!editContact) return;
 
@@ -355,8 +316,9 @@ export default function Component() {
           size="sm"
           variant="outline"
           className="cursor-pointer"
-          onClick={() => {
+          onClick={(e) => {
             setEditContact(row.original);
+            e.stopPropagation();
             setIsDialogOpen(true);
           }}
         >
@@ -483,7 +445,6 @@ export default function Component() {
                     }`}
                   onClick={async () => {
                     if (isNewMessage && messageId) {
-                      await markAsRead(messageId);
                     }
                     router.push(`/admin-dashboard/contacts/${row.original.id}`);
                   }}
@@ -663,8 +624,11 @@ function TableSkeleton({
                     className="px-4 py-3"
                   >
                     <Skeleton
-                      className={`h-4 rounded-md w-${3 + Math.floor(Math.random() * 4)
-                        }/4`}
+                      className={`h-4 rounded-md ${((rowIndex + colIndex) % 4 === 0 && "w-3/4") ||
+                        ((rowIndex + colIndex) % 4 === 1 && "w-2/4") ||
+                        ((rowIndex + colIndex) % 4 === 2 && "w-1/4") ||
+                        "w-full"
+                        }`}
                     />
                   </TableCell>
                 ))}

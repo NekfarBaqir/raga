@@ -12,6 +12,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { getAccessToken } from "@auth0/nextjs-auth0";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
@@ -69,6 +76,14 @@ export default function ApplyPage() {
   const [error, setError] = useState<string | null>(null);
   const [schema, setSchema] = useState<z.ZodObject<any> | null>(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
+
+  const [dialogSubmitting, setDialogSubmitting] = useState(false);
+  const [dialogSuccess, setDialogSuccess] = useState(false);
+  const [dialogError, setDialogError] = useState<{ open: boolean; message?: string }>({
+    open: false,
+    message: "",
+  });
+
   const router = useRouter();
   const CombinedSchema = schema
     ? ApplicantSchema.merge(schema)
@@ -126,16 +141,7 @@ export default function ApplyPage() {
 
   const onSubmit = async (data: any) => {
     const token = await getAccessToken();
-    const loadingToast = toast.loading("Submitting your application...", {
-      icon: <Loader className="animate-spin text-gray-500" />,
-      duration: Infinity,
-      style: {
-        borderRadius: "10px",
-        background: "#f9f9f9",
-        color: "#000000",
-        fontWeight: "500",
-      },
-    });
+    setDialogSubmitting(true);
 
     try {
       const answers = questions.map((q) => ({
@@ -165,55 +171,28 @@ export default function ApplyPage() {
         }
       );
 
+      setDialogSubmitting(false);
+
       if (res.data.status === "rejected") {
-        toast.error("Unfortunately, you are not eligible for this program.", {
-          id: loadingToast,
-          icon: <XCircle className="text-red-500" />,
-          duration: 5000,
-          style: {
-            borderRadius: "10px",
-            background: "#ffecec",
-            color: "#b00020",
-            fontWeight: "bold",
-          },
+        setDialogError({
+          open: true,
+          message: "Unfortunately, you are not eligible for this program.",
         });
       } else {
-        toast.success(
-          "🎉 Congratulations! You’ve been accepted in this program.",
-          {
-            id: loadingToast,
-            icon: <CheckCircle2 className="text-green-600" />,
-            duration: 4000,
-            style: {
-              borderRadius: "10px",
-              background: "#e6ffed",
-              color: "#065f46",
-              fontWeight: "bold",
-            },
-          }
-        );
+        setDialogSuccess(true);
 
         setTimeout(() => {
           router.push("/user-dashboard");
-        }, 1000);
+        }, 2000);
       }
     } catch (err: any) {
+      setDialogSubmitting(false);
       const msg =
         axios.isAxiosError(err) && err.response?.data?.message
           ? err.response.data.message
           : "Whoops… looks like we hit a snag. Try again later.";
 
-      toast.error(msg, {
-        id: loadingToast,
-        icon: <XCircle className="text-red-500" />,
-        duration: 5000,
-        style: {
-          borderRadius: "10px",
-          background: "#ffecec",
-          color: "#b00020",
-          fontWeight: "bold",
-        },
-      });
+      setDialogError({ open: true, message: msg });
     }
   };
 
@@ -246,16 +225,18 @@ export default function ApplyPage() {
             <div>
               <div className="flex flex-col gap-6">
                 <div className="flex flex-col gap-2">
-                  <label htmlFor="team_name" className="font-medium text-sm md:text-base">
+                  <label
+                    htmlFor="team_name"
+                    className="font-medium text-sm md:text-base"
+                  >
                     What is your team or project name?
                   </label>
                   <Input
                     id="team_name"
                     {...register("team_name")}
                     placeholder="Enter team name..."
-                    className={`p-3 py-7 text-xs ${
-                      errors.team_name ? "border-red-500" : "border"
-                    }`}
+                    className={`p-3 py-7 text-xs ${errors.team_name ? "border-red-500" : "border"
+                      }`}
                   />
                   {errors.team_name && (
                     <p className="text-red-500 text-sm">
@@ -280,11 +261,10 @@ export default function ApplyPage() {
                       <Textarea
                         {...register(q.id.toString())}
                         placeholder="Enter your answer..."
-                        className={`border p-2 rounded resize-y md:h-36 h-24 text-xs md:text-sm ${
-                          (errors as any)[q.id.toString()]
-                            ? "border-red-500"
-                            : "border"
-                        }`}
+                        className={`border p-2 rounded resize-y md:h-36 h-24 text-xs md:text-sm ${(errors as any)[q.id.toString()]
+                          ? "border-red-500"
+                          : "border"
+                          }`}
                       />
                     )}
 
@@ -328,11 +308,10 @@ export default function ApplyPage() {
                         defaultValue=""
                       >
                         <SelectTrigger
-                          className={`border p-3 rounded ${
-                            (errors as any)[q.id.toString()]
-                              ? "border-red-500"
-                              : "border-gray-300"
-                          }`}
+                          className={`border p-3 rounded ${(errors as any)[q.id.toString()]
+                            ? "border-red-500"
+                            : "border-gray-300"
+                            }`}
                         >
                           <SelectValue placeholder="Select an option" />
                         </SelectTrigger>
@@ -362,14 +341,17 @@ export default function ApplyPage() {
                 onCheckedChange={(checked) => setAcceptedTerms(!!checked)}
                 className="cursor-pointe"
               />
-              <label htmlFor="terms" className="text-xs md:text-sm text-foreground">
+              <label
+                htmlFor="terms"
+                className="text-xs md:text-sm text-foreground"
+              >
                 I confirm that the information I’ve provided is accurate, and I
                 agree to the{" "}
                 <a
-                  href="/tos"
+                  href="/terms"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 underline hover:text-blue-700 transition-colors"
+                  className="text-blue-500 underline hover:text-blue-700 transition-colors"
                 >
                   Terms of Service
                 </a>{" "}
@@ -378,7 +360,7 @@ export default function ApplyPage() {
                   href="/privacy"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-600 underline hover:text-blue-700 transition-colors"
+                  className="text-blue-500 underline hover:text-blue-700 transition-colors"
                 >
                   Privacy Policy
                 </a>
@@ -389,11 +371,10 @@ export default function ApplyPage() {
                 variant="outline"
                 type="submit"
                 disabled={isSubmitting || !isValid || !acceptedTerms}
-                className={`w-52 py-7 cursor-pointer ${
-                  !isValid
-                    ? " cursor-not-allowed"
-                    : "bg-primary text-muted hover:bg-primary hover:text-muted cursor-pointer"
-                }`}
+                className={`w-52 py-7 cursor-pointer ${!isValid
+                  ? " cursor-not-allowed"
+                  : "bg-primary text-muted hover:bg-primary hover:text-muted cursor-pointer"
+                  }`}
               >
                 {isSubmitting ? (
                   <>
@@ -408,6 +389,52 @@ export default function ApplyPage() {
           </form>
         </div>
       </section>
+
+      <Dialog open={dialogSubmitting} onOpenChange={setDialogSubmitting}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-center">Submitting Your Application. </DialogTitle>
+            <DialogDescription className="text-center">Please wait while we process your submission.
+              This may take a moment. We’re carefully reviewing your information to ensure everything is complete. Thank you for your patience!</DialogDescription>
+          </DialogHeader>
+          <div className="flex justify-center py-4">
+            <Loader className="animate-spin text-gray-500 w-8 h-8" />
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={dialogSuccess} onOpenChange={setDialogSuccess}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center text-center gap-2 text-green-600">
+              <CheckCircle2 className="w-8 h-8" />
+              Success
+            </DialogTitle>
+            <DialogDescription className="text-center">
+              🎉 Congratulations!
+              We’ve received your application. If we need any further details, we’ll reach out to you.
+              We appreciate your interest and look forward to connecting soon!
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={dialogError.open}
+        onOpenChange={(o) => setDialogError({ open: o })}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-600">
+              <XCircle className="w-6 h-6" />
+              Error
+            </DialogTitle>
+            <DialogDescription className="text-center">
+              {dialogError.message || "Something went wrong."}
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

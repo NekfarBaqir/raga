@@ -31,7 +31,7 @@ const navMain = [
     icon: IconMessageUser,
   },
   {
-    title: "Submission",
+    title: "My Submission",
     url: "/user-dashboard/submissions",
     icon: IconFileText,
   },
@@ -66,9 +66,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <SidebarMenuButton asChild>
                   <Link
                     href={item.url}
-                    className={`flex items-center py-6 mt-2 gap-3 p-3 rounded-md text-base transition-colors ${
-                      isActive ? "bg-popover text-foreground" : ""
-                    }`}
+                    className={`flex items-center py-6 mt-2 gap-3 p-3 rounded-md text-base transition-colors ${isActive ? "bg-popover text-foreground" : ""
+                      }`}
                   >
                     <item.icon className="!size-5" />
                     <span>{item.title}</span>
