@@ -127,7 +127,6 @@ export default function SubmissionsPage() {
     queryFn: fetchSubmissions,
   });
 
-  // Function to mark submission as viewed
   const markAsViewed = (submissionId: number) => {
     setViewedSubmissions(prev => new Set([...prev, submissionId]));
   };
@@ -308,6 +307,13 @@ export default function SubmissionsPage() {
                 })}
             </DropdownMenuContent>
           </DropdownMenu>
+        </div>
+        <div className="">
+          <Button variant={"outline"} className=" py-6 cursor-pointer" onClick={() => {
+            router.push(`/admin-dashboard/submissions/announcement`)
+          }}>
+            Announcement
+          </Button>
         </div>
       </div>
 

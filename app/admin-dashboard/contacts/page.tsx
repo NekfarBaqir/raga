@@ -441,8 +441,7 @@ export default function Component() {
               return (
                 <TableRow
                   key={row.id}
-                  className={`border-b cursor-pointer ${isNewMessage ? "font-semibold" : ""
-                    }`}
+                  className={`border-b cursor-pointer`}  // Remove font-semibold from here
                   onClick={async () => {
                     if (isNewMessage && messageId) {
                     }
@@ -452,7 +451,10 @@ export default function Component() {
                   {row.getVisibleCells().map((cell) => (
                     <TableCell
                       key={cell.id}
-                      className="px-2 py-1 md:px-4 md:py-2 break-words text-xs sm:text-sm"
+                      className={cn(
+                        "px-2 py-1 md:px-4 md:py-2 break-words text-xs sm:text-sm",
+                        isNewMessage && "font-semibold"  // Add font-semibold directly to cells
+                      )}
                     >
                       {flexRender(
                         cell.column.columnDef.cell,
