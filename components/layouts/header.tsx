@@ -165,7 +165,9 @@ const Header = () => {
         className="fixed top-0 left-0 right-0 z-40"
       >
 
-        <div className="w-full h-fit py-0  max-h-[50px] md:max-h-[70px] md:py-2 px-5 flex justify-between items-center gap-2 max-w-[1800px] mx-auto">
+        <div className={cn("w-full h-fit py-0  max-h-[50px] md:max-h-[70px] md:py-2 px-5 flex justify-between items-center gap-2 max-w-[1440px] mx-auto", {
+          "border-b": haveBackground,
+        })}>
         {/* Desktop Navigation */}
         <nav className="hidden md:flex w-full justify-between items-center gap-8">
           {sideConfig.mainNav.map((item: MainNavItem, idx: number) => {

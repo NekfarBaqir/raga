@@ -6,13 +6,13 @@ import Link from "next/link";
 export default function Footer() {
   return (
     <footer className=" text-white py-10 px-6 md:px-12 mt-10">
-      <div className="max-w-[1800px] mx-auto">
+      <div className="max-w-[1440px] mx-auto">
         <div className="flex flex-col md:flex-row items-start justify-between gap-8">
           <div className=" block md:flex justify-center items-center text-background md:pl-10 md:text-left space-y-3 md:space-y-0 md:space-x-5">
             <span className="text-2xl font-semibold text-primary">RAGA</span>
             <span className="text-black dark:text-white"> | </span>
             <p className=" text-sm md:text-base text-black dark:text-foreground">
-              The Perfect Work Space For All People.
+            A launchpad for innovation.
             </p>
           </div>
 

@@ -1,7 +1,6 @@
 "use client";
 import FAQSection from "@/components/blocks/faq-section";
 import HeroSectionV2 from "@/components/blocks/hero-section-v2";
-import OurPartnersSection from "@/components/blocks/our-partners-section";
 import SloganSection from "@/components/blocks/slogan-section";
 import WhatWeDoSection from "@/components/blocks/what-we-do-section";
 import WhoCanJoinUS from "@/components/blocks/who-can-join-section";
@@ -15,7 +14,7 @@ export default function Home() {
       <WhyWeDotItSection />
       <WhatWeDoSection />
       <WhoCanJoinUS />
-      <OurPartnersSection />
+      {/* <OurPartnersSection /> */}
       <FAQSection />
     </div>
   );

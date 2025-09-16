@@ -4,7 +4,7 @@ import CornerCroppedButton from "../ui/corner-cropped-button";
 
 const WhyWeDotItSection = () => {
   return (
-    <section className="relative w-full flex-col md:flex-row  flex justify-start items-start h-fit overflow-hidden max-w-[1800px] mx-auto px-12 md:px-16 lg:px-20 gap-10">
+    <section className="relative w-full flex-col md:flex-row  flex justify-start items-start h-fit overflow-hidden max-w-[1440px] mx-auto px-12 md:px-16 lg:px-20 gap-10">
       <div className="w-full md:w-[50%] self-stretch flex justify-center items-center pt-7 md:pt-0">
         <motion.div
           initial={{ opacity: 0, y: 10, filter: "blur(10px)" }}
@@ -15,8 +15,8 @@ const WhyWeDotItSection = () => {
           className="relative  aspect-[424/618] h-[300px] md:h-[618px] w-auto"
         >
           <Image
-            src={"/images/hero-section-bg.png"}
-            alt="hero-section-bg"
+            src={"/images/why.jpg"}
+            alt="coworking space"
             className="object-cover"
             loading="lazy"
             fill
@@ -60,10 +60,6 @@ const WhyWeDotItSection = () => {
           <CornerCroppedButton link="/about">Discover More</CornerCroppedButton>
         </motion.div>
       </div>
-
-      <span className="absolute top-0 right-0 text-xs md:text-sm font-light px-12 md:px-16 lg:px-20">
-        ABOUT US
-      </span>
     </section>
   );
 };

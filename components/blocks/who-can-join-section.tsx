@@ -4,7 +4,7 @@ import CornerCroppedButton from "../ui/corner-cropped-button";
 
 const WhoCanJoinUS = () => {
   return (
-    <section className="relative w-full flex flex-col md:flex-row justify-start items-start h-fit overflow-hidden max-w-[1800px] mx-auto px-12 md:px-16 lg:px-20 gap-10">
+    <section className="relative w-full flex flex-col md:flex-row justify-start items-start h-fit overflow-hidden max-w-[1440px] mx-auto px-12 md:px-16 lg:px-20 gap-10">
       <div className="w-full md:w-[50%] self-stretch flex justify-center items-center pt-7 md:pt-0">
         <motion.div
           initial={{ opacity: 0, y: 10, filter: "blur(10px)" }}
@@ -68,9 +68,7 @@ const WhoCanJoinUS = () => {
         </motion.div>
       </div>
 
-      <span className="absolute top-0 right-0 text-xs md:text-sm font-light px-12 md:px-16 lg:px-20 uppercase">
-        A place for visionaries.
-      </span>
+
     </section>
   );
 };

@@ -5,7 +5,7 @@ import SubTitle from "../ui/sub-title";
 
 const WhyRagaSection = () => {
   return (
-    <section className="w-[80%] max-w-[1800px] mx-auto p-5 flex-col  flex justify-start items-start gap-5 py-20">
+    <section className="w-[80%] max-w-[1440px] mx-auto p-5 flex-col  flex justify-start items-start gap-5 py-20">
       <motion.div
         initial={{ opacity: 0, y: 50, filter: "blur(10px)" }}
         whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}

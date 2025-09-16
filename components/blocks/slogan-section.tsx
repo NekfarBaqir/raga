@@ -5,8 +5,8 @@ import { motion } from "motion/react";
 
 const SloganSection = () => {
   return (
-    <div className="w-full h-fit overflow-visible -mt-[75vh]  md:-mt-[65vh] max-w-[1800px] mx-auto ">
-      <section className="w-[94%] aspect-[1361/2800] md:aspect-[1361/984] h-fit relative mx-auto  flex">
+    <div className="w-full h-fit overflow-visible -mt-[75vh]  md:-mt-[55vh] max-w-[1440px] mx-auto ">
+      <section className="w-[85%] aspect-[1361/2800] md:aspect-[1361/984] h-fit relative mx-auto  flex">
         <ExtendedLogo className="absolute inset-0 w-full h-full object-contain z-0 pointer-events-none" />
         <div className="absolute inset-0 z-10 w-full  flex justify-start items-start mx-auto">
           <div className="self-stretch w-[50%] flex flex-col justify-start pt-[35%] md:pt-0 md:justify-center items-center">

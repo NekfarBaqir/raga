@@ -3,7 +3,7 @@ import GridCarousel from "../ui/carousel/grid-carousel"
 
 const OurPartnersSection = () => {
   return (
-    <div className="w-full flex flex-col justify-start items-start gap-2.5 px-4 max-w-[1800px] mx-auto">
+    <div className="w-full flex flex-col justify-start items-start gap-2.5 px-4 max-w-[1440px] mx-auto">
         <motion.h2
           initial={{ opacity: 0, y: 10, filter: "blur(10px)" }}
           whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}

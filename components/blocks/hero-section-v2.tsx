@@ -5,12 +5,12 @@ const HeroSectionV2 = () => {
   return (
     <section className="w-full min-h-screen h-auto relative pointer-events-none overflow-visible flex flex-col justify-start items-start">
       <Image
-        src="/images/hero-section-bg.png"
+        src="/images/og-image.jpg"
         alt="Hero Section bg"
         fill
         className="object-cover"
       />
-      <div className="w-full h-full inset-0 absolute bg-gradient-to-b from-background/50 via-background/50 to-background/100"></div>
+      <div className="w-full h-full inset-0 absolute bg-gradient-to-b from-background/50 via-background/80 to-background/100"></div>
       <div className="w-full absolute z-[500] pb-3 bottom-0 flex justify-center items-center">
         <button className="cursor-pointer pointer-events-auto"><ChevronDown className="w-7 h-7 animate-bounce" /></button>
       </div>
