@@ -15,7 +15,7 @@ const WhyWeDotItSection = () => {
           className="relative  aspect-[424/618] h-[300px] md:h-[618px] w-auto"
         >
           <Image
-            src={"/images/why.jpg"}
+            src={"/images/9.jpg"}
             alt="coworking space"
             className="object-cover"
             loading="lazy"

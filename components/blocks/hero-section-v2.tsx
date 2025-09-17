@@ -5,7 +5,7 @@ const HeroSectionV2 = () => {
   return (
     <section className="w-full min-h-screen h-auto relative pointer-events-none overflow-visible flex flex-col justify-start items-start">
       <Image
-        src="/images/og-image.jpg"
+        src="/images/final.jpg"
         alt="Hero Section bg"
         fill
         className="object-cover"
