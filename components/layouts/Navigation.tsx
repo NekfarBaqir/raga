@@ -6,7 +6,7 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import * as React from "react";
-import { ShimmerButton } from "../magicui/shimmer-button";
+import CornerCroppedButton from "../ui/corner-cropped-button";
 import { MenuItem } from "./MenuItem";
 
 const variants = {
@@ -39,7 +39,7 @@ export const Navigation: React.FC<NavigationProps> = ({ onItemClick }) => {
             />
           );
         })}
-        
+
         {/* Apply Now Button */}
         {!pathname?.includes("apply") && (
           <motion.li
@@ -48,27 +48,26 @@ export const Navigation: React.FC<NavigationProps> = ({ onItemClick }) => {
                 y: 0,
                 opacity: 1,
                 transition: {
-                  y: { stiffness: 1000, velocity: -100 }
-                }
+                  y: { stiffness: 1000, velocity: -100 },
+                },
               },
               closed: {
                 y: 50,
                 opacity: 0,
                 transition: {
-                  y: { stiffness: 1000 }
-                }
-              }
+                  y: { stiffness: 1000 },
+                },
+              },
             }}
             className="pt-4"
           >
             <Link href="/apply" onClick={onItemClick}>
-              <ShimmerButton
-                background="black"
-                shimmerColor="#fff"
-                className="!p-3 !px-6 dark:text-foreground text-background !border border-black/20 cursor-pointer hover:border-black/40 transition-all duration-300 w-full"
+              <CornerCroppedButton
+                link="/apply"
+                className="font-medium text-lg  aspect-[177/60] w-[130px] "
               >
-                Apply Now
-              </ShimmerButton>
+                Apply
+              </CornerCroppedButton>
             </Link>
           </motion.li>
         )}

@@ -1,15 +1,15 @@
 "use client";
 
 import { getAccessToken } from "@auth0/nextjs-auth0";
-import axios from "axios";
 import { useQuery } from "@tanstack/react-query";
+import axios, { isAxiosError } from "axios";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { SubmissionDetail } from "@/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs";
 import { Brain, Loader2, User } from "lucide-react";
-import { toast, Toaster } from "sonner";
-import { SubmissionDetail } from "@/types";
+import { Toaster } from "sonner";
 
 
 export default function SubmissionDetailPage() {
@@ -37,6 +37,9 @@ export default function SubmissionDetailPage() {
   });
 
 
+  const is404 = isAxiosError(submissionError) && submissionError.response?.status === 404;
+
+
   if (submissionLoading)
     return (
       <div className="flex justify-center items-center h-64">
@@ -45,15 +48,16 @@ export default function SubmissionDetailPage() {
       </div>
     );
 
-  if (submissionError) return <p className="text-center text-red-500">{submissionError.message}</p>;
-  if (!submission) {
+  if (submissionError && !is404) return <p className="text-center text-red-500">{submissionError.message}</p>;
+  if (!submission || is404) {
     return (
-      <div className="flex flex-col items-center justify-center h-64 text-center space-y-4">
+      <div className="flex flex-col items-center self-stretch justify-center h-[80vh] text-center space-y-4">
         <p className="text-lg text-muted-foreground">
           You have not submitted an application yet.
         </p>
         <Button
           variant="default"
+          className="cursor-pointer"
           onClick={() => (window.location.href = "/apply")}
         >
           Go to Apply Page

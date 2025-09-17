@@ -14,18 +14,17 @@ import {
 } from "framer-motion";
 import { jwtDecode } from "jwt-decode";
 import {
-  ArrowRightIcon,
   FileText,
   HomeIcon,
   LayoutDashboard,
-  LogOut,
+  LogOut
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { RefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AnimatedThemeToggler } from "../magicui/animated-theme-toggler";
-import { ShimmerButton } from "../magicui/shimmer-button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import CornerCroppedButton from "../ui/corner-cropped-button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -189,14 +188,8 @@ const Header = () => {
             {!user ? (
               !pathname?.includes("apply") && (
                 <Link href="/auth/login?returnTo=/apply">
-                  <ShimmerButton
-                    background="white"
-                    shimmerColor="#000"
-                    className="!p-3 !px-6 group text-foreground !border border-black/10 cursor-pointer hover:border-black/20 transition-all duration-300"
-                  >
-                    Apply Now
-                    <ArrowRightIcon className="w-4 h-4 opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all duration-300" />
-                  </ShimmerButton>
+            
+                        <CornerCroppedButton link="/apply" className="font-medium text-lg  aspect-[177/60] w-[130px] ">Apply</CornerCroppedButton>
                 </Link>
               )
             ) : (

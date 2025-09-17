@@ -1,12 +1,11 @@
 "use client";
 
-import React from "react";
-import { useQuery } from "@tanstack/react-query";
-import axios from "axios";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, AlertCircle } from "lucide-react";
 import { getAccessToken } from "@auth0/nextjs-auth0";
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
+import { AlertCircle, Loader2 } from "lucide-react";
 
 interface Submission {
   status: "pending" | "approved" | "rejected";
@@ -32,6 +31,7 @@ const UserDashboard = () => {
   } = useQuery({
     queryKey: ["submission"],
     queryFn: fetchSubmission,
+    retry: 1,
   });
 
   if (isLoading)

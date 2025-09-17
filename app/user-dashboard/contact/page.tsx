@@ -1,20 +1,20 @@
 "use client";
 
-import { Card } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-import { getAccessToken, useUser } from "@auth0/nextjs-auth0";
-import axios from "axios";
-import { Loader2, SendHorizontal, ArrowLeft, X, CheckCircle, Sparkles } from "lucide-react";
-import { useRef, useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Message, Contact } from "@/types";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Contact, Message } from "@/types";
+import { getAccessToken, useUser } from "@auth0/nextjs-auth0";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
+import { CheckCircle, Loader2, SendHorizontal } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
 const ADMIN_EMAIL = "jafarimahdi850@gmail.com";
@@ -88,6 +88,7 @@ export default function ContactAdmin() {
       );
       return res.data;
     },
+    retry: 1,
   });
 
   const contact = contacts[0];
@@ -200,20 +201,10 @@ export default function ContactAdmin() {
 
   return (
     <div className="flex flex-col h-[90vh] w-full md:px-6 px-2" >
-      <div className="flex items-center mb-4">
-        <Button
-          variant="ghost"
-          onClick={() => (window.location.href = "/user-dashboard")}
-          className="mr-4 py-2"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <h2 className="text-2xl font-bold">Contact Admin</h2>
-      </div>
 
       <Card className="rounded-xl flex flex-col h-full relative">
         <div className="px-6 py-2 border-b flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-foreground">Admin Chat</h3>
+          <h3 className="text-lg font-semibold text-foreground">Chat with Admin</h3>
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-4 bg-muted/20 space-y-3 scrollbar-thin scrollbar-thumb-neutral-400 scrollbar-track-neutral-200">
