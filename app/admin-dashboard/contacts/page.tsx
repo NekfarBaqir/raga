@@ -80,7 +80,6 @@ type Contacts = {
   status: "new" | "in_progress" | "resolved";
   created_at: string;
   has_new_message: boolean;
-  id_message: number;
 };
 
 const multiColumnFilterFn: FilterFn<Contacts> = (
@@ -399,7 +398,6 @@ export default function Component() {
               <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
               {table
                 .getAllColumns()
-                .filter((col) => col.getCanHide() && col.id !== "has_new_message")
                 .map((col) => (
                   <DropdownMenuCheckboxItem
                     key={col.id}
@@ -437,13 +435,15 @@ export default function Component() {
           <TableBody>
             {table.getRowModel().rows.map((row) => {
               const isNewMessage = row.original.has_new_message;
-              const messageId = row.original.id_message;
               return (
                 <TableRow
                   key={row.id}
-                  className={`border-b cursor-pointer`}  // Remove font-semibold from here
+                  className={cn(
+                    "border-b cursor-pointer",
+                    isNewMessage && "font-bold"
+                  )}
                   onClick={async () => {
-                    if (isNewMessage && messageId) {
+                    if (isNewMessage) {
                     }
                     router.push(`/admin-dashboard/contacts/${row.original.id}`);
                   }}
@@ -453,7 +453,7 @@ export default function Component() {
                       key={cell.id}
                       className={cn(
                         "px-2 py-1 md:px-4 md:py-2 break-words text-xs sm:text-sm",
-                        isNewMessage && "font-semibold"  // Add font-semibold directly to cells
+                        isNewMessage && "font-bold"
                       )}
                     >
                       {flexRender(
@@ -465,6 +465,7 @@ export default function Component() {
                 </TableRow>
               );
             })}
+
           </TableBody>
         </Table>
       </div>

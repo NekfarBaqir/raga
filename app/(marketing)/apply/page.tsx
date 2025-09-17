@@ -28,6 +28,7 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast, Toaster } from "sonner";
 import * as z from "zod";
+import { elements } from "chart.js";
 
 type QuestionType = "text" | "yes_no" | "dropdown";
 interface Question {
@@ -49,7 +50,7 @@ const buildQuestionSchema = (questions: Question[]) => {
       schemaObj[q.id.toString()] = z
         .string()
         .min(1, `Answer is required`)
-        .max(500, `${q.text} must be 500 characters or less`);
+        .max(700, `${q.text} must be 700 characters or less`);
     } else if (q.type === "yes_no") {
       schemaObj[q.id.toString()] = z
         .string()
@@ -79,7 +80,7 @@ export default function ApplyPage() {
 
   const [dialogSubmitting, setDialogSubmitting] = useState(false);
   const [dialogSuccess, setDialogSuccess] = useState(false);
-  const [dialogError, setDialogError] = useState<{ open: boolean; message?: string }>({
+  const [dialogError, setDialogError] = useState<{ open: boolean; message?: string | any }>({
     open: false,
     message: "",
   });
@@ -174,11 +175,23 @@ export default function ApplyPage() {
       setDialogSubmitting(false);
 
       if (res.data.status === "rejected") {
+        const score = res.data.score ?? "not available";
+
         setDialogError({
           open: true,
-          message: "Unfortunately, you are not eligible for this program.",
+          message: (
+            <div>
+              <p>Unfortunately, your submission was not accepted for this program.</p>
+              <p>
+                You received a score of <strong>{score}</strong> out of 100, which did
+                not meet the minimum requirement.
+              </p>
+              <p>We encourage you to refine your submission and try again in the future.</p>
+            </div>
+          ),
         });
-      } else {
+      }
+      else {
         setDialogSuccess(true);
       }
     } catch (err: any) {
@@ -465,7 +478,7 @@ export default function ApplyPage() {
             </div>
 
             <DialogTitle className="text-xl font-semibold text-primary text-center">
-              Oops! Something went wrong
+              Oops! Something happened
             </DialogTitle>
 
             <DialogDescription className="text-center text-sm text-gray-600 dark:text-gray-300">

@@ -225,10 +225,10 @@ export default function Contact() {
         <DialogContent className="sm:max-w-[425px] rounded-lg p-6 bg-white shadow-lg">
           <div className="flex flex-col items-center gap-4">
             <Loader className="animate-spin text-primary w-12 h-12" />
-            <DialogTitle className="text-xl font-semibold text-center">
+            <DialogTitle className="text-sm md:text-lg font-semibold text-center">
               Sending your message...
             </DialogTitle>
-            <DialogDescription className="text-center text-gray-600">
+            <DialogDescription className="text-xs md:text-sm text-center text-gray-600">
               Please wait a moment while we process your request.
             </DialogDescription>
           </div>
@@ -238,10 +238,10 @@ export default function Contact() {
       <Dialog open={isModalOpen && !isLoading} onOpenChange={() => setIsModalOpen(false)}>
         <DialogContent className="sm:max-w-[425px] rounded-lg p-6 bg-white shadow-lg">
           <DialogHeader className="mb-4">
-            <DialogTitle className="text-2xl font-semibold text-center text-green-600">
+            <DialogTitle className="text-sm md:text-xl font-semibold text-center text-green-600">
               Success!
             </DialogTitle>
-            <DialogDescription className="mt-2 text-center text-gray-600">
+            <DialogDescription className="mt-2 text-xs md:text-sm text-center text-gray-600">
               {successMessage}
             </DialogDescription>
           </DialogHeader>
