@@ -17,7 +17,7 @@ import { CheckCircle, Loader2, SendHorizontal } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
-const ADMIN_EMAIL = "jafarimahdi850@gmail.com";
+const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL!;
 
 function AdminResponseDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   return (
@@ -110,7 +110,8 @@ export default function ContactAdmin() {
       return res.data;
     },
     enabled: !!contact,
-    refetchInterval: 3000,
+    refetchInterval: 1000,
+    retry: 1,
   });
 
   useEffect(() => {
@@ -119,7 +120,7 @@ export default function ContactAdmin() {
     } else {
       const reversedMessages = [...messages].reverse();
       const lastUserMessageIndex = reversedMessages.findIndex(
-        (m) => m.sender !== ADMIN_EMAIL && !m.sender.includes("admin")
+        (m) => m.sender !== ADMIN_EMAIL && !m.sender.includes("entop")
       );
 
       const hasAdminRepliedToLatest =
@@ -128,7 +129,7 @@ export default function ContactAdmin() {
           : reversedMessages
             .slice(0, lastUserMessageIndex)
             .some(
-              (m) => m.sender === ADMIN_EMAIL || m.sender.includes("admin")
+              (m) => m.sender === ADMIN_EMAIL || m.sender.includes("entop")
             );
 
       setHasAdminReplied(hasAdminRepliedToLatest);
@@ -222,7 +223,8 @@ export default function ContactAdmin() {
           ) : (
             messages.map((m) => {
               const isAdmin =
-                m.sender === ADMIN_EMAIL || m.sender.includes("admin");
+                m.sender === ADMIN_EMAIL || m.sender.includes("entop");
+              console.log("🚀 ~ ContactAdmin ~ isAdmin:", isAdmin)
               return (
                 <div
                   key={m.id}

@@ -181,26 +181,21 @@ const CustomButton = ({
       disabled={disabled}
       onClick={onClick}
       tabIndex={0}
-      className={`flex justify-center items-center gap-0.5 duration-150 ${
-        sizes[+svgOnly][size]
-      } ${
-        disabled || loading
+      className={`flex justify-center items-center gap-0.5 duration-150 ${sizes[+svgOnly][size]
+        } ${disabled || loading
           ? "bg-[#f2f2f2] dark:bg-[#1a1a1a] text-[#8f8f8f] fill-[#8f8f8f] border border-[#ebebeb] dark:border-[#2e2e2e] cursor-not-allowed"
           : types[type]
-      } ${shapes[shape][size]}${
-        shadow
+        } ${shapes[shape][size]}${shadow
           ? " shadow-[0_0_0_1px_#00000014,_0px_2px_2px_#0000000a] border-none"
           : ""
-      }${
-        fullWidth ? " w-100%" : ""
-      } focus:shadow-[0_0_0_2px_hsla(0,0%,100%,1),0_0_0_4px_oklch(57.61% 0.2508 258.23)]`}
+        }${fullWidth ? " w-100%" : ""
+        } focus:shadow-[0_0_0_2px_hsla(0,0%,100%,1),0_0_0_4px_oklch(57.61% 0.2508 258.23)]`}
       {...rest}
     >
       {loading ? <Spinner size={size === "large" ? 24 : 16} /> : prefix}
       <span
-        className={`overflow-hidden whitespace-nowrap overflow-ellipsis font-sans${
-          size === "tiny" ? "" : " px-1.5"
-        }`}
+        className={`overflow-hidden whitespace-nowrap overflow-ellipsis font-sans${size === "tiny" ? "" : " px-1.5"
+          }`}
       >
         {children}
       </span>
@@ -215,7 +210,7 @@ interface AccessPendingPageProps {
 }
 
 const AccessPendingPage = ({
-  adminEmail = "ragaentop@gmail.com",
+  adminEmail = "entopchatgpt@gmail.com",
 }: AccessPendingPageProps) => {
   const [isChecking, setIsChecking] = React.useState(false);
 
