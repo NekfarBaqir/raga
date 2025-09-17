@@ -110,7 +110,8 @@ export default function ContactAdmin() {
       return res.data;
     },
     enabled: !!contact,
-    refetchInterval: 3000,
+    refetchInterval: 1000,
+    retry: 1,
   });
 
   useEffect(() => {
@@ -119,7 +120,7 @@ export default function ContactAdmin() {
     } else {
       const reversedMessages = [...messages].reverse();
       const lastUserMessageIndex = reversedMessages.findIndex(
-        (m) => m.sender !== ADMIN_EMAIL && !m.sender.includes("admin")
+        (m) => m.sender !== ADMIN_EMAIL && !m.sender.includes("entop")
       );
 
       const hasAdminRepliedToLatest =
@@ -128,7 +129,7 @@ export default function ContactAdmin() {
           : reversedMessages
             .slice(0, lastUserMessageIndex)
             .some(
-              (m) => m.sender === ADMIN_EMAIL || m.sender.includes("admin")
+              (m) => m.sender === ADMIN_EMAIL || m.sender.includes("entop")
             );
 
       setHasAdminReplied(hasAdminRepliedToLatest);
@@ -222,7 +223,8 @@ export default function ContactAdmin() {
           ) : (
             messages.map((m) => {
               const isAdmin =
-                m.sender === ADMIN_EMAIL || m.sender.includes("admin");
+                m.sender === ADMIN_EMAIL || m.sender.includes("entop");
+              console.log("🚀 ~ ContactAdmin ~ isAdmin:", isAdmin)
               return (
                 <div
                   key={m.id}

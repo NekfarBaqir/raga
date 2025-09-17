@@ -206,13 +206,13 @@ export default function Page() {
                 messages.map((m) => (
                   <div
                     key={m.id}
-                    className={`flex items-end ${m.senderId?.includes("jafari")
+                    className={`flex items-end ${m.senderId?.includes("entop")
                       ? "justify-end"
                       : "justify-start"
                       }`}
                   >
                     <div
-                      className={`px-4 py-2 max-w-[70%] text-xs md:text-sm break-words rounded-2xl ${m.senderId?.includes("jafari")
+                      className={`px-4 py-2 max-w-[70%] text-xs md:text-sm break-words rounded-2xl ${m.senderId?.includes("entop")
                         ? "bg-muted text-foreground rounded-br-none"
                         : "bg-secondary/10 text-foreground rounded-bl-none"
                         }`}
