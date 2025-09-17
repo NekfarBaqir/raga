@@ -17,7 +17,7 @@ import { CheckCircle, Loader2, SendHorizontal } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
-const ADMIN_EMAIL = "jafarimahdi850@gmail.com";
+const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL!;
 
 function AdminResponseDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   return (
