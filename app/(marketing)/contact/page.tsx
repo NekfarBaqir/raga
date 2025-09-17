@@ -133,7 +133,7 @@ export default function Contact() {
               <div className="bg-gray-200 text-black p-2 rounded-full">
                 <Mail className="w-5 h-5" />
               </div>
-              <span>contact@raga.space</span>
+              <span>entopchatgpt@gmail.com</span>
             </div>
 
             <div className="flex items-center gap-3">
