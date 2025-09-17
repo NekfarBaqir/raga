@@ -5,11 +5,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
-import { Lightbulb, Mail, Phone } from "lucide-react";
-import { useState } from "react";
+import { Lightbulb, Loader, Mail, Phone } from "lucide-react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
-
+import { useUser } from "@auth0/nextjs-auth0";
 import {
   Dialog,
   DialogContent,
@@ -19,24 +19,44 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-const formSchema = z.object({
-  firstName: z.string().min(1, "First name is required"),
-  lastName: z.string().min(1, "Last name is required"),
-  email: z.string().email("Invalid email address"),
-  message: z.string().min(1, "Message is required"),
-});
+// Dynamic schema based on user authentication
+const getFormSchema = (isAuthenticated: boolean) => {
+  return z.object({
+    firstName: isAuthenticated ? z.string().optional() : z.string().min(1, "First name is required"),
+    lastName: isAuthenticated ? z.string().optional() : z.string().min(1, "Last name is required"),
+    email: isAuthenticated ? z.string().email("Invalid email address").optional() : z.string().email("Invalid email address"),
+    message: z.string().min(1, "Message is required"),
+  });
+};
 
-type FormData = z.infer<typeof formSchema>;
+type FormData = z.infer<ReturnType<typeof getFormSchema>>;
 
 export default function Contact() {
+  const { user, isLoading: userLoading } = useUser();
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    setIsAuthenticated(!!user);
+  }, [user]);
+
   const {
     register,
     handleSubmit,
     formState: { errors },
     reset,
+    setValue,
   } = useForm<FormData>({
-    resolver: zodResolver(formSchema),
+    resolver: zodResolver(getFormSchema(!!user)),
   });
+
+  // Pre-fill form when user is available
+  useEffect(() => {
+    if (user) {
+      setValue("firstName", user.given_name || "");
+      setValue("lastName", user.family_name || "");
+      setValue("email", user.email || "");
+    }
+  }, [user, setValue]);
 
   const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -46,31 +66,47 @@ export default function Contact() {
   const onSubmit = async (data: FormData) => {
     const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-    try {
-      setIsLoading(true);
-      const payload = {
+    const payload = user
+      ? {
+        name: `${user.given_name} ${user.family_name}`,
+        email: user.email,
+        message: data.message,
+      }
+      : {
         name: `${data.firstName} ${data.lastName}`,
         email: data.email,
         message: data.message,
       };
 
-      await axios.post(`${API_BASE_URL}/api/v1/contacts`, payload, {
-        headers: {
-          "Content-Type": "application/json",
-        },
+    try {
+      setIsLoading(true);
+      const response = await axios.post(`${API_BASE_URL}/api/v1/contacts`, payload, {
+        headers: { "Content-Type": "application/json" },
       });
 
-      reset();
-      setError(null);
-      setSuccessMessage("Your message was successfully submitted!");
-      setIsModalOpen(true);
+      if (response.status === 200 || response.status === 201) {
+        if (!user) reset();
+        setError(null);
+        setSuccessMessage("Your message was successfully submitted!");
+        setIsModalOpen(true);
+      } else {
+        throw new Error("Failed to submit contact");
+      }
     } catch (err: any) {
-      console.error(err);
-      setError(err.response?.data?.detail || "Failed to submit contact.");
+      console.error("Submission error:", err);
+      setError(err.response?.data?.detail || err.message || "Failed to submit contact.");
     } finally {
       setIsLoading(false);
     }
   };
+
+  if (userLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Loader className="animate-spin h-8 w-8" />
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background text-foreground pt-32 p-6 xl:pt-20">
@@ -114,106 +150,109 @@ export default function Contact() {
           <p className="mb-6 text-muted-foreground text-base">
             We'd love to hear from you!
           </p>
+
+          {error && (
+            <div className="mb-4 p-3 bg-destructive/15 text-destructive rounded-md">
+              {error}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-10">
-            <div className="flex gap-4">
-              <div className="flex-1">
-                <Label htmlFor="firstName" className="text-sm mb-1 block">
-                  First Name
-                </Label>
-                <Input
-                  id="firstName"
-                  placeholder="First name"
-                  {...register("firstName")}
-                  className="w-full  border bg-transparent border-ring text-foreground px-4 py-6 text-xs rounded-lg"
-                />
-                {errors.firstName && (
-                  <p className="text-destructive text-sm mt-1">
-                    {errors.firstName.message}
-                  </p>
-                )}
-              </div>
+            {!user && (
+              <>
+                {/* First Name */}
+                <div className="flex gap-4">
+                  <div className="flex-1">
+                    <Label htmlFor="firstName" className="text-sm mb-1 block">First Name</Label>
+                    <Input
+                      id="firstName"
+                      placeholder="First name"
+                      {...register("firstName")}
+                      className="w-full border bg-transparent border-ring text-foreground px-4 py-6 text-xs rounded-lg"
+                    />
+                    {errors.firstName && <p className="text-destructive text-sm mt-1">{errors.firstName.message}</p>}
+                  </div>
 
-              <div className="flex-1">
-                <Label htmlFor="lastName" className="text-sm mb-1 block">
-                  Last Name
-                </Label>
-                <Input
-                  id="lastName"
-                  placeholder="Last name"
-                  {...register("lastName")}
-                  className="w-full bg-transparent border border-ring text-foreground px-4 py-6 text-xs rounded-lg"
-                />
-                {errors.lastName && (
-                  <p className="text-destructive text-sm mt-1">
-                    {errors.lastName.message}
-                  </p>
-                )}
-              </div>
-            </div>
+                  {/* Last Name */}
+                  <div className="flex-1">
+                    <Label htmlFor="lastName" className="text-sm mb-1 block">Last Name</Label>
+                    <Input
+                      id="lastName"
+                      placeholder="Last name"
+                      {...register("lastName")}
+                      className="w-full bg-transparent border border-ring text-foreground px-4 py-6 text-xs rounded-lg"
+                    />
+                    {errors.lastName && <p className="text-destructive text-sm mt-1">{errors.lastName.message}</p>}
+                  </div>
+                </div>
 
+                {/* Email */}
+                <div>
+                  <Label htmlFor="email" className="text-sm mb-1 block">Email</Label>
+                  <Input
+                    id="email"
+                    placeholder="example@gmail.com"
+                    {...register("email")}
+                    className="w-full bg-transparent border border-ring text-foreground px-4 py-6 text-xs rounded-lg"
+                  />
+                  {errors.email && <p className="text-destructive text-sm mt-1">{errors.email.message}</p>}
+                </div>
+              </>
+            )}
+
+            {/* Message (always shown) */}
             <div>
-              <Label htmlFor="email" className="text-sm mb-1 block">
-                Email
-              </Label>
-              <Input
-                id="email"
-                placeholder="example@gmail.com"
-                {...register("email")}
-                className="w-full bg-transparent border border-ring text-foreground px-4 py-6 text-xs rounded-lg"
-              />
-              {errors.email && (
-                <p className="text-destructive text-sm mt-1">
-                  {errors.email.message}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <Label htmlFor="message" className="text-sm mb-1 block">
-                Message
-              </Label>
+              <Label htmlFor="message" className="text-sm mb-1 block">Message</Label>
               <Textarea
                 id="message"
                 placeholder="Your message"
                 {...register("message")}
                 className="w-full bg-transparent border border-ring text-foreground px-4 py-6 text-xs rounded-lg h-32"
               />
-              {errors.message && (
-                <p className="text-destructive text-sm mt-1">
-                  {errors.message.message}
-                </p>
-              )}
+              {errors.message && <p className="text-destructive text-sm mt-1">{errors.message.message}</p>}
             </div>
 
-            {error && <p className="text-destructive text-sm">{error}</p>}
-
-            <Button
-              type="submit"
-              variant={"outline"}
-              disabled={isLoading}
-              className="w-full bg-background text-foreground cursor-pointer px-6 py-7 text-base rounded-full font-semibold"
-            >
+            <Button type="submit" variant={"outline"} disabled={isLoading} className="w-full bg-background text-foreground cursor-pointer px-6 py-7 text-base rounded-full font-semibold">
+              {isLoading ? <Loader className="animate-spin mr-2 h-4 w-4" /> : null}
               {isLoading ? "Submitting..." : "Submit"}
             </Button>
           </form>
+
         </div>
       </div>
 
-      <Dialog open={isModalOpen} onOpenChange={() => setIsModalOpen(false)}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>{isLoading ? "Sending..." : "Success!"}</DialogTitle>
-            <DialogDescription>
-              {isLoading
-                ? "Your message is being sent. Please wait..."
-                : successMessage}
+      <Dialog open={isLoading} onOpenChange={() => { }}>
+        <DialogContent className="sm:max-w-[425px] rounded-lg p-6 bg-white shadow-lg">
+          <div className="flex flex-col items-center gap-4">
+            <Loader className="animate-spin text-primary w-12 h-12" />
+            <DialogTitle className="text-sm md:text-lg font-semibold text-center">
+              Sending your message...
+            </DialogTitle>
+            <DialogDescription className="text-xs md:text-sm text-center text-gray-600">
+              Please wait a moment while we process your request.
+            </DialogDescription>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isModalOpen && !isLoading} onOpenChange={() => setIsModalOpen(false)}>
+        <DialogContent className="sm:max-w-[425px] rounded-lg p-6 bg-white shadow-lg">
+          <DialogHeader className="mb-4">
+            <DialogTitle className="text-sm md:text-xl font-semibold text-center text-green-600">
+              Success!
+            </DialogTitle>
+            <DialogDescription className="mt-2 text-xs md:text-sm text-center text-gray-600">
+              {successMessage}
             </DialogDescription>
           </DialogHeader>
-          {!isLoading && (
-            <DialogFooter>
-              <Button onClick={() => setIsModalOpen(false)}>Close</Button>
-            </DialogFooter>
-          )}
+          <DialogFooter className="flex justify-center">
+            <Button
+              className="px-6 py-2 rounded-md bg-green-600 text-white hover:bg-green-700 transition"
+              onClick={() => setIsModalOpen(false)}
+            >
+              Close
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

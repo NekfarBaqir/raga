@@ -22,12 +22,13 @@ import {
 import { getAccessToken } from "@auth0/nextjs-auth0";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
-import { CheckCircle2, Loader, XCircle } from "lucide-react";
+import { CheckCircle, CheckCircle2, Loader, OctagonAlert, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast, Toaster } from "sonner";
 import * as z from "zod";
+import { elements } from "chart.js";
 
 type QuestionType = "text" | "yes_no" | "dropdown";
 interface Question {
@@ -49,7 +50,7 @@ const buildQuestionSchema = (questions: Question[]) => {
       schemaObj[q.id.toString()] = z
         .string()
         .min(1, `Answer is required`)
-        .max(500, `${q.text} must be 500 characters or less`);
+        .max(700, `${q.text} must be 700 characters or less`);
     } else if (q.type === "yes_no") {
       schemaObj[q.id.toString()] = z
         .string()
@@ -79,7 +80,7 @@ export default function ApplyPage() {
 
   const [dialogSubmitting, setDialogSubmitting] = useState(false);
   const [dialogSuccess, setDialogSuccess] = useState(false);
-  const [dialogError, setDialogError] = useState<{ open: boolean; message?: string }>({
+  const [dialogError, setDialogError] = useState<{ open: boolean; message?: string | any }>({
     open: false,
     message: "",
   });
@@ -174,23 +175,31 @@ export default function ApplyPage() {
       setDialogSubmitting(false);
 
       if (res.data.status === "rejected") {
+        const score = res.data.score ?? "not available";
+
         setDialogError({
           open: true,
-          message: "Unfortunately, you are not eligible for this program.",
+          message: (
+            <div>
+              <p>Unfortunately, your submission was not accepted for this program.</p>
+              <p>
+                You received a score of <strong>{score}</strong> out of 100, which did
+                not meet the minimum requirement.
+              </p>
+              <p>We encourage you to refine your submission and try again in the future.</p>
+            </div>
+          ),
         });
-      } else {
+      }
+      else {
         setDialogSuccess(true);
-
-        setTimeout(() => {
-          router.push("/user-dashboard");
-        }, 2000);
       }
     } catch (err: any) {
       setDialogSubmitting(false);
       const msg =
         axios.isAxiosError(err) && err.response?.data?.message
           ? err.response.data.message
-          : "Whoops… looks like we hit a snag. Try again later.";
+          : "It looks like we hit a temporary snag while processing your request. Please try again in a few moments.";
 
       setDialogError({ open: true, message: msg });
     }
@@ -252,7 +261,7 @@ export default function ApplyPage() {
               <div className="grid grid-cols-1 gap-8">
                 {questions.map((q, idx) => (
                   <div key={q.id} className="flex flex-col gap-2">
-                    <label className="font-medium text-xs md:base  text-foreground">
+                    <label className="font-medium text-xs md:text-base  text-foreground">
                       <span className="text-foreground mr-1">{idx + 1}.</span>{" "}
                       {q.text}
                     </label>
@@ -351,7 +360,7 @@ export default function ApplyPage() {
                   href="/terms"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-500 underline hover:text-blue-700 transition-colors"
+                  className="text-primary hover:underline transition-colors"
                 >
                   Terms of Service
                 </a>{" "}
@@ -360,7 +369,7 @@ export default function ApplyPage() {
                   href="/privacy"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-500 underline hover:text-blue-700 transition-colors"
+                  className="text-primary hover:underline transition-colors"
                 >
                   Privacy Policy
                 </a>
@@ -391,50 +400,103 @@ export default function ApplyPage() {
       </section>
 
       <Dialog open={dialogSubmitting} onOpenChange={setDialogSubmitting}>
-        <DialogContent>
+        <DialogContent className="max-w-md rounded-lg shadow-lg p-6 space-y-4">
           <DialogHeader>
-            <DialogTitle className="text-center">Submitting Your Application. </DialogTitle>
-            <DialogDescription className="text-center">Please wait while we process your submission.
-              This may take a moment. We’re carefully reviewing your information to ensure everything is complete. Thank you for your patience!</DialogDescription>
+            <DialogTitle className="text-xl font-semibold text-center">
+              Submitting Your Application
+            </DialogTitle>
+            <DialogDescription className="text-sm text-gray-600 text-center">
+              We're securely processing your application.
+              This should only take a few moments.
+              Please don’t close or refresh this window.
+            </DialogDescription>
           </DialogHeader>
-          <div className="flex justify-center py-4">
-            <Loader className="animate-spin text-gray-500 w-8 h-8" />
+
+          <div className="flex flex-col items-center space-y-4 pt-2">
+            <Loader className="animate-spin text-primary w-8 h-8" />
+            <p className="text-sm text-gray-500">Validating your information...</p>
+
+            <div className="flex space-x-1 pt-2">
+              <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0s' }} />
+              <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+              <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
+            </div>
           </div>
         </DialogContent>
       </Dialog>
 
+
       <Dialog open={dialogSuccess} onOpenChange={setDialogSuccess}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[500px] rounded-2xl p-8" showCloseButton={false}>
           <DialogHeader>
-            <DialogTitle className="flex items-center text-center gap-2 text-green-600">
-              <CheckCircle2 className="w-8 h-8" />
-              Success
-            </DialogTitle>
-            <DialogDescription className="text-center">
-              🎉 Congratulations!
-              We’ve received your application. If we need any further details, we’ll reach out to you.
-              We appreciate your interest and look forward to connecting soon!
-            </DialogDescription>
+            <DialogTitle className="sr-only">Message Sent Successfully</DialogTitle>
           </DialogHeader>
+          <div className="flex flex-col items-center text-center space-y-6">
+            <div className="relative">
+              <div className="relative bg-primary rounded-full p-4">
+                <CheckCircle className="h-12 w-12 text-white dark:text-black" />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <h2 className="text-3xl text-foreground font-bold animate-fade-in">
+                Congratulations!
+              </h2>
+              <div className="w-16 h-1 bg-primary mx-auto rounded-full"></div>
+            </div>
+
+            <div className="space-y-3">
+              <p>Your Application sent successfully !c</p>
+              <p className="text-muted-foreground leading-relaxed">
+                We’ve received your application. If we need any further details, we’ll reach out to you.
+                We appreciate your interest and look forward to connecting soon!
+              </p>
+            </div>
+
+            <div className="pt-4">
+              <Button
+                onClick={() => (window.location.href = "/user-dashboard")}
+                className="cursor-pointer py"
+                size="lg"
+              >
+                Go to Dashboard
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 
+
       <Dialog
         open={dialogError.open}
-        onOpenChange={(o) => setDialogError({ open: o })}
+        onOpenChange={(o) => setDialogError({ open: o, message: dialogError.message })}
       >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-red-600">
-              <XCircle className="w-6 h-6" />
-              Error
+        <DialogContent className="max-w-sm rounded-xl p-6 shadow-lg border bg-white dark:bg-gray-800">
+          <div className="flex flex-col items-center gap-4">
+            <div className="flex items-center justify-center h-16 w-16 rounded-full">
+              <OctagonAlert className="w-10 h-10 text-primary" />
+            </div>
+
+            <DialogTitle className="text-xl font-semibold text-primary text-center">
+              Oops! Something happened
             </DialogTitle>
-            <DialogDescription className="text-center">
-              {dialogError.message || "Something went wrong."}
+
+            <DialogDescription className="text-center text-sm text-gray-600 dark:text-gray-300">
+              {dialogError.message ||
+                "We couldn't complete your request. Please try again or contact support if the issue persists."}
             </DialogDescription>
-          </DialogHeader>
+
+            <button
+              onClick={() => setDialogError({ open: false })}
+              className="mt-2 inline-flex items-center justify-center rounded-lg bg-primary 
+                       text-white px-4 py-2 text-sm font-medium hover:bg-primary/80 transition-colors"
+            >
+              Close
+            </button>
+          </div>
         </DialogContent>
       </Dialog>
+
     </>
   );
 }
