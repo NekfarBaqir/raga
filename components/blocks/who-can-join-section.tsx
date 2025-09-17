@@ -15,7 +15,7 @@ const WhoCanJoinUS = () => {
           className="relative  aspect-[424/618] h-[300px] md:h-[618px] w-auto"
         >
           <Image
-            src={"/images/team.jpg"}
+            src={"/images/7.jpg"}
             alt="hero-section-bg"
             className="object-cover"
             loading="lazy"
@@ -50,10 +50,10 @@ const WhoCanJoinUS = () => {
           </p>{" "}
           <p>
             <span className="font-bold"> Visionary Teams —</span> groups with a clear idea, proven skills, and the
-          drive to create solutions that improve lives in Afghanistan. If you
-          have the passion to build, Raga has the space to support you.
+            drive to create solutions that improve lives in Afghanistan. If you
+            have the passion to build, Raga has the space to support you.
           </p>{" "}
-         
+
         </motion.div>
         <motion.div
           initial={{ opacity: 0, y: 10, filter: "blur(10px)" }}

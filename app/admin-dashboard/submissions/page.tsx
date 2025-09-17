@@ -308,13 +308,13 @@ export default function SubmissionsPage() {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        <div className="">
+        {/* <div className="">
           <Button variant={"outline"} className=" py-6 cursor-pointer" onClick={() => {
             router.push(`/admin-dashboard/submissions/announcement`)
           }}>
             Announcement
           </Button>
-        </div>
+        </div> */}
       </div>
 
       <div className="bg-background overflow-hidden rounded-lg border">
