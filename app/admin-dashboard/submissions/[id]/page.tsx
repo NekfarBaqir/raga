@@ -3,7 +3,8 @@
 import { getAccessToken } from "@auth0/nextjs-auth0";
 import axios from "axios";
 import { useParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,98 +15,35 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@radix-ui/react-tabs";
 import {
   AlertCircle,
   Brain,
   CheckCircle,
   Loader2,
-  MessageSquare,
-  RefreshCwIcon,
-  Send,
   User,
 } from "lucide-react";
 import { toast, Toaster } from "sonner";
+import { SubmissionDetail } from "@/types";
 
-interface SubmissionDetail {
-  id: number;
-  team_name: string;
-  name: string;
-  email: string;
-  status: "approved" | "pending" | "rejected";
-  score: number;
-  feedback: string;
-  strengths: string;
-  weaknesses: string;
-  keywords: string;
-  risk_level: string;
-  created_at: string;
-  answers: {
-    question_text: string;
-    answer: string;
-  }[];
-}
 
-interface APIMessage {
-  id: number;
-  sender: string;
-  receiver?: string;
-  message: string;
-  is_read?: boolean;
-  created_at?: string;
-}
-
-type LocalMessage = {
-  id: number;
-  sender: "user" | "admin";
-  message: string;
-  is_read?: boolean;
-  created_at?: string;
-  temporary?: boolean;
-};
 
 export default function SubmissionDetailPage() {
   const { id } = useParams();
-  const [submission, setSubmission] = useState<SubmissionDetail | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [editingStatus, setEditingStatus] =
     useState<SubmissionDetail["status"]>("pending");
-  const [saving, setSaving] = useState(false);
-
-  // Chat state
-  const [messages, setMessages] = useState<LocalMessage[]>([]);
-  const [newMessage, setNewMessage] = useState("");
-  const [sending, setSending] = useState(false);
-  const messagesContainerRef = useRef<HTMLDivElement | null>(null);
 
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-  const scrollToBottom = () => {
-    setTimeout(() => {
-      const el = messagesContainerRef.current;
-      if (el) el.scrollTop = el.scrollHeight;
-    }, 50);
-  };
-
-  const mapApiToLocal = (
-    m: APIMessage,
-    submissionEmail?: string
-  ): LocalMessage => {
-    const isUser = submissionEmail ? m.sender === submissionEmail : false;
-    return {
-      id: m.id,
-      sender: isUser ? "user" : "admin",
-      message: m.message,
-      is_read: !!m.is_read,
-      created_at: m.created_at,
-    };
-  };
-
-  const fetchSubmission = async () => {
-    try {
+  const {
+    data: submission,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["submission", id],
+    queryFn: async () => {
       const token = await getAccessToken();
       const response = await axios.get<SubmissionDetail>(
         `${API_BASE_URL}/api/v1/submissions/${id}`,
@@ -116,45 +54,23 @@ export default function SubmissionDetailPage() {
           },
         }
       );
-      const sub = response.data;
-      setSubmission(sub);
-      setEditingStatus(sub.status);
-
-      // Fetch messages
-      const messagesRes = await axios.get<APIMessage[]>(
-        `${API_BASE_URL}/api/v1/submissions/${sub.id}/messages`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      const mapped = messagesRes.data.map((m) => mapApiToLocal(m, sub.email));
-      setMessages(mapped);
-      scrollToBottom();
-    } catch (err: any) {
-      console.error(err);
-      setError("Failed to load submission details.");
-    } finally {
-      setLoading(false);
-    }
-  };
+      return response.data;
+    },
+    enabled: !!id,
+  });
 
   useEffect(() => {
-        if (id) fetchSubmission();
-  }, [API_BASE_URL, id]);
+    if (submission) {
+      setEditingStatus(submission.status);
+    }
+  }, [submission]);
 
-  const handleSave = async () => {
-    if (!submission) return;
-
-    setSaving(true);
-    const statusMap: Record<string, SubmissionDetail["status"]> = {
-      Approved: "approved",
-      Pending: "pending",
-      Rejected: "rejected",
-    };
-    const toastId = toast.loading("⏳ Updating the status...");
-
-    try {
+  const updateStatusMutation = useMutation({
+    mutationFn: async (status: SubmissionDetail["status"]) => {
+      if (!submission) throw new Error("No submission data");
       const token = await getAccessToken();
       const body = {
-        status: statusMap[editingStatus] || editingStatus,
+        status: status,
         submission_id: submission.id,
       };
       const response = await axios.patch<SubmissionDetail>(
@@ -167,10 +83,15 @@ export default function SubmissionDetailPage() {
           },
         }
       );
-      setSubmission((prev) => prev && { ...prev, ...response.data });
+      return response.data;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["submission", id] });
+      if (data.status) {
+        setEditingStatus(data.status);
+      }
       setEditing(false);
       toast.success("Your status has been updated successfully!", {
-        id: toastId,
         duration: 4000,
         icon: <CheckCircle className="h-5 w-5" />,
         style: {
@@ -184,10 +105,10 @@ export default function SubmissionDetailPage() {
           padding: "12px 16px",
         },
       });
-    } catch (err: any) {
-      console.error("Failed to update submission:", err);
+    },
+    onError: (error) => {
+      console.error("Failed to update submission:", error);
       toast.error("Whoops! Something went wrong while updating status.", {
-        id: toastId,
         duration: 4000,
         icon: <AlertCircle className="h-5 w-5" />,
         style: {
@@ -201,56 +122,17 @@ export default function SubmissionDetailPage() {
           padding: "12px 16px",
         },
       });
-    } finally {
-      setSaving(false);
-    }
+    },
+  });
+
+
+  const handleSave = async () => {
+    if (!submission) return;
+    updateStatusMutation.mutate(editingStatus);
   };
 
-  const handleSendMessage = async () => {
-    if (!newMessage.trim() || !submission) return;
 
-    const messageText = newMessage.trim();
-    setNewMessage("");
-
-    const tempId = Date.now();
-    const tempMsg: LocalMessage = {
-      id: tempId,
-      sender: "admin",
-      message: messageText,
-      temporary: true,
-      created_at: new Date().toISOString(),
-      is_read: true,
-    };
-    setMessages((prev) => [...prev, tempMsg]);
-    scrollToBottom();
-
-    setSending(true);
-    try {
-      const token = await getAccessToken();
-      const body = {
-        message: messageText,
-        receiver: submission.email,
-        submission_id: submission.id,
-      };
-      const res = await axios.post<APIMessage>(
-        `${API_BASE_URL}/api/v1/submissions/${submission.id}/messages`,
-        body,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      const mapped = mapApiToLocal(res.data, submission.email);
-      setMessages((prev) => prev.map((m) => (m.id === tempId ? mapped : m)));
-      scrollToBottom();
-      toast.success("Message sent!");
-    } catch (err) {
-      console.error("Send message failed:", err);
-      setMessages((prev) => prev.filter((m) => m.id !== tempId));
-      toast.error("Failed to send message.");
-    } finally {
-      setSending(false);
-    }
-  };
-
-  if (loading)
+  if (isLoading)
     return (
       <div className="flex justify-center items-center h-64">
         <Loader2 className="animate-spin h-6 w-6 text-muted-foreground" />
@@ -258,7 +140,7 @@ export default function SubmissionDetailPage() {
       </div>
     );
 
-  if (error) return <p>{error}</p>;
+  if (error) return <p>Error loading submission: {error.message}</p>;
   if (!submission) return <p>No submission found.</p>;
 
   return (
@@ -288,12 +170,7 @@ export default function SubmissionDetailPage() {
             >
               <Brain className="h-4 w-4" /> AI Evaluation
             </TabsTrigger>
-            <TabsTrigger
-              value="chat"
-              className="flex items-center cursor-pointer gap-2 rounded-xl px-5 py-3 text-sm font-semibold text-muted-foreground data-[state=active]:bg-muted data-[state=active]:text-primary"
-            >
-              <MessageSquare className="h-4 w-4" /> Chat
-            </TabsTrigger>
+
           </TabsList>
 
           <TabsContent
@@ -362,8 +239,8 @@ export default function SubmissionDetailPage() {
                         </Select>
                       ) : (
                         <div className="rounded-lg border bg-muted/30 px-3 py-2 text-base font-medium text-foreground">
-                          {editingStatus.charAt(0).toUpperCase() +
-                            editingStatus.slice(1)}
+                          {submission.status.charAt(0).toUpperCase() +
+                            submission.status.slice(1)}
                         </div>
                       )}
                     </dd>
@@ -375,10 +252,12 @@ export default function SubmissionDetailPage() {
                     <Button
                       onClick={handleSave}
                       className="cursor-pointer"
-                      disabled={saving}
+                      disabled={updateStatusMutation.isPending}
                       variant={"outline"}
                     >
-                      {saving ? "Saving..." : "Save Changes"}
+                      {updateStatusMutation.isPending
+                        ? "Saving..."
+                        : "Save Changes"}
                     </Button>
                   </div>
                 )}
@@ -462,83 +341,6 @@ export default function SubmissionDetailPage() {
                 </div>
               </CardContent>
             </Card>
-          </TabsContent>
-
-          <TabsContent
-            value="chat"
-            className="mt-10 grid place-items-center px-4"
-          >
-            <div className="w-full max-w-6xl">
-              <Card className="rounded-xl h-[600px] flex flex-col relative">
-                <button onClick={fetchSubmission} className="absolute cursor-pointer top-2 right-2">
-                  <RefreshCwIcon className="w-5 h-5" />
-                </button>
-                <div className="px-6 py-4">
-                  <h3 className="text-lg font-semibold text-foreground">
-                    Chat
-                  </h3>
-                </div>
-
-                <div
-                  ref={messagesContainerRef}
-                  className="flex-1 overflow-y-auto px-6 py-4 bg-muted/20 space-y-3 scrollbar-thin scrollbar-thumb-neutral-400 scrollbar-track-neutral-200"
-                >
-                  {messages.length > 0 ? (
-                    messages.map((m, i) => (
-                      <div
-                        key={m.id + "-" + i}
-                        className={`flex items-end ${
-                          m.sender === "admin" ? "justify-end" : "justify-start"
-                        }`}
-                      >
-                        <div
-                          className={`px-4 py-2 text-sm max-w-[70%] break-words ${
-                            m.sender === "admin"
-                              ? "bg-background text-foreground rounded-tl-2xl rounded-tr-2xl rounded-bl-2xl rounded-br-none"
-                              : "bg-accent text-foreground rounded-tl-2xl rounded-tr-2xl rounded-br-2xl rounded-bl-none"
-                          }`}
-                        >
-                          {m.message}
-                          <div className="text-[10px] text-muted-foreground mt-1">
-                            {m.created_at
-                              ? new Date(m.created_at).toLocaleTimeString()
-                              : ""}
-                            {m.temporary ? " (sending...)" : ""}
-                          </div>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-muted-foreground text-center mt-10">
-                      No messages yet.
-                    </p>
-                  )}
-                </div>
-
-                <div className="px-6 py-2 border-t border-border flex gap-2 items-center">
-                  <Textarea
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    placeholder="Type your message..."
-                    className="flex-1 resize-none h-12"
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSendMessage();
-                      }
-                    }}
-                  />
-                  <Button
-                    onClick={handleSendMessage}
-                    variant={"outline"}
-                    disabled={sending || !newMessage.trim()}
-                    className="p-5 cursor-pointer"
-                  >
-                    <Send className="h-7 w-7" />
-                  </Button>
-                </div>
-              </Card>
-            </div>
           </TabsContent>
         </Tabs>
       </div>

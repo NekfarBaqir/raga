@@ -2,7 +2,8 @@
 import { getAccessToken } from "@auth0/nextjs-auth0";
 import axios from "axios";
 import { useRouter } from "next/navigation";
-import { useEffect, useId, useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 import {
   ColumnDef,
@@ -67,14 +68,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-
 type Submissions = {
   id: number;
   team_name: string;
   email: string;
   status: string;
   score: number;
-  has_new_message: boolean;
+  created_at: number;
 };
 
 const multiColumnFilterFn: FilterFn<Submissions> = (row, filterValue) => {
@@ -82,115 +82,119 @@ const multiColumnFilterFn: FilterFn<Submissions> = (row, filterValue) => {
   const searchTerm = (filterValue ?? "").toLowerCase();
   return searchableRowContent.includes(searchTerm);
 };
-const columns: ColumnDef<Submissions>[] = [
-  {
-    header: "Team Name",
-    accessorKey: "team_name",
-    size: undefined,
-    minSize: 180,
-  },
-  {
-    header: "Email",
-    accessorKey: "email",
-    cell: ({ row }) => (
-      <div className="font-medium">{row.getValue("email")}</div>
-    ),
-    size: undefined,
-    minSize: 220,
-    filterFn: multiColumnFilterFn,
-    enableHiding: false,
-  },
-  {
-    header: "Status",
-    accessorKey: "status",
-    size: undefined,
-    minSize: 100,
-    cell: ({ row }) => {
-      const status = row.getValue("status") as string;
 
-      let statusColor = "bg-gray-200 text-gray-800";
-      if (status === "approved") statusColor = "bg-green-100 text-green-800";
-      else if (status === "pending")
-        statusColor = "bg-yellow-400/20 text-yellow-700";
-      else if (status === "rejected") statusColor = "bg-red-100 text-red-800";
+const fetchSubmissions = async (): Promise<Submissions[]> => {
+  const token = await getAccessToken();
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
-      return (
-        <span
-          className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${statusColor}`}
-        >
-          {status}
-        </span>
-      );
-    },
-  },
-  {
-    header: "Score",
-    accessorKey: "score",
-    size: undefined,
-    minSize: 20,
-  },
+  const response = await axios.get<Submissions[]>(
+    `${API_BASE_URL}/api/v1/submissions`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    }
+  );
 
-  {
-    id: "actions",
-    header: () => <span className="sr-only">Actions</span>,
-    cell: ({ row }) => <RowActions row={row} />,
-    size: undefined,
-    minSize: 20,
-    enableHiding: false,
-  },
-];
+  return response.data.sort((a, b) => b.id - a.id);
+};
+
+
 
 export default function SubmissionsPage() {
+  const router = useRouter();
   const id = useId();
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
+    id: false,
+  });
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
   });
   const inputRef = useRef<HTMLInputElement>(null);
-
   const [sorting, setSorting] = useState<SortingState>([
     {
       id: "id",
       desc: true,
     },
   ]);
+  const [viewedSubmissions, setViewedSubmissions] = useState<Set<number>>(new Set());
 
-  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
-  const [data, setData] = useState<Submissions[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data, isLoading, error } = useQuery<Submissions[], Error>({
+    queryKey: ["submissions"],
+    queryFn: fetchSubmissions,
+  });
 
-  useEffect(() => {
-    async function fetchQuestions() {
-      try {
-        const token = await getAccessToken();
+  // Function to mark submission as viewed
+  const markAsViewed = (submissionId: number) => {
+    setViewedSubmissions(prev => new Set([...prev, submissionId]));
+  };
+  const columns: ColumnDef<Submissions>[] = [
+    {
+      header: "ID",
+      accessorKey: "id",
+      size: undefined,
+      minSize: 100,
+      enableHiding: true,
+    },
+    {
+      header: "Team Name",
+      accessorKey: "team_name",
+      size: undefined,
+      minSize: 180,
+    },
+    {
+      header: "Email",
+      accessorKey: "email",
+      size: undefined,
+      minSize: 220,
+      filterFn: multiColumnFilterFn,
+      enableHiding: false,
+    },
+    {
+      header: "Status",
+      accessorKey: "status",
+      size: undefined,
+      minSize: 100,
+      cell: ({ row }) => {
+        const status = row.getValue("status") as string;
 
-        const response = await axios.get<Submissions[]>(
-          `${API_BASE_URL}/api/v1/submissions`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              "Content-Type": "application/json",
-            },
-          }
+        let statusColor = "bg-gray-200 text-gray-800";
+        if (status === "approved") statusColor = "bg-green-100 text-green-800 dark:bg-green-900 dark:text-white";
+        else if (status === "pending")
+          statusColor = "bg-yellow-400/20 text-yellow-700 dark:bg-yellow-600 dark:text-white";
+        else if (status === "rejected") statusColor = "bg-red-100 text-red-800 dark:bg-red-900 dark:text-white";
+
+        return (
+          <span
+            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${statusColor}`}
+          >
+            {status}
+          </span>
         );
-
-        setData(response.data);
-      } catch (err: any) {
-        console.error(err);
-        setError("Failed to load submissions.");
-      } finally {
-        setLoading(false);
+      },
+    },
+    {
+      header: "Score",
+      accessorKey: "score",
+      size: undefined,
+      minSize: 20,
+    },
+    {
+      header: "Date",
+      accessorKey: "created_at",
+      size: 100,
+      cell: ({ row }) => {
+        const date = new Date(row.getValue("created_at"));
+        return date.toISOString().split("T")[0];
       }
-    }
 
-    fetchQuestions();
-  }, [API_BASE_URL]);
-
+    },
+  ];
   const table = useReactTable({
-    data,
+    data: data || [],
     columns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -209,26 +213,28 @@ export default function SubmissionsPage() {
       columnVisibility,
     },
   });
-  if (loading)
+
+  if (isLoading)
     return <TableSkeleton columnWidths={[250, 100, 100, 120, 60]} rows={8} />;
 
   if (error)
     return (
       <div className="flex flex-col items-center justify-center text-center text-red-600 space-y-2 py-8">
         <AlertCircle className="h-8 w-8" />
-        <p className="font-semibold">{error}</p>
+        <p className="font-semibold">{error.message}</p>
       </div>
     );
 
-  if (data.length === 0)
+  if (!data || data.length === 0)
     return (
       <div className="flex flex-col items-center justify-center text-center text-gray-500 space-y-2 py-8">
         <Inbox className="h-8 w-8" />
         <p className="font-medium">No Submissions found.</p>
       </div>
     );
+
   return (
-    <div className="space-y-4 xl:px-5 overflow-y-auto">
+    <div className="space-y-4 xl:px-5 overflow-y-auto mt-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="relative">
@@ -238,7 +244,7 @@ export default function SubmissionsPage() {
               className={cn(
                 "peer min-w-60 ps-9",
                 Boolean(table.getColumn("team_name")?.getFilterValue()) &&
-                  "pe-9"
+                "pe-9"
               )}
               value={
                 (table.getColumn("team_name")?.getFilterValue() ?? "") as string
@@ -321,7 +327,7 @@ export default function SubmissionsPage() {
                         <div
                           className={cn(
                             header.column.getCanSort() &&
-                              "flex h-full cursor-pointer items-center justify-between gap-2 select-none"
+                            "flex h-full cursor-pointer items-center justify-between gap-2 select-none"
                           )}
                           onClick={header.column.getToggleSortingHandler()}
                           onKeyDown={(e) => {
@@ -372,13 +378,14 @@ export default function SubmissionsPage() {
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => {
 
-                const isNewMessage = row.original.has_new_message;
-
                 return (
                   <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() && "selected"}
-                    className={`${isNewMessage ? " *:!font-semibold" : ""}`}
+                    onClick={() => {
+                      router.push(`/admin-dashboard/submissions/${row.original.id}`)
+                    }}
+                    className="cursor-pointer"
                   >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell key={cell.id} className="last:py-0">
@@ -389,7 +396,7 @@ export default function SubmissionsPage() {
                       </TableCell>
                     ))}
                   </TableRow>
-                )
+                );
               })
             ) : (
               <TableRow>
@@ -397,7 +404,7 @@ export default function SubmissionsPage() {
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  Loading...
+                  No results found.
                 </TableCell>
               </TableRow>
             )}
@@ -442,8 +449,8 @@ export default function SubmissionsPage() {
               {Math.min(
                 Math.max(
                   table.getState().pagination.pageIndex *
-                    table.getState().pagination.pageSize +
-                    table.getState().pagination.pageSize,
+                  table.getState().pagination.pageSize +
+                  table.getState().pagination.pageSize,
                   0
                 ),
                 table.getRowCount()
@@ -514,10 +521,12 @@ export default function SubmissionsPage() {
     </div>
   );
 }
-function RowActions({ row }: { row: Row<Submissions> }) {
+
+function RowActions({ row, onMarkAsViewed }: { row: Row<Submissions>; onMarkAsViewed: (id: number) => void }) {
   const router = useRouter();
   const handleViewClick = () => {
     const id = row.original.id;
+    onMarkAsViewed(id);
     router.push(`/admin-dashboard/submissions/${id}`);
   };
   return (
@@ -576,9 +585,7 @@ function TableSkeleton({
                     className="px-4 py-3"
                   >
                     <Skeleton
-                      className={`h-4 rounded-md w-${
-                        3 + Math.floor(Math.random() * 4)
-                      }/4`}
+                      className={`h-4 rounded-md w-${3 + (rowIndex + colIndex) % 4}/4`}
                     />
                   </TableCell>
                 ))}
