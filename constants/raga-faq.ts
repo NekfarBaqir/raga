@@ -8,12 +8,8 @@ export const ragaFaq = [
     "answer": "We welcome ambitious individuals with skills in software engineering, design, or related fields, as well as visionary teams with clear ideas and the drive to create solutions that benefit Afghanistan."
   },
   {
-    "question": "Is Raga gender specific?",
-    "answer": "Yes. To ensure a comfortable environment for everyone, Raga operates in two dedicated shifts: from 6:00 AM until 2:00 PM the space is reserved for women, and from 2:00 PM until 12:00 midnight it is reserved for men."
-  },
-  {
     "question": "Does Raga charge money or take shares?",
-    "answer": "No. Raga does not charge rent, fees, or take equity. It is supported by Entop and community partners who believe in empowering Afghan innovators."
+    "answer": "Raga does not charge rent, fees, or take equity from its members. The space is funded by Entop and community partners who believe in supporting Afghan innovators. To ensure the environment stays clean, safe, and sustainable for everyone, we ask for a modest contribution of 500 Afghani for maintenance and upkeep."
   },
   {
     "question": "What facilities are provided?",
