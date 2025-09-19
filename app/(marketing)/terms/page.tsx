@@ -29,13 +29,6 @@ const page = () => {
           <h2 className="font-semibold mb-2">Use of Facilities</h2>
           <ul className="list-disc pl-6 space-y-1">
             <li>Members must respect the workspace, equipment, and other members.</li>
-            <li>
-              The workspace operates on a gender-specific schedule:
-              <ul className="list-disc pl-6 mt-1 space-y-1">
-                <li>6:00 AM – 2:00 PM: reserved for women.</li>
-                <li>2:00 PM – 12:00 midnight: reserved for men.</li>
-              </ul>
-            </li>
             <li>Misuse of facilities or disruptive behavior may result in suspension or removal.</li>
           </ul>
         </li>

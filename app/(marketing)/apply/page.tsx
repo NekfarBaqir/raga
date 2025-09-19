@@ -446,7 +446,7 @@ export default function ApplyPage() {
             </div>
 
             <div className="space-y-3">
-              <p>Your Application sent successfully !c</p>
+              <p>Your Application sent successfully !</p>
               <p className="text-muted-foreground leading-relaxed">
                 We’ve received your application. If we need any further details, we’ll reach out to you.
                 We appreciate your interest and look forward to connecting soon!
