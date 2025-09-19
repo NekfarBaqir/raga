@@ -382,7 +382,7 @@ export default function ApplyPage() {
                 disabled={isSubmitting || !isValid || !acceptedTerms}
                 className={`w-52 py-7 cursor-pointer ${!isValid
                   ? " cursor-not-allowed"
-                  : "bg-primary text-muted hover:bg-primary hover:text-muted cursor-pointer"
+                  : "bg-primary dark:bg-primary dark:hover:bg-primary dark:text-foreground text-muted hover:bg-primary hover:text-muted cursor-pointer"
                   }`}
               >
                 {isSubmitting ? (
