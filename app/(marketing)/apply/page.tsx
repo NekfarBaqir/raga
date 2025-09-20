@@ -2,6 +2,13 @@
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
@@ -12,23 +19,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
 import { getAccessToken } from "@auth0/nextjs-auth0";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
-import { CheckCircle, CheckCircle2, Loader, OctagonAlert, XCircle } from "lucide-react";
+import { CheckCircle, Loader } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { toast, Toaster } from "sonner";
+import { Toaster } from "sonner";
 import * as z from "zod";
-import { elements } from "chart.js";
 
 type QuestionType = "text" | "yes_no" | "dropdown";
 interface Question {
@@ -399,8 +398,8 @@ export default function ApplyPage() {
         </div>
       </section>
 
-      <Dialog open={dialogSubmitting} onOpenChange={setDialogSubmitting}>
-        <DialogContent className="max-w-md rounded-lg shadow-lg p-6 space-y-4">
+      <Dialog modal={true}  open={dialogSubmitting} onOpenChange={setDialogSubmitting}>
+        <DialogContent showCloseButton={false} onInteractOutside={(e)=>e.preventDefault()}  className="max-w-md rounded-lg shadow-lg p-6 space-y-4">
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold text-center">
               Submitting Your Application
@@ -410,17 +409,15 @@ export default function ApplyPage() {
               This should only take a few moments.
               Please don’t close or refresh this window.
             </DialogDescription>
+        
           </DialogHeader>
+
 
           <div className="flex flex-col items-center space-y-4 pt-2">
             <Loader className="animate-spin text-primary w-8 h-8" />
             <p className="text-sm text-gray-500">Validating your information...</p>
 
-            <div className="flex space-x-1 pt-2">
-              <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0s' }} />
-              <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
-              <span className="w-2 h-2 bg-primary rounded-full animate-bounce" style={{ animationDelay: '0.4s' }} />
-            </div>
+        
           </div>
         </DialogContent>
       </Dialog>
@@ -473,14 +470,6 @@ export default function ApplyPage() {
       >
         <DialogContent className="max-w-sm rounded-xl p-6 shadow-lg border bg-white dark:bg-gray-800">
           <div className="flex flex-col items-center gap-4">
-            <div className="flex items-center justify-center h-16 w-16 rounded-full">
-              <OctagonAlert className="w-10 h-10 text-primary" />
-            </div>
-
-            <DialogTitle className="text-xl font-semibold text-primary text-center">
-              Oops! Something happened
-            </DialogTitle>
-
             <DialogDescription className="text-center text-sm text-gray-600 dark:text-gray-300">
               {dialogError.message ||
                 "We couldn't complete your request. Please try again or contact support if the issue persists."}

@@ -13,15 +13,17 @@ import {
   useScroll,
 } from "framer-motion";
 import { jwtDecode } from "jwt-decode";
-import {
-  FileText,
-  HomeIcon,
-  LayoutDashboard,
-  LogOut
-} from "lucide-react";
+import { FileText, HomeIcon, InfoIcon, LayoutDashboard, LogOut, MessageCircle } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { RefObject, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  RefObject,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { AnimatedThemeToggler } from "../magicui/animated-theme-toggler";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import CornerCroppedButton from "../ui/corner-cropped-button";
@@ -99,13 +101,13 @@ const Header = () => {
     };
   }, [theme]);
 
-  const getUserRole = useCallback(async()=>{
+  const getUserRole = useCallback(async () => {
     const accessToken = await getAccessToken();
     const accessTokenDecoded: any = jwtDecode(accessToken);
     const roles: string[] =
       accessTokenDecoded["https://raga.space/roles"] || [];
     setRole(roles?.[0] ?? "user");
-  }, [])
+  }, []);
 
   useEffect(() => {
     if (user) {
@@ -163,46 +165,116 @@ const Header = () => {
         onFocusCapture={() => setIsHidden(false)}
         className="fixed top-0 left-0 right-0 z-40"
       >
+        <div
+          className={cn(
+            "w-full h-fit py-0  max-h-[50px] md:max-h-[70px] md:py-2 px-5 flex justify-between items-center gap-2 max-w-[1440px] mx-auto",
+            {
+              "border-b": haveBackground,
+            }
+          )}
+        >
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex w-full justify-between items-center gap-8">
+            {sideConfig.mainNav.map((item: MainNavItem, idx: number) => {
+              const active = pathname === item.href;
+              return (
+                <NavItem
+                  href={item.href}
+                  svg={item.svg}
+                  disabled={item.disabled}
+                  title={item.title}
+                  active={active}
+                  key={item.href || item.title || String(idx)}
+                />
+              );
+            })}
 
-        <div className={cn("w-full h-fit py-0  max-h-[50px] md:max-h-[70px] md:py-2 px-5 flex justify-between items-center gap-2 max-w-[1440px] mx-auto", {
-          "border-b": haveBackground,
-        })}>
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex w-full justify-between items-center gap-8">
-          {sideConfig.mainNav.map((item: MainNavItem, idx: number) => {
-            const active = pathname === item.href;
-            return (
-              <NavItem
-                href={item.href}
-                svg={item.svg}
-                disabled={item.disabled}
-                title={item.title}
-                active={active}
-                key={item.href || item.title || String(idx)}
-              />
-            );
-          })}
+            <div className="justify-end items-center hidden md:flex">
+              <AnimatedThemeToggler className="cursor-pointer mx-3" />
+              {!user ? (
+                !pathname?.includes("apply") && (
+                  <Link href="/apply">
+                    <CornerCroppedButton
+                      link="/apply"
+                      className="font-medium text-lg  aspect-[177/60] w-[130px] "
+                    >
+                      Apply
+                    </CornerCroppedButton>
+                  </Link>
+                )
+              ) : (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Avatar className="cursor-pointer">
+                      <AvatarImage
+                        className="rounded-full w-16"
+                        src={user.picture || ""}
+                        alt={user.name || ""}
+                      />
+                      <AvatarFallback className="rounded-full border p-4 ">
+                        {user.name ? user.name.charAt(0).toUpperCase() : "U"}
+                      </AvatarFallback>
+                    </Avatar>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56 py-4 mt-3">
+                    <DropdownMenuItem
+                      onClick={goToDashboard}
+                      className="cursor-pointer px-4 py-2 flex items-center justify-between gap-2"
+                    >
+                      <span>Dashboard</span>
+                      <LayoutDashboard className="w-4 h-4" />
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      asChild
+                      className="cursor-pointer px-4 py-2 flex items-center justify-between gap-2"
+                    >
+                      <Link
+                        href="/apply"
+                        className="flex items-center justify-between gap-2"
+                      >
+                        <span>Apply</span>
+                        <FileText className="w-4 h-4" />
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      asChild
+                      className="cursor-pointer px-4 py-2 mt-3 flex items-center gap-2 text-red-600 hover:bg-red-50"
+                    >
+                      <Link
+                        href="/auth/logout"
+                        className="flex items-center justify-between gap-2"
+                      >
+                        <span>Sign out</span>
+                        <LogOut className="w-4 h-4" />
+                      </Link>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+            </div>
+          </nav>
 
-          <div className="justify-end items-center hidden md:flex">
-            <AnimatedThemeToggler className="cursor-pointer mx-3" />
+          <div className="md:hidden flex justify-end items-center gap-1.5 w-full p-2 py-3">
+            <div className="flex-1 flex justify-start items-center">
+              <Link href={"/"}>
+                <HomeIcon />
+              </Link>
+            </div>
+            <AnimatedThemeToggler className="cursor-pointer mx-3 pointer-events-auto z-20" />
+
             {!user ? (
-              !pathname?.includes("apply") && (
-                <Link href="/apply">
-            
-                        <CornerCroppedButton link="/apply" className="font-medium text-lg  aspect-[177/60] w-[130px] ">Apply</CornerCroppedButton>
-                </Link>
-              )
+              <MenuToggle toggle={() => toggleOpen()} isOpen={isOpen} />
             ) : (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Avatar className="cursor-pointer">
                     <AvatarImage
                       className="rounded-full w-16"
-                      src={user.picture || ""}
-                      alt={user.name || ""}
+                      src={user?.picture || ""}
+                      alt={user?.name || ""}
                     />
                     <AvatarFallback className="rounded-full border p-4 ">
-                      {user.name ? user.name.charAt(0).toUpperCase() : "U"}
+                      {user?.name ? user?.name.charAt(0).toUpperCase() : "U"}
                     </AvatarFallback>
                   </Avatar>
                 </DropdownMenuTrigger>
@@ -215,17 +287,31 @@ const Header = () => {
                     <LayoutDashboard className="w-4 h-4" />
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                  asChild
-                  className="cursor-pointer px-4 py-2 flex items-center justify-between gap-2"
-                >
-                  <Link
-                    href="/apply"
-                    className="flex items-center justify-between gap-2"
+                    asChild
+                    className="cursor-pointer px-4 py-2 flex items-center justify-between gap-2"
                   >
-                    <span>Apply</span>
-                    <FileText className="w-4 h-4" />
-                  </Link>
-                </DropdownMenuItem>
+                    <Link
+                      href="/apply"
+                      className="flex items-center justify-between gap-2"
+                    >
+                      <span>Apply</span>
+                      <FileText className="w-4 h-4" />
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => router.push("/about")}
+                    className="cursor-pointer px-4 py-2 flex items-center justify-between gap-2"
+                  >
+                    <span>About</span>
+                    <InfoIcon className="w-4 h-4" />
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => router.push("/contact")}
+                    className="cursor-pointer px-4 py-2 flex items-center justify-between gap-2"
+                  >
+                    <span>Contact</span>
+                    <MessageCircle className="w-4 h-4" />
+                  </DropdownMenuItem>
                   <DropdownMenuItem
                     asChild
                     className="cursor-pointer px-4 py-2 mt-3 flex items-center gap-2 text-red-600 hover:bg-red-50"
@@ -242,17 +328,6 @@ const Header = () => {
               </DropdownMenu>
             )}
           </div>
-        </nav>
-
-        <div className="md:hidden flex justify-end items-center gap-1.5 w-full p-2 py-3">
-          <div className="flex-1 flex justify-start items-center">
-            <Link href={"/"}>
-              <HomeIcon />
-            </Link>
-          </div>
-          <AnimatedThemeToggler className="cursor-pointer mx-3 pointer-events-auto z-20" />
-          <MenuToggle toggle={() => toggleOpen()} isOpen={isOpen} />
-        </div>
         </div>
       </motion.header>
 
