@@ -5,13 +5,15 @@ import type { NextRequest } from "next/server";
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  const session = await auth0.getSession(request);
+  const accessToken = session?.tokenSet.accessToken;
+
   if (
     pathname.startsWith("/admin-dashboard") ||
     pathname.startsWith("/user-dashboard") || 
     pathname.startsWith("/apply")
   ) {
-    const session = await auth0.getSession(request);
-    const accessToken = session?.tokenSet.accessToken;
+
 
     if (!session?.user || !accessToken) {
       const returnTo = pathname;
