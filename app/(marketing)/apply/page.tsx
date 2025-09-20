@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { getAccessToken } from "@auth0/nextjs-auth0";
+import { getAccessToken, useUser } from "@auth0/nextjs-auth0";
 import { zodResolver } from "@hookform/resolvers/zod";
 import axios from "axios";
 import { CheckCircle, Loader } from "lucide-react";
@@ -83,6 +83,7 @@ export default function ApplyPage() {
     open: false,
     message: "",
   });
+  const { user, isLoading } = useUser();
 
   const router = useRouter();
   const CombinedSchema = schema
@@ -138,6 +139,15 @@ export default function ApplyPage() {
       form.setFocus(firstError as any);
     }
   }, [errors, form]);
+
+
+  useEffect(() => {
+       if (isLoading) return;
+       if(!isLoading && !user){
+        router?.push("/auth/login?returnTo=/apply")
+       }
+     
+  }, [isLoading, user]);
 
   const onSubmit = async (data: any) => {
     const token = await getAccessToken();
