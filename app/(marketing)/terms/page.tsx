@@ -33,9 +33,9 @@ const page = () => {
           </ul>
         </li>
         <li>
-          <h2 className="font-semibold mb-2">No Fees or Equity</h2>
+          <h2 className="font-semibold mb-2">No Equity</h2>
           <p>
-            Raga does not currently charge rent, take fees, or request equity from members. This may change in the future, and updates will be communicated in advance.
+          Raga does not charge rent, fees, or take equity from its members. The space is funded by Entop and community partners who believe in supporting Afghan innovators. To ensure the environment stays clean, safe, and sustainable for everyone, we ask for a modest contribution of 500 Afghani for maintenance and upkeep.
           </p>
         </li>
         <li>
