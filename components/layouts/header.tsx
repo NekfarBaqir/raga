@@ -187,7 +187,7 @@ const Header = () => {
             <AnimatedThemeToggler className="cursor-pointer mx-3" />
             {!user ? (
               !pathname?.includes("apply") && (
-                <Link href="/auth/login?returnTo=/apply">
+                <Link href="/apply">
             
                         <CornerCroppedButton link="/apply" className="font-medium text-lg  aspect-[177/60] w-[130px] ">Apply</CornerCroppedButton>
                 </Link>

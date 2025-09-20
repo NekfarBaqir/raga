@@ -1,13 +1,14 @@
-import type { NextRequest } from "next/server";
 import { auth0 } from "@/lib/auth0";
 import { jwtDecode } from "jwt-decode";
+import type { NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (
     pathname.startsWith("/admin-dashboard") ||
-    pathname.startsWith("/user-dashboard")
+    pathname.startsWith("/user-dashboard") || 
+    pathname.startsWith("/apply")
   ) {
     const session = await auth0.getSession(request);
     const accessToken = session?.tokenSet.accessToken;
@@ -18,6 +19,7 @@ export async function middleware(request: NextRequest) {
         new URL(`/auth/login?returnTo=${returnTo}`, request.url)
       );
     }
+  
 
     const accessTokenDecoded: any = jwtDecode(accessToken);
     const roles: string[] =
