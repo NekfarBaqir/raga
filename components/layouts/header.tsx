@@ -142,8 +142,8 @@ const Header = () => {
           isHidden
             ? "hidden"
             : haveBackground
-            ? "visibleBg"
-            : "visibleTransparent"
+              ? "visibleBg"
+              : "visibleTransparent"
         }
         variants={{
           hidden: {
@@ -298,20 +298,20 @@ const Header = () => {
                       <FileText className="w-4 h-4" />
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => router.push("/about")}
-                    className="cursor-pointer px-4 py-2 flex items-center justify-between gap-2"
-                  >
-                    <span>About</span>
-                    <InfoIcon className="w-4 h-4" />
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => router.push("/contact")}
-                    className="cursor-pointer px-4 py-2 flex items-center justify-between gap-2"
-                  >
-                    <span>Contact</span>
-                    <MessageCircle className="w-4 h-4" />
-                  </DropdownMenuItem>
+                  <Link href="/about">
+                    <DropdownMenuItem
+                      className="cursor-pointer px-4 py-2 flex items-center justify-between gap-2"
+                    >
+                      <span>About</span>
+                      <InfoIcon className="w-4 h-4" />
+                    </DropdownMenuItem></Link>
+                  <Link href="/contact">
+                    <DropdownMenuItem
+                      className="cursor-pointer px-4 py-2 flex items-center justify-between gap-2"
+                    >
+                      <span>Contact</span>
+                      <MessageCircle className="w-4 h-4" />
+                    </DropdownMenuItem></Link>
                   <DropdownMenuItem
                     asChild
                     className="cursor-pointer px-4 py-2 mt-3 flex items-center gap-2 text-red-600 hover:bg-red-50"
