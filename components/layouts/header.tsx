@@ -49,6 +49,7 @@ const Header = () => {
   const pathname = usePathname();
   const { scrollY } = useScroll();
   const lastYRef = useRef(0);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const [haveBackground, setHaveBackground] = useState(false);
   useMotionValueEvent(scrollY, "change", (y) => {
@@ -265,7 +266,7 @@ const Header = () => {
             {!user ? (
               <MenuToggle toggle={() => toggleOpen()} isOpen={isOpen} />
             ) : (
-              <DropdownMenu>
+              <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
                 <DropdownMenuTrigger asChild>
                   <Avatar className="cursor-pointer">
                     <AvatarImage
@@ -280,7 +281,10 @@ const Header = () => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56 py-4 mt-3">
                   <DropdownMenuItem
-                    onClick={goToDashboard}
+                    onClick={() => {
+                      goToDashboard();
+                      setDropdownOpen(false);
+                    }}
                     className="cursor-pointer px-4 py-2 flex items-center justify-between gap-2"
                   >
                     <span>Dashboard</span>
@@ -289,6 +293,7 @@ const Header = () => {
                   <DropdownMenuItem
                     asChild
                     className="cursor-pointer px-4 py-2 flex items-center justify-between gap-2"
+                    onClick={() => setDropdownOpen(false)}
                   >
                     <Link
                       href="/apply"
@@ -298,23 +303,30 @@ const Header = () => {
                       <FileText className="w-4 h-4" />
                     </Link>
                   </DropdownMenuItem>
-                  <Link href="/about">
-                    <DropdownMenuItem
-                      className="cursor-pointer px-4 py-2 flex items-center justify-between gap-2"
-                    >
+                  <DropdownMenuItem
+                    asChild
+                    className="cursor-pointer px-4 py-2 flex items-center justify-between gap-2"
+                    onClick={() => setDropdownOpen(false)}
+                  >
+                    <Link href="/about" className="flex items-center justify-between gap-2">
                       <span>About</span>
                       <InfoIcon className="w-4 h-4" />
-                    </DropdownMenuItem></Link>
-                  <Link href="/contact">
-                    <DropdownMenuItem
-                      className="cursor-pointer px-4 py-2 flex items-center justify-between gap-2"
-                    >
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    asChild
+                    className="cursor-pointer px-4 py-2 flex items-center justify-between gap-2"
+                    onClick={() => setDropdownOpen(false)}
+                  >
+                    <Link href="/contact" className="flex items-center justify-between gap-2">
                       <span>Contact</span>
                       <MessageCircle className="w-4 h-4" />
-                    </DropdownMenuItem></Link>
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuItem
                     asChild
                     className="cursor-pointer px-4 py-2 mt-3 flex items-center gap-2 text-red-600 hover:bg-red-50"
+                    onClick={() => setDropdownOpen(false)}
                   >
                     <Link
                       href="/auth/logout"
