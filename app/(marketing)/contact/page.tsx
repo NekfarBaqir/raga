@@ -100,13 +100,7 @@ export default function Contact() {
     }
   };
 
-  if (userLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader className="animate-spin h-8 w-8" />
-      </div>
-    );
-  }
+
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background text-foreground pt-32 p-6 xl:pt-20">

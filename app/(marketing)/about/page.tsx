@@ -1,3 +1,4 @@
+"use client"
 const page = () => {
   return (
     <div className="flex flex-col items-start justify-start h-fit py-10 max-w-7xl mx-auto pt-20 px-4">
