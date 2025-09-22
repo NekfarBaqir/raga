@@ -169,60 +169,64 @@ export default function ApplyPage() {
         email: user?.email,
       };
 
-      const res = await axios.post(
-        `${API_BASE_URL}/api/v1/submissions`,
-        payload,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      await axios.post(`${API_BASE_URL}/api/v1/submissions`, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
 
       setDialogSubmitting(false);
+      setDialogSuccess(true);
+    } catch (err: any) {
+      setDialogSubmitting(false);
 
-      if (res.data.status === "duplicate" || res.status === 409) {
-        setDialogError({
-          open: true,
-          message: (
-            <div>
-              <p>You have already applied with this email address.</p>
-              <p>Please wait for updates on your current application.</p>
-            </div>
-          ),
-        });
+      if (axios.isAxiosError(err)) {
+        if (err.response?.status === 409) {
+          setDialogError({
+            open: true,
+            message: (
+              <div>
+                <p>It seems you’ve already submitted an application using this email.</p>
+                <p>We’re currently reviewing it. If you want to submit another application,
+                  please use a different email address. Thank you!</p>
+              </div>
+
+            ),
+          });
+          return;
+        }
+
+        if (err.response?.data?.status === "rejected") {
+          const score = err.response.data?.score ?? "not available";
+          setDialogError({
+            open: true,
+            message: (
+              <div>
+                <p>Unfortunately, your submission was not accepted for this program.</p>
+                <p>
+                  You received a score of <strong>{score}</strong> out of 100, which did not meet the minimum requirement.
+                </p>
+                <p>We encourage you to refine your submission and try again in the future.</p>
+              </div>
+            ),
+          });
+          return;
+        }
+
+        const msg = err.response?.data?.message ||
+          "It looks like we hit a temporary snag while processing your request. Please try again in a few moments.";
+        setDialogError({ open: true, message: msg });
         return;
       }
 
-      if (res.data.status === "rejected") {
-        const score = res.data.score ?? "not available";
-        setDialogError({
-          open: true,
-          message: (
-            <div>
-              <p>Unfortunately, your submission was not accepted for this program.</p>
-              <p>
-                You received a score of <strong>{score}</strong> out of 100, which did
-                not meet the minimum requirement.
-              </p>
-              <p>We encourage you to refine your submission and try again in the future.</p>
-            </div>
-          ),
-        });
-      } else {
-        setDialogSuccess(true);
-      }
-    } catch (err: any) {
-      setDialogSubmitting(false);
-      const msg =
-        axios.isAxiosError(err) && err.response?.data?.message
-          ? err.response.data.message
-          : "It looks like we hit a temporary snag while processing your request. Please try again in a few moments.";
-
-      setDialogError({ open: true, message: msg });
+      setDialogError({
+        open: true,
+        message: "It looks like we hit a temporary snag while processing your request. Please try again in a few moments.",
+      });
     }
   };
+
 
   if (loading)
     return (
