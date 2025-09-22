@@ -1,0 +1,12 @@
+# Allow all crawlers to access public pages
+User-agent: *
+Disallow:
+
+# Block user dashboard 
+Disallow: /user-dashboard/
+
+# Block admin dashboard 
+Disallow: /admin-dashboard/
+
+# Point to sitemap
+Sitemap: https://raga.space/sitemap.xml
