@@ -140,13 +140,11 @@ export default function ApplyPage() {
     }
   }, [errors, form]);
 
-
   useEffect(() => {
-       if (isLoading) return;
-       if(!isLoading && !user){
-        router?.push("/auth/login?returnTo=/apply")
-       }
-     
+    if (isLoading) return;
+    if (!isLoading && !user) {
+      router?.push("/auth/login?returnTo=/apply")
+    }
   }, [isLoading, user]);
 
   const onSubmit = async (data: any) => {
@@ -168,6 +166,7 @@ export default function ApplyPage() {
       const payload = {
         answers,
         team_name: data.team_name,
+        email: user?.email,
       };
 
       const res = await axios.post(
@@ -183,9 +182,21 @@ export default function ApplyPage() {
 
       setDialogSubmitting(false);
 
+      if (res.data.status === "duplicate" || res.status === 409) {
+        setDialogError({
+          open: true,
+          message: (
+            <div>
+              <p>You have already applied with this email address.</p>
+              <p>Please wait for updates on your current application.</p>
+            </div>
+          ),
+        });
+        return;
+      }
+
       if (res.data.status === "rejected") {
         const score = res.data.score ?? "not available";
-
         setDialogError({
           open: true,
           message: (
@@ -199,8 +210,7 @@ export default function ApplyPage() {
             </div>
           ),
         });
-      }
-      else {
+      } else {
         setDialogSuccess(true);
       }
     } catch (err: any) {
@@ -352,6 +362,7 @@ export default function ApplyPage() {
                 ))}
               </div>
             </div>
+
             <div className="flex items-start space-x-4 p-4 border rounded-md  transition-shadow cursor-pointer bg-popover">
               <Checkbox
                 id="terms"
@@ -407,9 +418,8 @@ export default function ApplyPage() {
           </form>
         </div>
       </section>
-
-      <Dialog modal={true}  open={dialogSubmitting} onOpenChange={setDialogSubmitting}>
-        <DialogContent showCloseButton={false} onInteractOutside={(e)=>e.preventDefault()}  className="max-w-md rounded-lg shadow-lg p-6 space-y-4">
+      <Dialog modal={true} open={dialogSubmitting} onOpenChange={setDialogSubmitting}>
+        <DialogContent showCloseButton={false} onInteractOutside={(e) => e.preventDefault()} className="max-w-md rounded-lg shadow-lg p-6 space-y-4">
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold text-center">
               Submitting Your Application
@@ -419,19 +429,13 @@ export default function ApplyPage() {
               This should only take a few moments.
               Please don’t close or refresh this window.
             </DialogDescription>
-        
           </DialogHeader>
-
-
           <div className="flex flex-col items-center space-y-4 pt-2">
             <Loader className="animate-spin text-primary w-8 h-8" />
             <p className="text-sm text-gray-500">Validating your information...</p>
-
-        
           </div>
         </DialogContent>
       </Dialog>
-
 
       <Dialog open={dialogSuccess} onOpenChange={setDialogSuccess}>
         <DialogContent className="sm:max-w-[500px] rounded-2xl p-8" showCloseButton={false}>
@@ -473,7 +477,6 @@ export default function ApplyPage() {
         </DialogContent>
       </Dialog>
 
-
       <Dialog
         open={dialogError.open}
         onOpenChange={(o) => setDialogError({ open: o, message: dialogError.message })}
@@ -484,7 +487,6 @@ export default function ApplyPage() {
               {dialogError.message ||
                 "We couldn't complete your request. Please try again or contact support if the issue persists."}
             </DialogDescription>
-
             <button
               onClick={() => setDialogError({ open: false })}
               className="mt-2 inline-flex items-center justify-center rounded-lg bg-primary 
@@ -495,7 +497,6 @@ export default function ApplyPage() {
           </div>
         </DialogContent>
       </Dialog>
-
     </>
   );
 }

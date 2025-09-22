@@ -24,7 +24,6 @@ const navMain = [
     url: "/user-dashboard",
     icon: ChartGantt,
   },
-
   {
     title: "Contact",
     url: "/user-dashboard/contact",
@@ -40,6 +39,7 @@ const navMain = [
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user, isLoading } = useUser();
   const pathname = usePathname();
+  const [isOpen, setIsOpen] = React.useState(true);
 
   if (isLoading) return null;
 
@@ -49,39 +49,46 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     avatar: user?.picture || "",
   };
 
+  const handleLinkClick = () => {
+    setIsOpen(false);
+  };
+
   return (
-    <Sidebar collapsible="offcanvas" {...props}>
-      <SidebarHeader>
-        <Link href="/" className="">
-          <Logo className="w-60 -mt-14 -mb-10 " />
-        </Link>
-      </SidebarHeader>
+    <div className={`sidebar-wrapper ${isOpen ? "open" : "closed"}`}>
+      <Sidebar collapsible="offcanvas" {...props}>
+        <SidebarHeader>
+          <Link href="/" className="">
+            <Logo className="w-60 -mt-14 -mb-10" />
+          </Link>
+        </SidebarHeader>
 
-      <SidebarContent>
-        <SidebarMenu>
-          {navMain.map((item) => {
-            const isActive = pathname === item.url;
-            return (
-              <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton asChild>
-                  <Link
-                    href={item.url}
-                    className={`flex items-center py-6 mt-2 gap-3 p-3 rounded-md text-base transition-colors ${isActive ? "bg-popover text-foreground" : ""
-                      }`}
-                  >
-                    <item.icon className="!size-5" />
-                    <span>{item.title}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            );
-          })}
-        </SidebarMenu>
-      </SidebarContent>
+        <SidebarContent>
+          <SidebarMenu>
+            {navMain.map((item) => {
+              const isActive = pathname === item.url;
+              return (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <Link
+                      href={item.url}
+                      onClick={handleLinkClick}
+                      className={`flex items-center py-6 mt-2 gap-3 p-3 rounded-md text-base transition-colors ${isActive ? "bg-popover text-foreground" : ""
+                        }`}
+                    >
+                      <item.icon className="!size-5" />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              );
+            })}
+          </SidebarMenu>
+        </SidebarContent>
 
-      <SidebarFooter>
-        <NavUser user={userData} />
-      </SidebarFooter>
-    </Sidebar>
+        <SidebarFooter>
+          <NavUser user={userData} />
+        </SidebarFooter>
+      </Sidebar>
+    </div>
   );
 }
