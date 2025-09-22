@@ -13,63 +13,15 @@ import { Contact, Message } from "@/types";
 import { getAccessToken, useUser } from "@auth0/nextjs-auth0";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import { CheckCircle, Loader2, SendHorizontal } from "lucide-react";
+import { Loader2, SendHorizontal } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL!;
 const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL!;
 
-function AdminResponseDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
-  return (
-    <Dialog open={open}>
-      <DialogContent className="sm:max-w-[500px] rounded-2xl p-8" showCloseButton={false}>
-        <DialogHeader>
-          <DialogTitle className="sr-only">Message Sent Successfully</DialogTitle>
-        </DialogHeader>
-        <div className="flex flex-col items-center text-center space-y-6">
-          <div className="relative">
-            <div className="relative bg-primary rounded-full p-4">
-              <CheckCircle className="h-12 w-12 text-white dark:text-black" />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <h2 className="text-3xl text-foreground font-bold animate-fade-in">
-              Congratulations!
-            </h2>
-            <div className="w-16 h-1 bg-primary mx-auto rounded-full"></div>
-          </div>
-
-          <div className="space-y-3">
-            <p className="text-lg font-semibold text-foreground">
-              Message Sent Successfully!
-            </p>
-            <p className="text-muted-foreground leading-relaxed">
-              Your message has been delivered to our admin team.
-              <br />
-              Please wait for their response before sending another message.
-            </p>
-          </div>
-
-          <div className="pt-4">
-            <Button
-              onClick={() => (window.location.href = "/user-dashboard")}
-              className="cursor-pointer py"
-              size="lg"
-            >
-              Go to Dashboard
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 export default function ContactAdmin() {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const [newMessage, setNewMessage] = useState("");
-  const [hasAdminReplied, setHasAdminReplied] = useState(true);
   const queryClient = useQueryClient();
   const { user } = useUser();
 
@@ -114,28 +66,6 @@ export default function ContactAdmin() {
     retry: 1,
   });
 
-  useEffect(() => {
-    if (messages.length === 0) {
-      setHasAdminReplied(true);
-    } else {
-      const reversedMessages = [...messages].reverse();
-      const lastUserMessageIndex = reversedMessages.findIndex(
-        (m) => m.sender !== ADMIN_EMAIL && !m.sender.includes("entop")
-      );
-
-      const hasAdminRepliedToLatest =
-        lastUserMessageIndex === -1
-          ? true
-          : reversedMessages
-            .slice(0, lastUserMessageIndex)
-            .some(
-              (m) => m.sender === ADMIN_EMAIL || m.sender.includes("entop")
-            );
-
-      setHasAdminReplied(hasAdminRepliedToLatest);
-    }
-  }, [messages]);
-
   const sendMessageMutation = useMutation<Message, Error, string>({
     mutationFn: async (messageText: string) => {
       let currentContact = contact;
@@ -147,7 +77,7 @@ export default function ContactAdmin() {
           {
             email: user?.email,
             message: messageText,
-            name: user?.name || user?.email?.split('@')[0] || 'User'
+            name: user?.name || user?.email?.split("@")[0] || "User",
           },
           { headers: { Authorization: `Bearer ${token}` } }
         );
@@ -180,7 +110,6 @@ export default function ContactAdmin() {
         (old: Message[] = []) => [...old, data]
       );
       setNewMessage("");
-      setHasAdminReplied(false);
     },
   });
 
@@ -201,11 +130,12 @@ export default function ContactAdmin() {
   };
 
   return (
-    <div className="flex flex-col h-[90vh] w-full md:px-6 px-2" >
-
+    <div className="flex flex-col h-[90vh] w-full md:px-6 px-2">
       <Card className="rounded-xl flex flex-col h-full relative">
         <div className="px-6 py-2 border-b flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-foreground">Chat with Admin</h3>
+          <h3 className="text-lg font-semibold text-foreground">
+            Chat with Admin
+          </h3>
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-4 bg-muted/20 space-y-3 scrollbar-thin scrollbar-thumb-neutral-400 scrollbar-track-neutral-200">
@@ -224,11 +154,11 @@ export default function ContactAdmin() {
             messages.map((m) => {
               const isAdmin =
                 m.sender === ADMIN_EMAIL || m.sender.includes("entop");
-              console.log("🚀 ~ ContactAdmin ~ isAdmin:", isAdmin)
               return (
                 <div
                   key={m.id}
-                  className={`flex ${isAdmin ? "justify-start" : "justify-end"}`}
+                  className={`flex ${isAdmin ? "justify-start" : "justify-end"
+                    }`}
                 >
                   <div className="flex flex-col max-w-[85%]">
                     {isAdmin && (
@@ -238,8 +168,8 @@ export default function ContactAdmin() {
                     )}
                     <div
                       className={`px-4 py-2 text-xs md:text-sm break-words rounded-2xl ${isAdmin
-                        ? "bg-muted-foreground/10 text-foreground rounded-bl-none text-left"
-                        : "bg-primary/10 text-foreground rounded-br-none text-right"
+                          ? "bg-muted-foreground/10 text-foreground rounded-bl-none text-left"
+                          : "bg-primary/10 text-foreground rounded-br-none text-right"
                         }`}
                     >
                       <div className={isAdmin ? "text-left" : "text-right"}>
@@ -272,15 +202,10 @@ export default function ContactAdmin() {
                 handleSendMessage();
               }
             }}
-            disabled={!hasAdminReplied && messages.length > 0}
           />
           <button
             onClick={handleSendMessage}
-            disabled={
-              isSending ||
-              !newMessage.trim() ||
-              (!hasAdminReplied && messages.length > 0)
-            }
+            disabled={isSending || !newMessage.trim()}
             className="p-3 rounded-full disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer absolute right-8 bg-primary hover:bg-primary/90 transition-colors"
           >
             {isSending ? (
@@ -291,11 +216,6 @@ export default function ContactAdmin() {
           </button>
         </div>
       </Card>
-
-      <AdminResponseDialog
-        open={!hasAdminReplied && messages.length > 0}
-        onOpenChange={setHasAdminReplied}
-      />
     </div>
   );
 }
