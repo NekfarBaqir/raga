@@ -190,9 +190,7 @@ export default function Page() {
                 {contact.name}
               </h3>
             ) : (
-              <p className="text-sm text-muted-foreground">
-                Contact not found
-              </p>
+              <p className="text-sm text-muted-foreground">Contact not found</p>
             )}
           </div>
 
@@ -206,23 +204,55 @@ export default function Page() {
                 messages.map((m) => (
                   <div
                     key={m.id}
-                    className={`flex items-end ${m.senderId?.includes("entop")
-                      ? "justify-end"
-                      : "justify-start"
-                      }`}
+                    className={`flex items-end ${
+                      m.senderId?.includes("entop")
+                        ? "justify-end"
+                        : "justify-start"
+                    }`}
                   >
                     <div
-                      className={`px-4 py-2 max-w-[70%] text-xs md:text-sm break-words rounded-2xl ${m.senderId?.includes("entop")
-                        ? "bg-muted text-foreground rounded-br-none"
-                        : "bg-secondary/10 text-foreground rounded-bl-none"
-                        }`}
+                      className={`px-4 py-2 max-w-[70%] text-xs md:text-sm break-words rounded-2xl ${
+                        m.senderId?.includes("entop")
+                          ? "bg-muted text-foreground rounded-br-none"
+                          : "bg-secondary/10 text-foreground rounded-bl-none"
+                      }`}
                     >
                       {m.content}
                       <div className="text-xs text-muted-foreground mt-1 text-right">
-                        {new Date(m.timestamp).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                        {(() => {
+                          const date = new Date(m.timestamp);
+                          const now = new Date();
+
+                          const isToday =
+                            date.getDate() === now.getDate() &&
+                            date.getMonth() === now.getMonth() &&
+                            date.getFullYear() === now.getFullYear();
+
+                          const yesterday = new Date();
+                          yesterday.setDate(now.getDate() - 1);
+                          const isYesterday =
+                            date.getDate() === yesterday.getDate() &&
+                            date.getMonth() === yesterday.getMonth() &&
+                            date.getFullYear() === yesterday.getFullYear();
+
+                          if (isToday) {
+                            return date.toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            });
+                          } else if (isYesterday) {
+                            return `Yesterday ${date.toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}`;
+                          } else {
+                            return date.toLocaleDateString([], {
+                              day: "2-digit",
+                              month: "2-digit",
+                              year: "2-digit",
+                            });
+                          }
+                        })()}
                       </div>
                     </div>
                   </div>
