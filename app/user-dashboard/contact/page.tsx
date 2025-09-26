@@ -126,7 +126,37 @@ export default function ContactAdmin() {
 
   const formatTimestamp = (ts: string) => {
     const date = new Date(ts);
-    return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    const now = new Date();
+
+    const isToday =
+      date.getDate() === now.getDate() &&
+      date.getMonth() === now.getMonth() &&
+      date.getFullYear() === now.getFullYear();
+
+    const yesterday = new Date();
+    yesterday.setDate(now.getDate() - 1);
+    const isYesterday =
+      date.getDate() === yesterday.getDate() &&
+      date.getMonth() === yesterday.getMonth() &&
+      date.getFullYear() === yesterday.getFullYear();
+
+    if (isToday) {
+      return date.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } else if (isYesterday) {
+      return `Yesterday ${date.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      })}`;
+    } else {
+      return date.toLocaleDateString([], {
+        day: "2-digit",
+        month: "2-digit",
+        year: "2-digit",
+      });
+    }
   };
 
   return (
@@ -157,8 +187,9 @@ export default function ContactAdmin() {
               return (
                 <div
                   key={m.id}
-                  className={`flex ${isAdmin ? "justify-start" : "justify-end"
-                    }`}
+                  className={`flex ${
+                    isAdmin ? "justify-start" : "justify-end"
+                  }`}
                 >
                   <div className="flex flex-col max-w-[85%]">
                     {isAdmin && (
@@ -167,17 +198,19 @@ export default function ContactAdmin() {
                       </span>
                     )}
                     <div
-                      className={`px-4 py-2 text-xs md:text-sm break-words rounded-2xl ${isAdmin
+                      className={`px-4 py-2 text-xs md:text-sm break-words rounded-2xl ${
+                        isAdmin
                           ? "bg-muted-foreground/10 text-foreground rounded-bl-none text-left"
                           : "bg-primary/10 text-foreground rounded-br-none text-right"
-                        }`}
+                      }`}
                     >
                       <div className={isAdmin ? "text-left" : "text-right"}>
                         {m.message}
                       </div>
                       <div
-                        className={`text-xs text-muted-foreground mt-1 ${isAdmin ? "text-left" : "text-right"
-                          }`}
+                        className={`text-xs text-muted-foreground mt-1 ${
+                          isAdmin ? "text-left" : "text-right"
+                        }`}
                       >
                         {formatTimestamp(m.created_at)}
                       </div>
