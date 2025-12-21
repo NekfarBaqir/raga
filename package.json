@@ -45,7 +45,7 @@
     "jwt-decode": "^4.0.0",
     "lucide-react": "^0.542.0",
     "motion": "^12.23.12",
-    "next": "15.5.2",
+    "next": "15.5.9",
     "next-video": "^2.2.3",
     "nextjs-toploader": "^3.9.17",
     "radix-ui": "^1.4.3",
